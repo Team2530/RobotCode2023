@@ -7,33 +7,20 @@ package frc.robot.commands;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.subsystems.DriveTrain;
-/**
- * This class uses multiple commands run in sequence to run Autonomous (Or PathWeaver if we can figure it out)
- */
+
 public class Autonomous extends CommandBase {
-  DriveTrain driveTrain;
-  AHRS ahrs;
-
-
+  private AHRS ahrs;
+  private DriveTrain driveTrain;
   /** Creates a new Autonomous. */
   public Autonomous(DriveTrain driveTrain, AHRS ahrs) {
-   this.driveTrain = driveTrain;
-   this.ahrs = ahrs;
+    this.ahrs = ahrs;
+    this.driveTrain = driveTrain;
   }
 
   // Called when the command is initially scheduled.
   @Override
-  public void initialize() {
-    SequentialCommandGroup autonomousCommand = new SequentialCommandGroup(
-    // Todo: Create commands to run during autonomous
-    );
-
-    autonomousCommand.schedule();
-
-  }
+  public void initialize() {}
 
   // Called every time the scheduler runs while the command is scheduled.
   @Override

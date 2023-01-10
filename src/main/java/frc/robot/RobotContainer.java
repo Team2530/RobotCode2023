@@ -25,8 +25,6 @@ public class RobotContainer {
 
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
-    private final LimeLight m_limeLight = new LimeLight(m_driveTrain);
-    private final USBCamera driveCamera = new USBCamera();
 
     // ---------- Autonomous Commands ----------\\
 
@@ -43,13 +41,10 @@ public class RobotContainer {
     }
 
     public void configureButtonBindings() {
-        new JoystickButton(stick, Constants.J_DRIVETRAIN_TOGGLE).whenPressed(() -> {
-            m_driveTrain.toggleDriveMode();
-        });
-
-        new JoystickButton(xbox, Constants.X_AIM_TOWARDS_TARGET).whileHeld(() -> {
-            m_limeLight.aimAtTarget();
-        });
+        new JoystickButton(stick, Constants.J_DRIVETRAIN_TOGGLE).onTrue(
+          new InstantCommand(() -> {
+          m_driveTrain.toggleDriveMode();
+        }));
     }
 
     /**
