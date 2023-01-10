@@ -1,0 +1,9 @@
+# Files to ignore when pushing robot code
+# We can ignore all build realted gradle files
+.gradle/
+# All class files, we don't need to push these to github
+.bin/
+# We don't need the built files
+.build/
+
+#This leaves all of src and other files to be changed as need be
