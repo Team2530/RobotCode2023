@@ -3,6 +3,8 @@ package frc.robot;
 import frc.robot.commands.*;
 import frc.robot.libraries.*;
 import frc.robot.subsystems.*;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -45,6 +47,17 @@ public class RobotContainer {
           new InstantCommand(() -> {
           m_driveTrain.toggleDriveMode();
         }));
+        if(RobotBase.isSimulation()) {
+            new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
+                new InstantCommand(() -> {
+                m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
+            }));
+        }
+        
+    }
+
+    public DriveTrain getDriveTrain() {
+        return m_driveTrain;
     }
 
     /**

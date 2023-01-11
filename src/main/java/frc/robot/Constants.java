@@ -38,10 +38,10 @@ public class Constants {
     public static final double FIELD_LENGTH = 16.48;
 
     // ---------- Driving Constants ----------\\
-    public static final double WHEEL_RADIUS = 6;
-    public static final double DRIVETRAIN_GEAR_RATIO = 3;
+    public static final double WHEEL_RADIUS = 3;
+    public static final double DRIVETRAIN_GEAR_RATIO = 16.2;
     public static final double TRACK_WIDTH_METERS = .72;
-    public static final double ROBOT_MASS = Units.lbsToKilograms(10);
+    public static final double ROBOT_MASS = Units.lbsToKilograms(125);
     public static final double INERTIA = 5;
 
 
@@ -53,6 +53,7 @@ public class Constants {
     // Todo: Add all joystick buttons as Constants
     // Joystick Buttons (Use J_ before the button name to indicate use with Joystick)
     public static final int J_DRIVETRAIN_TOGGLE = 1;
+    public static final int J_SIMULATION_RESET = 2;
 
     // Xbox Buttons (Use X_ before the button name to indicate use with Xbox controller)
     public static final int X_AIM_TOWARDS_TARGET = 1;

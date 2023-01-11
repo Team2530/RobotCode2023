@@ -10,6 +10,8 @@ import com.kauailabs.vmx.AHRSJNI;
 
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Encoder;
@@ -55,6 +57,7 @@ public class DriveTrain extends SubsystemBase {
   );
 
 
+
   private AHRS ahrs;
   private Joystick stick;
   private XboxController xbox;
@@ -77,6 +80,12 @@ public class DriveTrain extends SubsystemBase {
     this.ahrs = ahrs;
     this.stick = stick;
     this.xbox = xbox;
+
+    m_leftEncoder.setDistancePerPulse(2 * Math.PI 
+        / Constants.WHEEL_RADIUS / Constants.ENCODER_TICKS_PER_REVOLUTION);
+
+    m_rightEncoder.setDistancePerPulse(2 * Math.PI 
+        / Constants.WHEEL_RADIUS / Constants.ENCODER_TICKS_PER_REVOLUTION);
 
     if(RobotBase.isSimulation()) {
       m_odometry = new DifferentialDriveOdometry(
@@ -105,26 +114,8 @@ public class DriveTrain extends SubsystemBase {
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
 
-  @Override
-  public void simulationPeriodic() {
-    drivetrainSim.setInputs(
-        motorFL.get() * RobotController.getInputVoltage(),
-        motorFR.get() * RobotController.getInputVoltage());
-    drivetrainSim.update(0.020);
-
-    m_leftEncoderSim.setDistance(drivetrainSim.getLeftPositionMeters());
-    m_leftEncoderSim.setRate(drivetrainSim.getLeftVelocityMetersPerSecond());
-    m_rightEncoderSim.setDistance(drivetrainSim.getRightPositionMeters());
-    m_rightEncoderSim.setRate(drivetrainSim.getRightVelocityMetersPerSecond());
-    // Update navX stuff
-    int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
-    SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
-    angle.set(-drivetrainSim.getHeading().getDegrees());
-  }
-
   public void singleJoystickDrive(double x, double y, double z) {
     if(currentDriveMode != Modes.Stop) {
-      // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive) driveBase).arcadeDrive(x, z);
       ((DifferentialDrive) driveBase).arcadeDrive(x, z);
     }
     
@@ -173,5 +164,27 @@ public class DriveTrain extends SubsystemBase {
     m_odometry.update(ahrsSim.getRotation2d(), 
         m_leftEncoder.getDistance(), 
         m_rightEncoder.getDistance());
+  }
+  public void simulationPeriodic() {
+    drivetrainSim.setInputs(
+        motorFL.get() * RobotController.getInputVoltage(),
+        motorFR.get() * RobotController.getInputVoltage());
+    drivetrainSim.update(0.020);
+    m_leftEncoderSim.setDistance(drivetrainSim.getLeftPositionMeters());
+    m_leftEncoderSim.setRate(drivetrainSim.getLeftVelocityMetersPerSecond());
+    m_rightEncoderSim.setDistance(drivetrainSim.getRightPositionMeters());
+    m_rightEncoderSim.setRate(drivetrainSim.getRightVelocityMetersPerSecond());
+    // Update navX heading
+    int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
+    SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
+    angle.set(-drivetrainSim.getHeading().getDegrees());
+  }
+
+  public void simulationReset(Pose2d pose) {
+    m_leftEncoder.reset();
+    m_rightEncoder.reset();
+    drivetrainSim.setPose(pose);
+    m_odometry.resetPosition(
+        ahrsSim.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), pose);
   }
 }
