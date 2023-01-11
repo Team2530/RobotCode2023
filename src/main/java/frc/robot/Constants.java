@@ -1,4 +1,7 @@
 package frc.robot;
+
+import edu.wpi.first.math.util.Units;
+
 /**
  * Constans provides a place for all robot
  * constants to exist and be easily changed
@@ -35,8 +38,12 @@ public class Constants {
     public static final double FIELD_LENGTH = 16.48;
 
     // ---------- Driving Constants ----------\\
-    public static final double WHEEL_RADIUS = 0;
-    public static final double DRIVETRAIN_GEAR_RATIO = 1;
+    public static final double WHEEL_RADIUS = 6;
+    public static final double DRIVETRAIN_GEAR_RATIO = 3;
+    public static final double TRACK_WIDTH_METERS = .72;
+    public static final double ROBOT_MASS = Units.lbsToKilograms(10);
+    public static final double INERTIA = 5;
+
 
     // ---------- Joystick Constants ----------\\
     public static final int JOYSTICK_PORT = 1;
