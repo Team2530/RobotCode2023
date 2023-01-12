@@ -1,6 +1,11 @@
 package frc.robot;
 
+import java.sql.Driver;
+import java.util.function.Supplier;
+
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 
 /**
  * Constans provides a place for all robot
@@ -46,8 +51,8 @@ public class Constants {
 
 
     // ---------- Joystick Constants ----------\\
-    public static final int JOYSTICK_PORT = 1;
-    public static final int XBOX_PORT = 2;
+    public static int JOYSTICK_PORT = 0;
+    public static int XBOX_PORT = 0;
 
     public static final double DEADZONE = 0.05;
     // Todo: Add all joystick buttons as Constants
@@ -57,5 +62,53 @@ public class Constants {
 
     // Xbox Buttons (Use X_ before the button name to indicate use with Xbox controller)
     public static final int X_AIM_TOWARDS_TARGET = 1;
+
+    // Sets controler ports
+    static {
+        if(RobotBase.isReal()) {
+            JOYSTICK_PORT = getJoystickPort();
+            XBOX_PORT = getXboxPort();
+
+            System.out.println(JOYSTICK_PORT);
+            System.out.println(XBOX_PORT);
+        } else {
+           JOYSTICK_PORT = 0;
+           XBOX_PORT = 1;
+        }
+        
+    }
+
+    /**
+     * Gets the first joystick port that exists. If the robot is simulated, 
+     * the Joystick port is defaulted to 0
+     * @return Joystick port
+     * @throws Error if the joystick isn't connected to the computer
+     */
+    private static int getJoystickPort() {
+        for(int i = 0; i < 6; i++) {
+            if(DriverStation.getJoystickName(i).contains("Logitech Extreme 3D")
+            && DriverStation.isJoystickConnected(i)) {
+                return i;
+            }
+        }
+        throw new Error("Joystick seems not to be connected! " + 
+            " Make sure the Joystick is connected to the computer");
+    }
+    /**
+     * Gets the first Xbox port that exists. If the robot is simulated, 
+     * the Xbox port is defaulted to 1
+     * @return Xbox port
+     * @throws Error if the Xbox isn't connected to the computer
+     */
+    private static int getXboxPort() {
+        for(int i = 0; i < 6; i++) {
+            if(DriverStation.getJoystickName(i).contains("Xbox") &&
+            DriverStation.isJoystickConnected(i)) {
+                return i;
+            }
+        }
+
+        throw new Error("Xbox seems not to be connected! Make sure the Xbox is connected to the computer");
+    }
 
 }
