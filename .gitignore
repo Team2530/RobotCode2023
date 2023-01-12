@@ -6,4 +6,8 @@
 # We don't need the built files
 .build/
 
+**.dll
+**.pdb
+**.class
+
 #This leaves all of src and other files to be changed as need be
