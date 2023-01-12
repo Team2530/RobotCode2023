@@ -1,12 +1,18 @@
 # Files to ignore when pushing robot code
 # We can ignore all build realted gradle files
-.gradle/
+./gradle/*
 # All class files, we don't need to push these to github
-bin/
+./bin/*
 # We don't need the built files
-build/
+./build/*
 
-gradle/
+**.dll
+*.dll
+**.pdb
+**.class
+
+
+gradle/*
 
 
 
