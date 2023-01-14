@@ -6,7 +6,7 @@ package frc.robot.subsystems;
 
 import java.util.Date;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.Joystick;
@@ -40,10 +40,10 @@ public class DriveTrain extends SubsystemBase {
   private Modes currentDriveMode = Modes.Move;
 
   //---------- Drive Motors ----------\\
-  WPI_TalonFX motorFL = new WPI_TalonFX(Constants.MOTOR_FL_PORT);
-  WPI_TalonFX motorBL = new WPI_TalonFX(Constants.MOTOR_BL_PORT);
-  WPI_TalonFX motorFR = new WPI_TalonFX(Constants.MOTOR_FR_PORT);
-  WPI_TalonFX motorBR = new WPI_TalonFX(Constants.MOTOR_BR_PORT);
+  WPI_VictorSPX motorFL = new WPI_VictorSPX(Constants.MOTOR_FL_PORT);
+  WPI_VictorSPX motorBL = new WPI_VictorSPX(Constants.MOTOR_BL_PORT);
+  WPI_VictorSPX motorFR = new WPI_VictorSPX(Constants.MOTOR_FR_PORT);
+  WPI_VictorSPX motorBR = new WPI_VictorSPX(Constants.MOTOR_BR_PORT);
 
 
   /** Creates a new DriveTrain. */
@@ -53,7 +53,7 @@ public class DriveTrain extends SubsystemBase {
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
-
+    tankDrive();
     // Todo: Declare using provided method based on DriveTrain type Ex: tankDrive();s
 
   }
@@ -61,23 +61,13 @@ public class DriveTrain extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
-
-
-    
-    //A temorary place for SmartDashbord commands 
-    //SmartShuffle.put("hello", new Date().toString() );
-    SmartDashboard.putNumber("Joystick X value", (stick.getX() * -100) );
-    SmartDashboard.putNumber("Joystick Y value", (stick.getY() * 100) );
-    SmartDashboard.putNumber("Joystick Z value", (stick.getZ() * 100) );
-    //Depented upon the variable we have in constaints -->   SmartDashboard.getBoolean("Is controler pluged in?", false);
-    // SmartDashboard.
-
-
   }
 
   public void singleJoystickDrive(double x, double y, double z) {
     if(currentDriveMode != Modes.Stop) {
       // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive) driveBase).arcadeDrive(x, z);
+      ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE) * 0.1,
+        Deadzone.deadZone(stick.getZ(), Constants.DEADZONE) * 0.1);
     }
 
    
