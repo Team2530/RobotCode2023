@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems;
 
+import java.util.Date;
+
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 
@@ -13,8 +15,11 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+
+import frc.robot.libraries.*;
 
 public class DriveTrain extends SubsystemBase {
   private AHRS ahrs;
@@ -56,12 +61,26 @@ public class DriveTrain extends SubsystemBase {
   @Override
   public void periodic() {
     // This method will be called once per scheduler run
+
+
+    
+    //A temorary place for SmartDashbord commands 
+    //SmartShuffle.put("hello", new Date().toString() );
+    SmartDashboard.putNumber("Joystick X value", (stick.getX() * -100) );
+    SmartDashboard.putNumber("Joystick Y value", (stick.getY() * 100) );
+    SmartDashboard.putNumber("Joystick Z value", (stick.getZ() * 100) );
+    //Depented upon the variable we have in constaints -->   SmartDashboard.getBoolean("Is controler pluged in?", false);
+    // SmartDashboard.
+
+
   }
 
   public void singleJoystickDrive(double x, double y, double z) {
     if(currentDriveMode != Modes.Stop) {
       // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive) driveBase).arcadeDrive(x, z);
     }
+
+   
     
   }
 
