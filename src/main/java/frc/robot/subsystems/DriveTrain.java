@@ -114,7 +114,7 @@ public class DriveTrain extends SubsystemBase {
   }
   /**Create and Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
-    SmartShuffle.get("Joystick X", 0).setValue(stick.getX());
+    SmartShuffle.get("Joystick Y", 0).setValue(stick.getY());
     SmartShuffle.get("Joystick Z", 0).setValue(stick.getZ());
   }
 }

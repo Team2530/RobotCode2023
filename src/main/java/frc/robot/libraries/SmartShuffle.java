@@ -1,20 +1,6 @@
 package frc.robot.libraries;
 
-<<<<<<< Updated upstream
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public class SmartShuffle{
-    public static void put(String key, int n) {
-        SmartDashboard.putNumber(key, n);
-    }
-
-    public static void put(String key, boolean b) {
-        SmartDashboard.putBoolean(key, b);
-    }
-
-    public static void put(String key, String myString) {
-        SmartDashboard.putString(key, myString);
-=======
 import java.util.HashMap;
 
 import edu.wpi.first.networktables.GenericEntry;
@@ -96,9 +82,5 @@ public class SmartShuffle {
 
     public static void setWidget(BuiltInWidgets widget) {
         SmartShuffle.widget = widget;
-    }
-
-    public void setPosition(int x, int y) {
->>>>>>> Stashed changes
     }
 }
