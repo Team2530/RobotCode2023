@@ -47,12 +47,19 @@ public class RobotContainer {
           new InstantCommand(() -> {
           m_driveTrain.toggleDriveMode();
         }));
+
         if(RobotBase.isSimulation()) {
             new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
                 new InstantCommand(() -> {
                 m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
             }));
         }
+        //TODO: Needs Testing!
+        /*new JoystickButton(stick, Constants.J_VECTOR_DRIVE).whileTrue(
+            new InstantCommand(() -> {
+                m_driveTrain.vectorDrive(stick.getX(), stick.getY());
+            }));
+        */
         
     }
 

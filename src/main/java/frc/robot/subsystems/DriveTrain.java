@@ -56,8 +56,6 @@ public class DriveTrain extends SubsystemBase {
   , null
   );
 
-
-
   private AHRS ahrs;
   private Joystick stick;
   private XboxController xbox;
@@ -102,6 +100,11 @@ public class DriveTrain extends SubsystemBase {
 
     // Todo: Create DriveTrain type and reverse motors if needed
 
+    if(RobotBase.isSimulation()) {
+      motorBL.setInverted(true);
+      motorBR.setInverted(true);
+    }
+
     // Todo: Declare using provided method based on DriveTrain type Ex: tankDrive();s
     tankDrive();
 
@@ -127,6 +130,55 @@ public class DriveTrain extends SubsystemBase {
     } else if(currentDriveMode == Modes.Stop) {
       currentDriveMode = Modes.Move;
     }
+  }
+  /**
+   * Turns the robot to the angle held by the joystick, and when within
+   * the turn tolerance, drives forward
+   * @param stickX Joystick X
+   * @param stickY Joystick Y
+   */
+  public void vectorDrive(double stickX, double stickY) {
+    double currentAngle = ahrs.getAngle() % 360;
+    // return the "length" of the joystick vector
+    double vectorLength = Math.min(1, Math.sqrt((Math.pow(stickX, 2) + Math.pow(stickY, 2))));
+    // return the "angle" of the joystick vector
+    double vectorAngle = to360(stickX, stickY);
+    // System.out.println("Start: " + vectorAngle);
+    // drive the robot based on the angle input (3 Degree Tolerance)
+    if (Math.abs(vectorAngle - currentAngle) > Constants.TURN_TOLERANCE) {
+      if (180 - Math.abs(vectorAngle - currentAngle) > 0) {
+        ((DifferentialDrive) driveBase).tankDrive(-0.2, 0.2);
+      } else {
+        ((DifferentialDrive) driveBase).tankDrive(0.2, -0.2);
+      }
+    } else {
+     // ((DifferentialDrive) driveBase).tankDrive(0.2, 0.2);
+    }
+
+    // System.out.println("End: " + vectorAngle);
+
+    // TODO: Add PID to allow rotation by the calculated amount
+  }
+
+    /**
+   * Converts stick angle into 360 degree angle
+   * 
+   * @param stickX the stick x position
+   * @param stickY the stick y position
+   * @return the 360 (0-359) degree position that the stick is at
+   */
+  public double to360(double stickX, double stickY) {
+    double vectorAngle = Math.toDegrees(Math.atan2(stickY, stickX));
+    if (stickX <= 0 && stickY <= 0) {
+      vectorAngle = -90 + Math.abs(vectorAngle);
+    } else if (stickX < 0 && stickY > 0) {
+      vectorAngle = 270 - vectorAngle;
+    } else if (stickX >= 0 && stickY >= 0) {
+      vectorAngle = 270 - vectorAngle;
+    } else {
+      vectorAngle = 270 + Math.abs(vectorAngle);
+    }
+    return vectorAngle;
   }
 
   public void reset() {
@@ -185,6 +237,6 @@ public class DriveTrain extends SubsystemBase {
     m_rightEncoder.reset();
     drivetrainSim.setPose(pose);
     m_odometry.resetPosition(
-        ahrsSim.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), pose);
+        ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), pose);
   }
 }
