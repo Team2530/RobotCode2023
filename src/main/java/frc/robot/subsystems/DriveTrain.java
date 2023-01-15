@@ -53,9 +53,15 @@ public class DriveTrain extends SubsystemBase {
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
-    tankDrive();
-    // Todo: Declare using provided method based on DriveTrain type Ex: tankDrive();s
+    motorFL.setInverted(true);
+    motorBL.setInverted(true);
+    motorBR.setInverted(true);
 
+    // Todo: Declare using provided method based on DriveTrain type Ex: tankDrive();s
+    motorFL.setInverted(true);
+    motorBL.setInverted(true);
+    motorBR.setInverted(true);
+    
   }
 
   @Override

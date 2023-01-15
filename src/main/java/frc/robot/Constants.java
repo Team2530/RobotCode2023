@@ -6,10 +6,10 @@ package frc.robot;
  */
 public class Constants {
     // ---------- Motor Constants ----------\\
-    public static final int MOTOR_FL_PORT = 1;
-    public static final int MOTOR_FR_PORT = 2;
-    public static final int MOTOR_BL_PORT = 3;
-    public static final int MOTOR_BR_PORT = 4;
+    public static final int MOTOR_FL_PORT = 10;
+    public static final int MOTOR_FR_PORT = 20;
+    public static final int MOTOR_BL_PORT = 30;
+    public static final int MOTOR_BR_PORT = 40;
 
     // ---------- Other Motor Ports ----------\\
     public static final int MOTOR_SHOOTER_PORT = 5;
