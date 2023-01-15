@@ -60,7 +60,7 @@ public class DriveTrain extends SubsystemBase {
 
   @Override
   public void periodic() {
-    // This method will be called once per scheduler run
+    updateShuffleBoardValues();
   }
 
   public void singleJoystickDrive(double x, double y, double z) {
@@ -111,5 +111,10 @@ public class DriveTrain extends SubsystemBase {
     motorBL.set(speed);
     motorFR.set(speed);
     motorBR.set(speed);
+  }
+  /**Create and Update all ShuffleBoard values */
+  private void updateShuffleBoardValues() {
+    SmartShuffle.get("Joystick X", 0).setValue(stick.getX());
+    SmartShuffle.get("Joystick Z", 0).setValue(stick.getZ());
   }
 }
