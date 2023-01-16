@@ -9,15 +9,20 @@ import java.util.Date;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.libraries.SmartShuffle;
 
 import frc.robot.libraries.*;
 
@@ -38,6 +43,7 @@ public class DriveTrain extends SubsystemBase {
   }
 
   private Modes currentDriveMode = Modes.Move;
+  
 
   //---------- Drive Motors ----------\\
   WPI_VictorSPX motor10 = new WPI_VictorSPX(10);
@@ -63,6 +69,8 @@ public class DriveTrain extends SubsystemBase {
     // motorBL.setInverted(true);
     // motorBR.setInverted(true);
     this.tankDrive();
+
+    createValues();
   }
 
   @Override
@@ -121,9 +129,17 @@ public class DriveTrain extends SubsystemBase {
     // motorFR.set(speed);
     // motorBR.set(speed);
   }
-  /**Create and Update all ShuffleBoard values */
+  /**Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
-    SmartShuffle.get("Joystick Y", 0).setValue(stick.getY());
-    SmartShuffle.get("Joystick Z", 0).setValue(stick.getZ());
+   SmartShuffle.get("Sticky").update(stick.getY() * -100);
+   SmartShuffle.get("Stickz").update(stick.getZ() * 100);
+  }
+
+  private void createValues() {
+    SmartShuffle.setPosx(0);
+    SmartShuffle.setPosy(2);
+    SmartShuffle.add("Sticky", 0);
+    SmartShuffle.setWidget(BuiltInWidgets.kDial);
+    SmartShuffle.add("Stickz", 0);
   }
 }

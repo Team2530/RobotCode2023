@@ -1,83 +1,83 @@
 package frc.robot.libraries;
 
-
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardComponent;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.shuffleboard.SimpleWidget;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class SmartShuffle {
-    private String key;
-    private Object value;
-    /** Network Tables Entry */
+
     private GenericEntry entry;
-    /**Widget type */
-    static BuiltInWidgets widget;
+    
+    // position of the placement of a SmartShuffle object
+    private static int posx = 0;
+    private static int posy = 0;
 
-    /** Current Table to make values on */
-    private static String currentTable = "Test Values";
+    private static int width = 1;
+    private static int height = 1;
 
-    /** All created SmartShuffle items */
-    private static HashMap<String, SmartShuffle> map = new HashMap<String, SmartShuffle>();
+    private static BuiltInWidgets widget = BuiltInWidgets.kNumberBar;
 
-    /** Creates a SmartShuffle object */
-    private SmartShuffle(String key, Object value) {
-        this.key = key;
-        this.value = value;
-        entry = Shuffleboard.getTab(currentTable).add(key, value).getEntry();
-    }
+    private static HashMap<String, SmartShuffle> shuffleObjects = new HashMap<String, SmartShuffle>();
 
-    /**
-     * Adds a SmartShuffle object to the map
-     * 
-     * @param key   name of SmartShuffle
-     * @param value value in the SmartShuffle
-     */
-    private static void add(String key, Object value) {
-        map.put(key, new SmartShuffle(key, value));
-    }
+    private SmartShuffle(String title, Object defaultValue) {
+        entry = Shuffleboard.getTab("Test Values")
+        .add(title, defaultValue)
+        .withWidget(widget)
+        .withProperties(Map.of("min", -100, "max", 100))
+        .withPosition(posx, posy) // specify the widget here
+        .withSize(width, height)
+        .getEntry();
 
-    /**
-     * Gets the SmartShuffle specified
-     * 
-     * @param key          the name of the SmartShuffle you would like to access
-     * if it doesn't already exist, it creates one with the specified name
-     * @param defaultValue the default value for the type of
-     *                     SmartShuffle object
-     * @return the SmartShuffle Object
-     */
-    public static SmartShuffle get(String key, Object defaultValue) {
-        if (!map.containsKey(key)) {
-            SmartShuffle.add(key, defaultValue);
-        }
-        return map.get(key);
-    }
-    /**
-     * Set the value of the SmartShuffle
-     * @param value value you would like to set it to
-     */
-    public void setValue(Object value) {
-        this.value = value;
-        if (value instanceof String) {
-            entry.setString((String) value);
-        } else if (value instanceof Integer) {
-            entry.setInteger((Integer) value);
-        } else if(value instanceof Boolean) {
-            entry.setBoolean((Boolean) value);
-        } else if(value instanceof Double) {
-            entry.setDouble((Double) value);
+        posx++;
+        // if we go off the screen
+        if(posx == 9) {
+            posy++;
+            posx = 0;
         }
     }
+    /**
+     * Adds a SmartShuffle object to the list
+     * @param title name of shuffle object
+     * @param defaultValue default value of the object
+     * (0, "Hello", 1.5, etc.)
+     */
+    public static void add(String title, Object defaultValue) {
+        shuffleObjects.put(title, new SmartShuffle(title, defaultValue));
+    }
+    /**
+     * Updates the Entry on ShuffleBoard
+     * @param o the value you want updated
+     */
+    public void update(Object o) {
+        entry.setValue(o);
+    }
+    /**
+     * Gets the SmartShuffle with the given name
+     * @param name Name of SmartShuffle object
+     * @return The SmartShuffle object with the given name
+     */
+    public static SmartShuffle get(String name) {
+        return shuffleObjects.get(name);
+    }
+    
+    public static void setHeight(int height) {
+        SmartShuffle.height = height;
+    }
 
-    public static void setCurrentTable(String currentTable) {
-        SmartShuffle.currentTable = currentTable;
+    public static void setWidth(int width) {
+        SmartShuffle.width = width;
+    }
+
+    public static void setPosx(int posx) {
+        SmartShuffle.posx = posx;
+    }
+
+    public static void setPosy(int posy) {
+        SmartShuffle.posy = posy;
     }
 
     public static void setWidget(BuiltInWidgets widget) {
