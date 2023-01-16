@@ -4,6 +4,7 @@
 
 package frc.robot.commands;
 import frc.robot.subsystems.*;
+import frc.robot.subsystems.DriveTrain.Modes;
 import frc.robot.libraries.*;
 import frc.robot.*;
 
@@ -30,9 +31,11 @@ public class SingleJoystickDrive extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
+    driveTrain.setMode(Modes.Crawl);
     driveTrain.singleJoystickDrive(Deadzone.deadZone(stick.getRawAxis(1), Constants.DEADZONE),
         Deadzone.deadZone(stick.getRawAxis(0), Constants.DEADZONE),
         Deadzone.deadZone(stick.getRawAxis(2), Constants.DEADZONE));
+    System.out.println("SingleJoystickDrive.execute()");
   }
 
   // Called once the command ends or is interrupted.

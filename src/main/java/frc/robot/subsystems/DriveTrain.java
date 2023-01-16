@@ -40,10 +40,10 @@ public class DriveTrain extends SubsystemBase {
   private Modes currentDriveMode = Modes.Move;
 
   //---------- Drive Motors ----------\\
-  WPI_VictorSPX motorFL = new WPI_VictorSPX(Constants.MOTOR_FL_PORT);
-  WPI_VictorSPX motorBL = new WPI_VictorSPX(Constants.MOTOR_BL_PORT);
-  WPI_VictorSPX motorFR = new WPI_VictorSPX(Constants.MOTOR_FR_PORT);
-  WPI_VictorSPX motorBR = new WPI_VictorSPX(Constants.MOTOR_BR_PORT);
+  WPI_VictorSPX motor10 = new WPI_VictorSPX(10);
+  WPI_VictorSPX motor20 = new WPI_VictorSPX(20);
+  WPI_VictorSPX motor30 = new WPI_VictorSPX(30);
+  WPI_VictorSPX motor40 = new WPI_VictorSPX(40);
 
 
   /** Creates a new DriveTrain. */
@@ -53,15 +53,16 @@ public class DriveTrain extends SubsystemBase {
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
-    motorFL.setInverted(true);
-    motorBL.setInverted(true);
-    motorBR.setInverted(true);
+    motor10.setInverted(false);
+    motor20.setInverted(false);
+    motor30.setInverted(true);
+    motor40.setInverted(true);
 
     // Todo: Declare using provided method based on DriveTrain type Ex: tankDrive();s
-    motorFL.setInverted(true);
-    motorBL.setInverted(true);
-    motorBR.setInverted(true);
-    
+    // motorFL.setInverted(true);
+    // motorBL.setInverted(true);
+    // motorBR.setInverted(true);
+    this.tankDrive();
   }
 
   @Override
@@ -69,15 +70,17 @@ public class DriveTrain extends SubsystemBase {
     updateShuffleBoardValues();
   }
 
+  public void setMode(Modes m) {
+    currentDriveMode = m;
+  }
+
   public void singleJoystickDrive(double x, double y, double z) {
     if(currentDriveMode != Modes.Stop) {
       // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive) driveBase).arcadeDrive(x, z);
-      ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE) * 0.1,
-        Deadzone.deadZone(stick.getZ(), Constants.DEADZONE) * 0.1);
+      ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
+        Deadzone.deadZone(stick.getZ(), Constants.DEADZONE));
+      System.out.println(motor10.get());
     }
-
-   
-    
   }
 
   public void toggleDriveMode() {
@@ -100,23 +103,23 @@ public class DriveTrain extends SubsystemBase {
    * Use to create a MecanumDrive
    */
   private void mecanumDrive() {
-    driveBase = new MecanumDrive(motorFL, motorBL, motorFR, motorBR);
-    driveBase.setSafetyEnabled(false);
+    // driveBase = new MecanumDrive(motorFL, motorBL, motorFR, motorBR);
+    // driveBase.setSafetyEnabled(false);
   }
   /**
    * Use to create a Tank Drive (Differential Drive)
    */
   private void tankDrive() {
-    motorBR.follow(motorFR);
-    motorBL.follow(motorFL);
-    driveBase = new DifferentialDrive(motorFR, motorFL);
+    motor40.follow(motor30);
+    motor10.follow(motor20);
+    driveBase = new DifferentialDrive(motor30, motor20);
   }
 
   private void setAll(double speed) {
-    motorFL.set(speed);
-    motorBL.set(speed);
-    motorFR.set(speed);
-    motorBR.set(speed);
+    // motorFL.set(speed);
+    // motorBL.set(speed);
+    // motorFR.set(speed);
+    // motorBR.set(speed);
   }
   /**Create and Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
