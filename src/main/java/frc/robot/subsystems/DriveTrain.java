@@ -6,237 +6,189 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
-import com.kauailabs.vmx.AHRSJNI;
 
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.drive.MecanumDrive;
-import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.simulation.AnalogGyroSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
+import frc.robot.RobotContainer;
 
 public class DriveTrain extends SubsystemBase {
-
-  //---------- Drive Motors ----------\\
-  WPI_TalonFX motorFL = new WPI_TalonFX(Constants.MOTOR_FL_PORT);
-  WPI_TalonFX motorBL = new WPI_TalonFX(Constants.MOTOR_BL_PORT);
-  WPI_TalonFX motorFR = new WPI_TalonFX(Constants.MOTOR_FR_PORT);
-  WPI_TalonFX motorBR = new WPI_TalonFX(Constants.MOTOR_BR_PORT);
-
-  private DifferentialDriveOdometry m_odometry;
-  private final Encoder m_leftEncoder = new Encoder(0, 1);
-  private final Encoder m_rightEncoder = new Encoder(2, 3);
-
-  // ---------- Simulation Clases ---------- \\
-  private AHRS ahrsSim;
-  private EncoderSim m_leftEncoderSim;
-  private EncoderSim m_rightEncoderSim;
-  private final Field2d m_fieldSim = new Field2d();
-  private final DifferentialDrivetrainSim drivetrainSim = 
-  new DifferentialDrivetrainSim(DCMotor.getFalcon500(2), Constants.DRIVETRAIN_GEAR_RATIO
-  , Constants.INERTIA, Constants.ROBOT_MASS, 
-  Constants.WHEEL_RADIUS, Constants.TRACK_WIDTH_METERS
-  , null
-  );
-
-  private AHRS ahrs;
   private Joystick stick;
   private XboxController xbox;
 
-  RobotDriveBase driveBase;
+  // 3 meters per second.
+  public static final double kMaxSpeed = 3.0;
+  // 1/2 rotation per second.
+  public static final double kMaxAngularSpeed = 1;
 
-  public static enum Modes {
-    Stop,
-    Move,
-    Brake,
-    Full,
-    Crawl,
-    Half
-  }
+  private static final double kTrackWidth = 0.381 * 2;
+  private static final double kWheelRadius = 0.0762;
+  private static final int kEncoderResolution = -4096;
 
-  private Modes currentDriveMode = Modes.Move;
+  //---------- Motors ----------\\
+  private final WPI_TalonFX m_leftLeader = new WPI_TalonFX(1);
+  private final WPI_TalonFX m_leftFollower = new WPI_TalonFX(2);
+  private final WPI_TalonFX m_rightLeader = new WPI_TalonFX(3);
+  private final WPI_TalonFX m_rightFollower = new WPI_TalonFX(4);
 
-  /** Creates a new DriveTrain. */
+  private final MotorControllerGroup m_leftGroup =
+      new MotorControllerGroup(m_leftLeader, m_leftFollower);
+  private final MotorControllerGroup m_rightGroup =
+      new MotorControllerGroup(m_rightLeader, m_rightFollower);
+
+  //---------- Encoders ----------\\
+  private final Encoder m_leftEncoder = new Encoder(0, 1);
+  private final Encoder m_rightEncoder = new Encoder(2, 3);
+
+
+  //---------- PID Controllers ----------\\
+  private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
+  private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
+  private AHRS ahrs = RobotContainer.getAhrs();
+
+  //---------- Kinematics & Odometry ----------\\
+  private final DifferentialDriveKinematics m_kinematics =
+      new DifferentialDriveKinematics(kTrackWidth);
+  private final DifferentialDriveOdometry m_odometry =
+      new DifferentialDriveOdometry(
+          ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+
+  // Gains are for example purposes only - must be determined for your own
+  // robot!
+  private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(1, 3);
+
+  //---------- Simulation Classes ----------\\
+  private final EncoderSim m_leftEncoderSim = new EncoderSim(m_leftEncoder);
+  private final EncoderSim m_rightEncoderSim = new EncoderSim(m_rightEncoder);
+  private final Field2d m_fieldSim = new Field2d();
+  private final LinearSystem<N2, N2, N2> m_drivetrainSystem =
+      LinearSystemId.identifyDrivetrainSystem(1.98, 0.2, 1.5, 0.3);
+  private final DifferentialDrivetrainSim m_drivetrainSimulator =
+      new DifferentialDrivetrainSim(
+          m_drivetrainSystem, DCMotor.getFalcon500(2), 8, kTrackWidth, kWheelRadius, null);
+
+
+  
+  /** Subsystem constructor. */
   public DriveTrain(AHRS ahrs, Joystick stick, XboxController xbox) {
     this.ahrs = ahrs;
     this.stick = stick;
     this.xbox = xbox;
 
-    m_leftEncoder.setDistancePerPulse(2 * Math.PI 
-        / Constants.WHEEL_RADIUS / Constants.ENCODER_TICKS_PER_REVOLUTION);
+    // We need to invert one side of the drivetrain so that positive voltages
+    // result in both sides moving forward. Depending on how your robot's
+    // gearbox is constructed, you might have to invert the left side instead.
+    m_rightGroup.setInverted(true);
 
-    m_rightEncoder.setDistancePerPulse(2 * Math.PI 
-        / Constants.WHEEL_RADIUS / Constants.ENCODER_TICKS_PER_REVOLUTION);
+    // Set the distance per pulse for the drive encoders. We can simply use the
+    // distance traveled for one rotation of the wheel divided by the encoder
+    // resolution.
+    m_leftEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
+    m_rightEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
 
-    if(RobotBase.isSimulation()) {
-      m_odometry = new DifferentialDriveOdometry(
-          ahrs.getRotation2d(), m_leftEncoder.getDistance(), 
-          m_rightEncoder.getDistance());
-      ahrsSim = ahrs;
-      m_leftEncoderSim = new EncoderSim(m_leftEncoder);
-      m_rightEncoderSim = new EncoderSim(m_rightEncoder);
-    } else {
-      m_odometry = null;
-      m_leftEncoderSim = null;
-      m_rightEncoderSim = null;
-    }
+    m_leftEncoder.reset();
+    m_rightEncoder.reset();
 
-    // Todo: Create DriveTrain type and reverse motors if needed
-
-    if(RobotBase.isSimulation()) {
-      motorBL.setInverted(true);
-      motorBR.setInverted(true);
-    }
-
-    // Todo: Declare using provided method based on DriveTrain type Ex: tankDrive();s
-    tankDrive();
-
-    SmartDashboard.putData("Field" , m_fieldSim);
+    m_rightGroup.setInverted(true);
+    SmartDashboard.putData("Field", m_fieldSim);
   }
 
   @Override
   public void periodic() {
-    updateOdometry();
-    m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
+    updatePeriodic();
   }
 
-  public void singleJoystickDrive(double x, double y, double z) {
-    if(currentDriveMode != Modes.Stop) {
-      ((DifferentialDrive) driveBase).arcadeDrive(x, z);
-    }
-    
-  }
+  /** Sets speeds to the drivetrain motors. */
+  public void setSpeeds(DifferentialDriveWheelSpeeds speeds) {
+    var leftFeedforward = m_feedforward.calculate(speeds.leftMetersPerSecond);
+    var rightFeedforward = m_feedforward.calculate(speeds.rightMetersPerSecond);
+    double leftOutput =
+        m_leftPIDController.calculate(m_leftEncoder.getRate(), speeds.leftMetersPerSecond);
+    double rightOutput =
+        m_rightPIDController.calculate(m_rightEncoder.getRate(), speeds.rightMetersPerSecond);
 
-  public void toggleDriveMode() {
-    if(currentDriveMode == Modes.Move) {
-      currentDriveMode = Modes.Stop;
-    } else if(currentDriveMode == Modes.Stop) {
-      currentDriveMode = Modes.Move;
-    }
-  }
-  /**
-   * Turns the robot to the angle held by the joystick, and when within
-   * the turn tolerance, drives forward
-   * @param stickX Joystick X
-   * @param stickY Joystick Y
-   */
-  public void vectorDrive(double stickX, double stickY) {
-    double currentAngle = ahrs.getAngle() % 360;
-    // return the "length" of the joystick vector
-    double vectorLength = Math.min(1, Math.sqrt((Math.pow(stickX, 2) + Math.pow(stickY, 2))));
-    // return the "angle" of the joystick vector
-    double vectorAngle = to360(stickX, stickY);
-    // System.out.println("Start: " + vectorAngle);
-    // drive the robot based on the angle input (3 Degree Tolerance)
-    if (Math.abs(vectorAngle - currentAngle) > Constants.TURN_TOLERANCE) {
-      if (180 - Math.abs(vectorAngle - currentAngle) > 0) {
-        ((DifferentialDrive) driveBase).tankDrive(-0.2, 0.2);
-      } else {
-        ((DifferentialDrive) driveBase).tankDrive(0.2, -0.2);
-      }
-    } else {
-     // ((DifferentialDrive) driveBase).tankDrive(0.2, 0.2);
-    }
-
-    // System.out.println("End: " + vectorAngle);
-
-    // TODO: Add PID to allow rotation by the calculated amount
-  }
-
-    /**
-   * Converts stick angle into 360 degree angle
-   * 
-   * @param stickX the stick x position
-   * @param stickY the stick y position
-   * @return the 360 (0-359) degree position that the stick is at
-   */
-  public double to360(double stickX, double stickY) {
-    double vectorAngle = Math.toDegrees(Math.atan2(stickY, stickX));
-    if (stickX <= 0 && stickY <= 0) {
-      vectorAngle = -90 + Math.abs(vectorAngle);
-    } else if (stickX < 0 && stickY > 0) {
-      vectorAngle = 270 - vectorAngle;
-    } else if (stickX >= 0 && stickY >= 0) {
-      vectorAngle = 270 - vectorAngle;
-    } else {
-      vectorAngle = 270 + Math.abs(vectorAngle);
-    }
-    return vectorAngle;
-  }
-
-  public void reset() {
-    // Todo: implement a reset method
-  }
-
-  public void stop() {
-    // Todo: implement a stop method
+    m_leftGroup.setVoltage(leftOutput + leftFeedforward);
+    m_rightGroup.setVoltage(rightOutput + rightFeedforward);
   }
 
   /**
-   * Use to create a MecanumDrive
+   * Controls the robot using arcade drive.
+   *
+   * @param xSpeed the speed for the x axis
+   * @param rot the rotation
    */
-  private void mecanumDrive() {
-    driveBase = new MecanumDrive(motorFL, motorBL, motorFR, motorBR);
-    driveBase.setSafetyEnabled(false);
-  }
-  /**
-   * Use to create a Tank Drive (Differential Drive)
-   */
-  private void tankDrive() {
-    motorBR.follow(motorFR);
-    motorBL.follow(motorFL);
-    driveBase = new DifferentialDrive(motorFR, motorFL);
+  public void drive(double xSpeed, double rot) {
+    setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
   }
 
-  private void setAll(double speed) {
-    motorFL.set(speed);
-    motorBL.set(speed);
-    motorFR.set(speed);
-    motorBR.set(speed);
+  /** Update robot odometry. */
+  public void updateOdometry() {
+    m_odometry.update(
+        ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
   }
 
-  private void updateOdometry() {
-    m_odometry.update(ahrsSim.getRotation2d(), 
-        m_leftEncoder.getDistance(), 
-        m_rightEncoder.getDistance());
-  }
-  public void simulationPeriodic() {
-    drivetrainSim.setInputs(
-        motorFL.get() * RobotController.getInputVoltage(),
-        motorFR.get() * RobotController.getInputVoltage());
-    drivetrainSim.update(0.020);
-    m_leftEncoderSim.setDistance(drivetrainSim.getLeftPositionMeters());
-    m_leftEncoderSim.setRate(drivetrainSim.getLeftVelocityMetersPerSecond());
-    m_rightEncoderSim.setDistance(drivetrainSim.getRightPositionMeters());
-    m_rightEncoderSim.setRate(drivetrainSim.getRightVelocityMetersPerSecond());
-    // Update navX heading
-    int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
-    SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
-    angle.set(-drivetrainSim.getHeading().getDegrees());
-  }
-
-  public void simulationReset(Pose2d pose) {
+  /** Resets robot odometry. */
+  public void resetOdometry(Pose2d pose) {
     m_leftEncoder.reset();
     m_rightEncoder.reset();
-    drivetrainSim.setPose(pose);
+    m_drivetrainSimulator.setPose(pose);
     m_odometry.resetPosition(
         ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), pose);
   }
+
+  /** Check the current robot pose. */
+  public Pose2d getPose() {
+    return m_odometry.getPoseMeters();
+  }
+
+  /** Update our simulation. This should be run every robot loop in simulation. */
+  public void simulationPeriodic() {
+    // To update our simulation, we set motor voltage inputs, update the
+    // simulation, and write the simulated positions and velocities to our
+    // simulated encoder and gyro. We negate the right side so that positive
+    // voltages make the right side move forward.
+    m_drivetrainSimulator.setInputs(
+        m_leftGroup.get() * RobotController.getInputVoltage(),
+        m_rightGroup.get() * RobotController.getInputVoltage());
+    m_drivetrainSimulator.update(0.02);
+
+    m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
+    m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
+    m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
+    m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
+
+    int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
+    SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
+    angle.set(-m_drivetrainSimulator.getHeading().getDegrees());
+  }
+
+  /** Update odometry - this should be run every robot loop. */
+  public void updatePeriodic() {
+    updateOdometry();
+    m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
+  }
 }
+
