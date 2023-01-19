@@ -68,8 +68,8 @@ public class Constants {
     // Sets controler ports
     static {
         if(RobotBase.isReal()) {
-            JOYSTICK_PORT = getJoystickPort();
-            XBOX_PORT = getXboxPort();
+            JOYSTICK_PORT = 0;
+            XBOX_PORT = 1;
 
             System.out.println(JOYSTICK_PORT);
             System.out.println(XBOX_PORT);
@@ -93,6 +93,7 @@ public class Constants {
                 return i;
             }
         }
+        
         throw new Error("Joystick seems not to be connected! " + 
             " Make sure the Joystick is connected to the computer");
     }

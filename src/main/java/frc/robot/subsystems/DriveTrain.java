@@ -4,7 +4,7 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.hal.SimDouble;
@@ -49,10 +49,10 @@ public class DriveTrain extends SubsystemBase {
   private static final int kEncoderResolution = -4096;
 
   //---------- Motors ----------\\
-  private final WPI_TalonFX m_leftLeader = new WPI_TalonFX(1);
-  private final WPI_TalonFX m_leftFollower = new WPI_TalonFX(2);
-  private final WPI_TalonFX m_rightLeader = new WPI_TalonFX(3);
-  private final WPI_TalonFX m_rightFollower = new WPI_TalonFX(4);
+  private final WPI_VictorSPX m_leftLeader = new WPI_VictorSPX(30);
+  private final WPI_VictorSPX m_leftFollower = new WPI_VictorSPX(40);
+  private final WPI_VictorSPX m_rightLeader = new WPI_VictorSPX(10);
+  private final WPI_VictorSPX m_rightFollower = new WPI_VictorSPX(20);
 
   private final MotorControllerGroup m_leftGroup =
       new MotorControllerGroup(m_leftLeader, m_leftFollower);
