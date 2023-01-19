@@ -6,7 +6,7 @@ package frc.robot.subsystems;
 
 import java.util.Date;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.networktables.GenericEntry;
@@ -46,10 +46,10 @@ public class DriveTrain extends SubsystemBase {
   
 
   //---------- Drive Motors ----------\\
-  WPI_VictorSPX motor10 = new WPI_VictorSPX(10);
-  WPI_VictorSPX motor20 = new WPI_VictorSPX(20);
-  WPI_VictorSPX motor30 = new WPI_VictorSPX(30);
-  WPI_VictorSPX motor40 = new WPI_VictorSPX(40);
+  WPI_TalonFX motor10 = new WPI_TalonFX(10);
+  WPI_TalonFX motor20 = new WPI_TalonFX(20);
+  WPI_TalonFX motor30 = new WPI_TalonFX(30);
+  WPI_TalonFX motor40 = new WPI_TalonFX(40);
 
 
   /** Creates a new DriveTrain. */
@@ -69,7 +69,6 @@ public class DriveTrain extends SubsystemBase {
     // motorBL.setInverted(true);
     // motorBR.setInverted(true);
     this.tankDrive();
-
     createValues();
   }
 
@@ -87,7 +86,6 @@ public class DriveTrain extends SubsystemBase {
       // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive) driveBase).arcadeDrive(x, z);
       ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
         Deadzone.deadZone(stick.getZ(), Constants.DEADZONE));
-      System.out.println(motor10.get());
     }
   }
 
@@ -131,15 +129,15 @@ public class DriveTrain extends SubsystemBase {
   }
   /**Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
-   SmartShuffle.get("Sticky").update(stick.getY() * -100);
-   SmartShuffle.get("Stickz").update(stick.getZ() * 100);
+   SmartShuffle.get("Stick Y").update(stick.getY() * -100);
+   SmartShuffle.get("Stick Z").update(stick.getZ() * 100);
   }
 
   private void createValues() {
     SmartShuffle.setPosx(0);
     SmartShuffle.setPosy(2);
-    SmartShuffle.add("Sticky", 0);
+    SmartShuffle.add("Stick Y", 0);
     SmartShuffle.setWidget(BuiltInWidgets.kDial);
-    SmartShuffle.add("Stickz", 0);
+    SmartShuffle.add("Stick Z", 0);
   }
 }

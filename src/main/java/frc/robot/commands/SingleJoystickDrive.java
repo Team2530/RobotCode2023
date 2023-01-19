@@ -35,7 +35,6 @@ public class SingleJoystickDrive extends CommandBase {
     driveTrain.singleJoystickDrive(Deadzone.deadZone(stick.getRawAxis(1), Constants.DEADZONE),
         Deadzone.deadZone(stick.getRawAxis(0), Constants.DEADZONE),
         Deadzone.deadZone(stick.getRawAxis(2), Constants.DEADZONE));
-    System.out.println("SingleJoystickDrive.execute()");
   }
 
   // Called once the command ends or is interrupted.
