@@ -67,16 +67,19 @@ public class Constants {
 
     // Sets controler ports
     static {
-        if(RobotBase.isReal()) {
-            JOYSTICK_PORT = 0;
-            XBOX_PORT = 1;
+        JOYSTICK_PORT = getJoystickPort();
+        XBOX_PORT = getXboxPort();
+        
+        // if(RobotBase.isReal()) {
+        //     JOYSTICK_PORT = 0;
+        //     XBOX_PORT = 1;
 
-            System.out.println(JOYSTICK_PORT);
-            System.out.println(XBOX_PORT);
-        } else {
-           JOYSTICK_PORT = 0;
-           XBOX_PORT = 1;
-        }
+        //     System.out.println(JOYSTICK_PORT);
+        //     System.out.println(XBOX_PORT);
+        // } else {
+        //    JOYSTICK_PORT = 0;
+        //    XBOX_PORT = 1;
+        // }
         
     }
 
@@ -88,8 +91,8 @@ public class Constants {
      */
     private static int getJoystickPort() {
         for(int i = 0; i < 6; i++) {
-            if(DriverStation.getJoystickName(i).contains("Logitech Extreme 3D")
-            && DriverStation.isJoystickConnected(i)) {
+            DriverStation.getJoystickName(i);
+            if(DriverStation.getJoystickName(i).contains("Logitech Extreme 3D")) { 
                 return i;
             }
         }
@@ -105,8 +108,7 @@ public class Constants {
      */
     private static int getXboxPort() {
         for(int i = 0; i < 6; i++) {
-            if(DriverStation.getJoystickName(i).contains("Xbox") &&
-            DriverStation.isJoystickConnected(i)) {
+            if(DriverStation.getJoystickName(i).contains("Xbox")) {
                 return i;
             }
         }
