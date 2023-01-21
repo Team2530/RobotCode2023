@@ -135,6 +135,23 @@ public class DriveTrain extends SubsystemBase {
     createValues();
 
     ahrs.reset();
+
+        // We need to invert one side of the drivetrain so that positive voltages
+    // result in both sides moving forward. Depending on how your robot's
+    // gearbox is constructed, you might have to invert the left side instead.
+    m_rightGroup.setInverted(true);
+
+    // Set the distance per pulse for the drive encoders. We can simply use the
+    // distance traveled for one rotation of the wheel divided by the encoder
+    // resolution.
+    m_leftEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
+    m_rightEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
+
+    m_leftEncoder.reset();
+    m_rightEncoder.reset();
+
+    m_rightGroup.setInverted(true);
+    SmartDashboard.putData("Field", m_fieldSim);
   }
 
   @Override
@@ -172,22 +189,6 @@ public class DriveTrain extends SubsystemBase {
 
     ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
         Deadzone.deadZone(driveZ , Constants.DEADZONE));
-    // We need to invert one side of the drivetrain so that positive voltages
-    // result in both sides moving forward. Depending on how your robot's
-    // gearbox is constructed, you might have to invert the left side instead.
-    m_rightGroup.setInverted(true);
-
-    // Set the distance per pulse for the drive encoders. We can simply use the
-    // distance traveled for one rotation of the wheel divided by the encoder
-    // resolution.
-    m_leftEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
-    m_rightEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
-
-    m_leftEncoder.reset();
-    m_rightEncoder.reset();
-
-    m_rightGroup.setInverted(true);
-    SmartDashboard.putData("Field", m_fieldSim);
   }
 
   /** Sets speeds to the drivetrain motors. */
