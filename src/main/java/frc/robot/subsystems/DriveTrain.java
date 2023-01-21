@@ -49,10 +49,10 @@ public class DriveTrain extends SubsystemBase {
   
 
   //---------- Drive Motors ----------\\
-  WPI_VictorSPX motor10 = new WPI_VictorSPX(10);
-  WPI_VictorSPX motor20 = new WPI_VictorSPX(20);
-  WPI_VictorSPX motor30 = new WPI_VictorSPX(30);
-  WPI_VictorSPX motor40 = new WPI_VictorSPX(40);
+  WPI_TalonFX motor10 = new WPI_TalonFX(10);
+  WPI_TalonFX motor20 = new WPI_TalonFX(20);
+  WPI_TalonFX motor30 = new WPI_TalonFX(30);
+  WPI_TalonFX motor40 = new WPI_TalonFX(40);
   
   //! Values for FredBOt were: 0.05, 0.0, 0.005
   PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
