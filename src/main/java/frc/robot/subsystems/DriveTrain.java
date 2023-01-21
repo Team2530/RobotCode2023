@@ -6,7 +6,7 @@ package frc.robot.subsystems;
 
 import java.util.Date;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.math.controller.PIDController;
@@ -75,7 +75,6 @@ public class DriveTrain extends SubsystemBase {
     // motorBL.setInverted(true);
     // motorBR.setInverted(true);
     this.tankDrive();
-
     createValues();
 
     ahrs.reset();
@@ -159,15 +158,15 @@ public class DriveTrain extends SubsystemBase {
   }
   /**Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
-   SmartShuffle.get("Sticky").update(stick.getY() * -100);
-   SmartShuffle.get("Stickz").update(stick.getZ() * 100);
+   SmartShuffle.get("Stick Y").update(stick.getY() * -100);
+   SmartShuffle.get("Stick Z").update(stick.getZ() * 100);
   }
 
   private void createValues() {
     SmartShuffle.setPosx(0);
     SmartShuffle.setPosy(2);
-    SmartShuffle.add("Sticky", 0);
+    SmartShuffle.add("Stick Y", 0);
     SmartShuffle.setWidget(BuiltInWidgets.kDial);
-    SmartShuffle.add("Stickz", 0);
+    SmartShuffle.add("Stick Z", 0);
   }
 }
