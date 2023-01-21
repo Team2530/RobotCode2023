@@ -88,8 +88,6 @@ public class DriveTrain extends SubsystemBase {
   private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
   private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
   private AHRS ahrs = RobotContainer.getAhrs();
-  //! Values for FredBOt were: 0.05, 0.0, 0.005
-  PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
   // Double for Rot PID
   private double yawCtl = 0.0;
   private double yawTarget = 0.0;
@@ -175,7 +173,7 @@ public class DriveTrain extends SubsystemBase {
     
     // If we are actualy turning the stick
     if(Math.abs(stick.getZ()) <= 0.1) {
-      yawCtl = rotPID.calculate(ahrs.getAngle(), yawTarget);
+      yawCtl = Constants.PID.rotPID.calculate(ahrs.getAngle(), yawTarget);
     } else {
       // we are currently turning
       yawTarget = ahrs.getAngle();
@@ -185,10 +183,10 @@ public class DriveTrain extends SubsystemBase {
     System.out.println(yawTarget);
 
     // Enforce Limits
-    double driveZ = Deadzone.cutOff(yawCtl, Constants.CUT_OFF_MOTOR_SPEED) * Constants.MAX_DRIVE_SPEED;
+    double driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrain.CUT_OFF_MOTOR_SPEED) * Constants.DriveTrain.MAX_DRIVE_SPEED;
 
-    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
-        Deadzone.deadZone(driveZ , Constants.DEADZONE));
+    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.Controller.DEADZONE),
+        Deadzone.deadZone(driveZ , Constants.Controller.DEADZONE));
   }
 
   /** Sets speeds to the drivetrain motors. */
