@@ -4,35 +4,48 @@
 
 package frc.robot.subsystems;
 
-import java.util.Date;
-
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.hal.SimDouble;
+import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.networktables.GenericEntry;
-import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.simulation.AnalogGyroSim;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.libraries.*;
+import frc.robot.RobotContainer;
+import frc.robot.libraries.Deadzone;
+import frc.robot.libraries.SmartShuffle;
+import frc.robot.logging.*;
 
 public class DriveTrain extends SubsystemBase {
-  private AHRS ahrs;
   private Joystick stick;
   private XboxController xbox;
-
-  // Double for Rot PID
-  private double yawCtl = 0.0;
-  private double yawTarget = 0.0;
 
   RobotDriveBase driveBase;
 
@@ -46,29 +59,73 @@ public class DriveTrain extends SubsystemBase {
   }
 
   private Modes currentDriveMode = Modes.Move;
-  
 
-  //---------- Drive Motors ----------\\
-  WPI_TalonFX motor10 = new WPI_TalonFX(10);
-  WPI_TalonFX motor20 = new WPI_TalonFX(20);
-  WPI_TalonFX motor30 = new WPI_TalonFX(30);
-  WPI_TalonFX motor40 = new WPI_TalonFX(40);
-  
+  // 3 meters per second.
+  public static final double kMaxSpeed = 3.0;
+  // 1/2 rotation per second.
+  public static final double kMaxAngularSpeed = 1;
+
+  private static final double kTrackWidth = 0.381 * 2;
+  private static final double kWheelRadius = 0.0762;
+  private static final int kEncoderResolution = -4096;
+
+  //---------- Motors ----------\\
+  private final WPI_TalonFX m_leftLeader = new WPI_TalonFX(30);
+  private final WPI_TalonFX m_leftFollower = new WPI_TalonFX(40);
+  private final WPI_TalonFX m_rightLeader = new WPI_TalonFX(10);
+  private final WPI_TalonFX m_rightFollower = new WPI_TalonFX(20);
+
+  private final MotorControllerGroup m_leftGroup =
+      new MotorControllerGroup(m_leftLeader, m_leftFollower);
+  private final MotorControllerGroup m_rightGroup =
+      new MotorControllerGroup(m_rightLeader, m_rightFollower);
+
+  //---------- Encoders ----------\\
+  private final Encoder m_leftEncoder = new Encoder(0, 1);
+  private final Encoder m_rightEncoder = new Encoder(2, 3);
+
+  //---------- PID Controllers ----------\\
+  private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
+  private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
+  private AHRS ahrs = RobotContainer.getAhrs();
   //! Values for FredBOt were: 0.05, 0.0, 0.005
   PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
+  // Double for Rot PID
+  private double yawCtl = 0.0;
+  private double yawTarget = 0.0;
 
+  //---------- Kinematics & Odometry ----------\\
+  private final DifferentialDriveKinematics m_kinematics =
+      new DifferentialDriveKinematics(kTrackWidth);
+  private final DifferentialDriveOdometry m_odometry =
+      new DifferentialDriveOdometry(
+          ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
 
-  /** Creates a new DriveTrain. */
+  // Gains are for example purposes only - must be determined for your own
+  // robot!
+  private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(1, 3);
+
+  //---------- Simulation Classes ----------\\
+  private final EncoderSim m_leftEncoderSim = new EncoderSim(m_leftEncoder);
+  private final EncoderSim m_rightEncoderSim = new EncoderSim(m_rightEncoder);
+  private final Field2d m_fieldSim = new Field2d();
+  private final LinearSystem<N2, N2, N2> m_drivetrainSystem =
+      LinearSystemId.identifyDrivetrainSystem(1.98, 0.2, 1.5, 0.3);
+  private final DifferentialDrivetrainSim m_drivetrainSimulator =
+      new DifferentialDrivetrainSim(
+          m_drivetrainSystem, DCMotor.getFalcon500(2), 8, kTrackWidth, kWheelRadius, null);
+  
+  /** Subsystem constructor. */
   public DriveTrain(AHRS ahrs, Joystick stick, XboxController xbox) {
     this.ahrs = ahrs;
     this.stick = stick;
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
-    motor10.setInverted(false);
-    motor20.setInverted(false);
-    motor30.setInverted(true);
-    motor40.setInverted(true);
+    m_rightLeader.setInverted(false);
+    m_rightFollower.setInverted(false);
+    m_leftLeader.setInverted(true);
+    m_leftFollower.setInverted(true);
 
     // Todo: Declare using provided method based on DriveTrain type Ex: tankDrive();s
     // motorFL.setInverted(true);
@@ -78,10 +135,11 @@ public class DriveTrain extends SubsystemBase {
     createValues();
 
     ahrs.reset();
-    }
+  }
 
   @Override
   public void periodic() {
+    updatePeriodic();
     updateShuffleBoardValues();
   }
 
@@ -114,24 +172,65 @@ public class DriveTrain extends SubsystemBase {
 
     ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
         Deadzone.deadZone(driveZ , Constants.DEADZONE));
+    // We need to invert one side of the drivetrain so that positive voltages
+    // result in both sides moving forward. Depending on how your robot's
+    // gearbox is constructed, you might have to invert the left side instead.
+    m_rightGroup.setInverted(true);
+
+    // Set the distance per pulse for the drive encoders. We can simply use the
+    // distance traveled for one rotation of the wheel divided by the encoder
+    // resolution.
+    m_leftEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
+    m_rightEncoder.setDistancePerPulse(2 * Math.PI * kWheelRadius / kEncoderResolution);
+
+    m_leftEncoder.reset();
+    m_rightEncoder.reset();
+
+    m_rightGroup.setInverted(true);
+    SmartDashboard.putData("Field", m_fieldSim);
   }
 
-  public void toggleDriveMode() {
-    if(currentDriveMode == Modes.Move) {
-      currentDriveMode = Modes.Stop;
-    } else if(currentDriveMode == Modes.Stop) {
-      currentDriveMode = Modes.Move;
-    }
+  /** Sets speeds to the drivetrain motors. */
+  public void setSpeeds(DifferentialDriveWheelSpeeds speeds) {
+    var leftFeedforward = m_feedforward.calculate(speeds.leftMetersPerSecond);
+    var rightFeedforward = m_feedforward.calculate(speeds.rightMetersPerSecond);
+    double leftOutput =
+        m_leftPIDController.calculate(m_leftEncoder.getRate(), speeds.leftMetersPerSecond);
+    double rightOutput =
+        m_rightPIDController.calculate(m_rightEncoder.getRate(), speeds.rightMetersPerSecond);
+
+    m_leftGroup.setVoltage(leftOutput + leftFeedforward);
+    m_rightGroup.setVoltage(rightOutput + rightFeedforward);
+  }
+
+  /**
+   * Controls the robot using arcade drive.
+   *
+   * @param xSpeed the speed for the x axis
+   * @param rot the rotation
+   */
+  public void drive(double xSpeed, double rot) {
+    setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
   }
 
   public void reset() {
     ahrs.reset();
-
-    // Todo: implement a reset method
   }
 
-  public void stop() {
-    // Todo: implement a stop method
+    // Todo: implement a reset method
+  /** Update robot odometry. */
+  public void updateOdometry() {
+    m_odometry.update(
+        ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+  }
+
+  /** Resets robot odometry. */
+  public void resetOdometry(Pose2d pose) {
+    m_leftEncoder.reset();
+    m_rightEncoder.reset();
+    m_drivetrainSimulator.setPose(pose);
+    m_odometry.resetPosition(
+        ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), pose);
   }
 
   /**
@@ -145,17 +244,16 @@ public class DriveTrain extends SubsystemBase {
    * Use to create a Tank Drive (Differential Drive)
    */
   private void tankDrive() {
-    motor40.follow(motor30);
-    motor10.follow(motor20);
-    driveBase = new DifferentialDrive(motor30, motor20);
+    m_leftFollower.follow(m_leftLeader);
+    m_rightFollower.follow(m_rightLeader);
+    driveBase = new DifferentialDrive(m_leftLeader, m_rightFollower);
   }
 
   private void setAll(double speed) {
-    // motorFL.set(speed);
-    // motorBL.set(speed);
-    // motorFR.set(speed);
-    // motorBR.set(speed);
+    m_leftGroup.set(speed);
+    m_rightGroup.set(speed);
   }
+  
   /**Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
    SmartShuffle.get("Stick Y").update(stick.getY() * -100);
@@ -169,4 +267,37 @@ public class DriveTrain extends SubsystemBase {
     SmartShuffle.setWidget(BuiltInWidgets.kDial);
     SmartShuffle.add("Stick Z", 0);
   }
+  
+  /** Check the current robot pose. */
+  public Pose2d getPose() {
+    return m_odometry.getPoseMeters();
+  }
+
+  /** Update our simulation. This should be run every robot loop in simulation. */
+  public void simulationPeriodic() {
+    // To update our simulation, we set motor voltage inputs, update the
+    // simulation, and write the simulated positions and velocities to our
+    // simulated encoder and gyro. We negate the right side so that positive
+    // voltages make the right side move forward.
+    m_drivetrainSimulator.setInputs(
+        m_leftGroup.get() * RobotController.getInputVoltage(),
+        m_rightGroup.get() * RobotController.getInputVoltage());
+    m_drivetrainSimulator.update(0.02);
+
+    m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
+    m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
+    m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
+    m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
+
+    int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
+    SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
+    angle.set(-m_drivetrainSimulator.getHeading().getDegrees());
+  }
+
+  /** Update odometry - this should be run every robot loop. */
+  public void updatePeriodic() {
+    updateOdometry();
+    m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
+  }
 }
+

@@ -3,6 +3,8 @@ package frc.robot;
 import frc.robot.commands.*;
 import frc.robot.libraries.*;
 import frc.robot.subsystems.*;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -21,7 +23,7 @@ public class RobotContainer {
     final Joystick stick = new Joystick(Constants.JOYSTICK_PORT);
     final XboxController xbox = new XboxController(Constants.XBOX_PORT);
 
-    private final AHRS m_ahrs = new AHRS();
+    private static final AHRS m_ahrs = new AHRS();
 
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
@@ -41,10 +43,21 @@ public class RobotContainer {
     }
 
     public void configureButtonBindings() {
-        new JoystickButton(stick, Constants.J_DRIVETRAIN_TOGGLE).onTrue(
-          new InstantCommand(() -> {
-          m_driveTrain.toggleDriveMode();
-        }));
+        // new JoystickButton(stick, Constants.J_DRIVETRAIN_TOGGLE).onTrue(
+        //   new InstantCommand(() -> {
+        //   m_driveTrain.toggleDriveMode();
+        // }));
+
+        // if(RobotBase.isSimulation()) {
+        //     new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
+        //         new InstantCommand(() -> {
+        //         m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
+        //     }));
+        
+    }
+
+    public DriveTrain getDriveTrain() {
+        return m_driveTrain;
     }
 
     /**
@@ -55,7 +68,8 @@ public class RobotContainer {
      * @return the command to run when the robot is enabled
      */
     public Command getEnableCommand() {
-        return new InstantCommand(() -> m_driveTrain.reset());
+        // return new InstantCommand(() -> m_driveTrain.reset());
+        return null;
     }
 
     /**
@@ -80,5 +94,9 @@ public class RobotContainer {
      */
     public Command getTestCommand() {
         return null;
+    }
+
+    public static AHRS getAhrs() {
+        return m_ahrs;
     }
 }
