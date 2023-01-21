@@ -9,6 +9,7 @@ import java.util.Date;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.Joystick;
@@ -22,14 +23,16 @@ import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.libraries.SmartShuffle;
-
 import frc.robot.libraries.*;
 
 public class DriveTrain extends SubsystemBase {
   private AHRS ahrs;
   private Joystick stick;
   private XboxController xbox;
+
+  // Double for Rot PID
+  private double yawCtl = 0.0;
+  private double yawTarget = 0.0;
 
   RobotDriveBase driveBase;
 
@@ -50,6 +53,9 @@ public class DriveTrain extends SubsystemBase {
   WPI_VictorSPX motor20 = new WPI_VictorSPX(20);
   WPI_VictorSPX motor30 = new WPI_VictorSPX(30);
   WPI_VictorSPX motor40 = new WPI_VictorSPX(40);
+  
+  //! Values for FredBOt were: 0.05, 0.0, 0.005
+  PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
 
 
   /** Creates a new DriveTrain. */
@@ -71,7 +77,9 @@ public class DriveTrain extends SubsystemBase {
     this.tankDrive();
 
     createValues();
-  }
+
+    ahrs.reset();
+    }
 
   @Override
   public void periodic() {
@@ -83,12 +91,30 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public void singleJoystickDrive(double x, double y, double z) {
-    if(currentDriveMode != Modes.Stop) {
-      // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive) driveBase).arcadeDrive(x, z);
-      ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
-        Deadzone.deadZone(stick.getZ(), Constants.DEADZONE));
-      System.out.println(motor10.get());
+    // if(currentDriveMode != Modes.Stop) {
+    //   // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive) driveBase).arcadeDrive(x, z);
+    //   ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
+    //     Deadzone.deadZone(stick.getZ(), Constants.DEADZONE));
+    //   // System.out.println(motor10.get());
+    // }
+    
+    
+    // If we are actualy turning the stick
+    if(Math.abs(stick.getZ()) <= 0.1) {
+      yawCtl = rotPID.calculate(ahrs.getAngle(), yawTarget);
+    } else {
+      // we are currently turning
+      yawTarget = ahrs.getAngle();
+      yawCtl = stick.getZ();
     }
+
+    System.out.println(yawTarget);
+
+    // Enforce Limits
+    double driveZ = Deadzone.cutOff(yawCtl, Constants.CUT_OFF_MOTOR_SPEED) * Constants.MAX_DRIVE_SPEED;
+
+    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
+        Deadzone.deadZone(driveZ , Constants.DEADZONE));
   }
 
   public void toggleDriveMode() {
@@ -100,6 +126,8 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public void reset() {
+    ahrs.reset();
+
     // Todo: implement a reset method
   }
 

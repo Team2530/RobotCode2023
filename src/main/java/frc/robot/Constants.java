@@ -38,6 +38,9 @@ public class Constants {
     public static final double WHEEL_RADIUS = 0;
     public static final double DRIVETRAIN_GEAR_RATIO = 1;
 
+    public static final double CUT_OFF_MOTOR_SPEED = 0.1;
+    public static final double MAX_DRIVE_SPEED = 1;
+
     // ---------- Joystick Constants ----------\\
     public static final int JOYSTICK_PORT = 1;
     public static final int XBOX_PORT = 2;
