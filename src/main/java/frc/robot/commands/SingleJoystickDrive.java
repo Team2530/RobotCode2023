@@ -36,13 +36,13 @@ public class SingleJoystickDrive extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    double xSpeed = -m_speedLimiter.calculate(stick.getY()) * DriveTrain.kMaxSpeed;
+    double xSpeed = -m_speedLimiter.calculate(Deadzone.deadZone(stick.getY(), 0.05) * DriveTrain.kMaxSpeed);
     // Get the rate of angular rotation. We are inverting this because we want a
     // positive value when we pull to the left (remember, CCW is positive in
     // mathematics). Xbox controllers return positive values when you pull to
     // the right by default.
     double rot = Deadzone.deadZone(stick.getZ(), 0.05);
-    driveTrain.drive(xSpeed, rot);
+    driveTrain.drive(xSpeed, -rot);
   }
 
   // Called once the command ends or is interrupted.
