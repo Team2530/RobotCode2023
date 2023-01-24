@@ -8,6 +8,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 
+import frc.robot.subsystems.Controller;
+
 /**
  * Constans provides a place for all robot
  * constants to exist and be easily changed
@@ -15,10 +17,10 @@ import edu.wpi.first.wpilibj.RobotBase;
  */
 public class Constants {
 
-    // Sets controler ports
+    // Sets controller ports
     static {
-        Controller.JOYSTICK_PORT = 0; // getJoystickPort();
-        Controller.XBOX_PORT = 1; // getXboxPort();
+        Controller.JOYSTICK_PORT = 0; // frc.robot.subsystems.Controller.getJoystickPort();
+        Controller.XBOX_PORT = 1; // frc.robot.subsystems.Controller.getXboxPort();
 
         System.out.println("Joystick port: " + Controller.JOYSTICK_PORT);
         System.out.println("Xbox port: " + Controller.XBOX_PORT);
@@ -91,46 +93,4 @@ public class Constants {
         // controller)
         public static final int X_AIM_TOWARDS_TARGET = 1;
     }
-
-    /**
-     * Gets the first joystick port that exists. If the robot is simulated,
-     * the Joystick port is defaulted to 0
-     * 
-     * @return Joystick port
-     * @throws Error if the joystick isn't connected to the computer
-     */
-    private static int getJoystickPort() {
-        if (RobotBase.isReal()) {
-            for (int i = 0; i < 6; i++) {
-                if (DriverStation.getJoystickName(i).contains("Logitech Extreme 3D")) {
-                    return i;
-                }
-            }
-            throw new Error(
-                    "Joystick seems not to be connected! " + " Make sure the Joystick is connected to the computer");
-        } else {
-            return 0;
-        }
-    }
-
-    /**
-     * Gets the first Xbox port that exists. If the robot is simulated,
-     * the Xbox port is defaulted to 1
-     * 
-     * @return Xbox port
-     * @throws Error if the Xbox isn't connected to the computer
-     */
-    private static int getXboxPort() {
-        if (RobotBase.isReal()) {
-            for (int i = 0; i < 6; i++) {
-                if (DriverStation.getJoystickName(i).contains("Xbox")) {
-                    return i;
-                }
-            }
-            throw new Error("Xbox seems not to be connected! Make sure the Xbox is connected to the computer");
-        } else {
-            return 1;
-        }
-    }
-
 }
