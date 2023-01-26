@@ -20,13 +20,13 @@ import com.kauailabs.navx.frc.AHRS;
  */
 public class RobotContainer {
 
-    final Joystick stick = new Joystick(Constants.Controller.JOYSTICK_PORT);
-    final XboxController xbox = new XboxController(Constants.Controller.XBOX_PORT);
+    final static Joystick stick = new Joystick(Constants.Controller.JOYSTICK_PORT);
+    final static XboxController xbox = new XboxController(Constants.Controller.XBOX_PORT);
 
     private static final AHRS m_ahrs = new AHRS();
 
     // ---------- Subsystems ----------\\
-    private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
+    private final static DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
 
     // ---------- Autonomous Commands ----------\\
 
@@ -34,7 +34,6 @@ public class RobotContainer {
     InstantCommand example = new InstantCommand(() -> {
 
     });
-        
 
     // ---------- Global Toggles ----------\\
 
@@ -44,19 +43,19 @@ public class RobotContainer {
 
     public void configureButtonBindings() {
         // new JoystickButton(stick, Constants.J_DRIVETRAIN_TOGGLE).onTrue(
-        //   new InstantCommand(() -> {
-        //   m_driveTrain.toggleDriveMode();
+        // new InstantCommand(() -> {
+        // m_driveTrain.toggleDriveMode();
         // }));
 
         // if(RobotBase.isSimulation()) {
-        //     new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
-        //         new InstantCommand(() -> {
-        //         m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
-        //     }));
-        
+        // new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
+        // new InstantCommand(() -> {
+        // m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
+        // }));
+
     }
 
-    public DriveTrain getDriveTrain() {
+    public static DriveTrain getDriveTrain() {
         return m_driveTrain;
     }
 
@@ -83,13 +82,16 @@ public class RobotContainer {
 
     /**
      * Command to run in Telop mode
+     * 
      * @return the command to run in Telop
      */
     public Command getTelopCommand() {
         return new SingleJoystickDrive(m_driveTrain, stick, xbox);
     }
+
     /**
      * Command to run in Test Mode
+     * 
      * @return the command to run in Test
      */
     public Command getTestCommand() {
