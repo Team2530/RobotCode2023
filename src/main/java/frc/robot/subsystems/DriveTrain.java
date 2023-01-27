@@ -161,7 +161,7 @@ public class DriveTrain extends SubsystemBase {
   public void singleJoystickDrive(double x, double y, double z) {
 
     // If we are actualy turning the stick
-    if (Math.abs(stick.getZ()) <= 0.1) {
+    if(Math.abs(stick.getZ()) <= 0.1 || stick.getRawButton(Constants.Controller.J_DRIVE_STRAIGHT)) {
       yawCtl = Constants.PID.rotPID.calculate(ahrs.getAngle(), yawTarget);
     } else {
       // we are currently turning

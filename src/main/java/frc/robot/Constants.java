@@ -92,8 +92,9 @@ public class Constants {
         // Joystick Buttons (Use J_ before the button name to indicate use with
         // Joystick)
         public static final int J_DRIVETRAIN_TOGGLE = 1;
-        public static final int J_SIMULATION_RESET = 2;
+        public static final int J_SIMULATION_RESET = 4;
         public static final int J_VECTOR_DRIVE = 3;
+        public static final int J_DRIVE_STRAIGHT = 2;
 
         // Xbox Buttons (Use X_ before the button name to indicate use with Xbox
         // controller)

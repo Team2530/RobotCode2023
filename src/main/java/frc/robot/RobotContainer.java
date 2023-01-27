@@ -43,6 +43,8 @@ public class RobotContainer {
     }
 
     public void configureButtonBindings() {
+        // Button 2 is used for drive straight
+
         // new JoystickButton(stick, Constants.J_DRIVETRAIN_TOGGLE).onTrue(
         //   new InstantCommand(() -> {
         //   m_driveTrain.toggleDriveMode();
