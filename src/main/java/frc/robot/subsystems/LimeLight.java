@@ -78,8 +78,8 @@ public class LimeLight extends SubsystemBase {
   }
 
   public double distanceToTarget() {
-    double r = toRadians(Constants.Sensor.LIMELIGHT_HEIGHT + yoff);
-    return (Constants.Field.TARGET_HEIGHT - Constants.Sensor.LIMELIGHT_HEIGHT) / Math.tan(r);
+    double r = toRadians(Constants.SensorConstants.LIMELIGHT_HEIGHT + yoff);
+    return (Constants.FieldConstants.TARGET_HEIGHT - Constants.SensorConstants.LIMELIGHT_HEIGHT) / Math.tan(r);
   }
 
   public void changeMode() {

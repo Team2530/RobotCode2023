@@ -39,9 +39,9 @@ public class SingleJoystickDrive extends CommandBase {
   public void execute() {
 
     if(RobotBase.isReal()){
-      driveTrain.singleJoystickDrive(Deadzone.deadZone(stick.getRawAxis(1), Constants.Controller.DEADZONE), 
-          Deadzone.deadZone(stick.getRawAxis(0), Constants.Controller.DEADZONE), 
-          Deadzone.deadZone(stick.getRawAxis(2), Constants.Controller.DEADZONE));
+      driveTrain.singleJoystickDrive(Deadzone.deadZone(stick.getRawAxis(1), Constants.ControllerConstants.DEADZONE), 
+          Deadzone.deadZone(stick.getRawAxis(0), Constants.ControllerConstants.DEADZONE), 
+          Deadzone.deadZone(stick.getRawAxis(2), Constants.ControllerConstants.DEADZONE));
     } else {
       double xSpeed = -m_speedLimiter.calculate(Deadzone.deadZone(stick.getY(), 0.05) * DriveTrain.kMaxSpeed);
     // Get the rate of angular rotation. We are inverting this because we want a

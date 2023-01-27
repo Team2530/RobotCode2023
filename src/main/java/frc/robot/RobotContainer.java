@@ -20,8 +20,8 @@ import com.kauailabs.navx.frc.AHRS;
  */
 public class RobotContainer {
 
-    final Joystick stick = new Joystick(Constants.Controller.JOYSTICK_PORT);
-    final XboxController xbox = new XboxController(Constants.Controller.XBOX_PORT);
+    final Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
+    final XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
 
     private static final AHRS m_ahrs = new AHRS();
 

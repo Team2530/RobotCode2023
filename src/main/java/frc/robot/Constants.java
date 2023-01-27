@@ -1,14 +1,7 @@
 package frc.robot;
 
-import java.sql.Driver;
-import java.util.function.Supplier;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
-
-import frc.robot.subsystems.Controller;
 
 /**
  * Constans provides a place for all robot
@@ -19,17 +12,17 @@ public class Constants {
 
     // Sets controller ports
     static {
-        Controller.JOYSTICK_PORT = 0; // frc.robot.subsystems.Controller.getJoystickPort();
-        Controller.XBOX_PORT = 1; // frc.robot.subsystems.Controller.getXboxPort();
+        ControllerConstants.JOYSTICK_PORT = 0; // frc.robot.subsystems.Controller.getJoystickPort();
+        ControllerConstants.XBOX_PORT = 1; // frc.robot.subsystems.Controller.getXboxPort();
 
-        System.out.println("Joystick port: " + Controller.JOYSTICK_PORT);
-        System.out.println("Xbox port: " + Controller.XBOX_PORT);
+        System.out.println("Joystick port: " + ControllerConstants.JOYSTICK_PORT);
+        System.out.println("Xbox port: " + ControllerConstants.XBOX_PORT);
     }
 
     /**
      * Ports for all sorts of motors and motor controllers
      */
-    public static class Ports {
+    public static class PortsConstants {
         public static final int MOTOR_FL_PORT = 10;
         public static final int MOTOR_FR_PORT = 20;
         public static final int MOTOR_BL_PORT = 30;
@@ -39,7 +32,7 @@ public class Constants {
     /**
      * Sensor Constants
      */
-    public static class Sensor {
+    public static class SensorConstants {
         public static final int ENCODER_TICKS_PER_REVOLUTION = 2048;
         public static final double LIMELIGHT_HEIGHT = 1.5;
     }
@@ -47,7 +40,7 @@ public class Constants {
     /**
      * PID Constants
      */
-    public static class PID {
+    public static class PIDConstants {
         // ! Values for FredBOt were: 0.05, 0.0, 0.005
         /** PID for Robot Rotation */
         public static final PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
@@ -56,7 +49,7 @@ public class Constants {
     /**
      * All Field Constants
      */
-    public static class Field {
+    public static class FieldConstants {
         public static final double GRAVITY = 9.8;
         public static final double TARGET_HEIGHT = 5;
 
@@ -68,7 +61,7 @@ public class Constants {
     /**
      * Driving / DriveTrain Constants
      */
-    public static class DriveTrain {
+    public static class DriveTrainConstants {
         public static final double WHEEL_RADIUS = 3;
         public static final double DRIVETRAIN_GEAR_RATIO = 16.2;
         public static final double TRACK_WIDTH_METERS = .72;
@@ -83,7 +76,7 @@ public class Constants {
     /**
      * Controller Constants
      */
-    public static class Controller {
+    public static class ControllerConstants {
         public static int JOYSTICK_PORT = 0;
         public static int XBOX_PORT = 1;
 
