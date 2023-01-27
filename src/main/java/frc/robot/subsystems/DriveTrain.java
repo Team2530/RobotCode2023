@@ -69,22 +69,20 @@ public class DriveTrain extends SubsystemBase {
   private static final double kWheelRadius = 0.0762;
   private static final int kEncoderResolution = -4096;
 
-  //---------- Motors ----------\\
+  // ---------- Motors ----------\\
   private final WPI_TalonFX m_leftLeader = new WPI_TalonFX(30);
   private final WPI_TalonFX m_leftFollower = new WPI_TalonFX(40);
   private final WPI_TalonFX m_rightLeader = new WPI_TalonFX(10);
   private final WPI_TalonFX m_rightFollower = new WPI_TalonFX(20);
 
-  private final MotorControllerGroup m_leftGroup =
-      new MotorControllerGroup(m_leftLeader, m_leftFollower);
-  private final MotorControllerGroup m_rightGroup =
-      new MotorControllerGroup(m_rightLeader, m_rightFollower);
+  private final MotorControllerGroup m_leftGroup = new MotorControllerGroup(m_leftLeader, m_leftFollower);
+  private final MotorControllerGroup m_rightGroup = new MotorControllerGroup(m_rightLeader, m_rightFollower);
 
-  //---------- Encoders ----------\\
+  // ---------- Encoders ----------\\
   private final Encoder m_leftEncoder = new Encoder(0, 1);
   private final Encoder m_rightEncoder = new Encoder(2, 3);
 
-  //---------- PID Controllers ----------\\
+  // ---------- PID Controllers ----------\\
   private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
   private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
   private AHRS ahrs = RobotContainer.getAhrs();
@@ -92,27 +90,24 @@ public class DriveTrain extends SubsystemBase {
   private double yawCtl = 0.0;
   private double yawTarget = 0.0;
 
-  //---------- Kinematics & Odometry ----------\\
-  private final DifferentialDriveKinematics m_kinematics =
-      new DifferentialDriveKinematics(kTrackWidth);
-  private final DifferentialDriveOdometry m_odometry =
-      new DifferentialDriveOdometry(
-          ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+  // ---------- Kinematics & Odometry ----------\\
+  private final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
+  private final DifferentialDriveOdometry m_odometry = new DifferentialDriveOdometry(
+      ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
 
   // Gains are for example purposes only - must be determined for your own
   // robot!
   private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(1, 3);
 
-  //---------- Simulation Classes ----------\\
+  // ---------- Simulation Classes ----------\\
   private final EncoderSim m_leftEncoderSim = new EncoderSim(m_leftEncoder);
   private final EncoderSim m_rightEncoderSim = new EncoderSim(m_rightEncoder);
   private final Field2d m_fieldSim = new Field2d();
-  private final LinearSystem<N2, N2, N2> m_drivetrainSystem =
-      LinearSystemId.identifyDrivetrainSystem(1.98, 0.2, 1.5, 0.3);
-  private final DifferentialDrivetrainSim m_drivetrainSimulator =
-      new DifferentialDrivetrainSim(
-          m_drivetrainSystem, DCMotor.getFalcon500(2), 8, kTrackWidth, kWheelRadius, null);
-  
+  private final LinearSystem<N2, N2, N2> m_drivetrainSystem = LinearSystemId.identifyDrivetrainSystem(1.98, 0.2, 1.5,
+      0.3);
+  private final DifferentialDrivetrainSim m_drivetrainSimulator = new DifferentialDrivetrainSim(
+      m_drivetrainSystem, DCMotor.getFalcon500(2), 8, kTrackWidth, kWheelRadius, null);
+
   /** Subsystem constructor. */
   public DriveTrain(AHRS ahrs, Joystick stick, XboxController xbox) {
     this.ahrs = ahrs;
@@ -120,12 +115,13 @@ public class DriveTrain extends SubsystemBase {
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
-    m_rightLeader.setInverted(false);
-    m_rightFollower.setInverted(false);
-    m_leftLeader.setInverted(true);
-    m_leftFollower.setInverted(true);
+    m_rightLeader.setInverted(!true);
+    m_rightFollower.setInverted(!true);
+    m_leftLeader.setInverted(!false);
+    m_leftFollower.setInverted(!false);
 
-    // Todo: Declare using provided method based on DriveTrain type Ex: tankDrive();s
+    // Todo: Declare using provided method based on DriveTrain type Ex:
+    // tankDrive();s
     // motorFL.setInverted(true);
     // motorBL.setInverted(true);
     // motorBR.setInverted(true);
@@ -134,7 +130,7 @@ public class DriveTrain extends SubsystemBase {
 
     ahrs.reset();
 
-        // We need to invert one side of the drivetrain so that positive voltages
+    // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
     m_rightGroup.setInverted(true);
@@ -163,16 +159,9 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public void singleJoystickDrive(double x, double y, double z) {
-    // if(currentDriveMode != Modes.Stop) {
-    //   // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive) driveBase).arcadeDrive(x, z);
-    //   ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.DEADZONE),
-    //     Deadzone.deadZone(stick.getZ(), Constants.DEADZONE));
-    //   // System.out.println(motor10.get());
-    // }
-    
-    
+
     // If we are actualy turning the stick
-    if(Math.abs(stick.getZ()) <= 0.1) {
+    if (Math.abs(stick.getZ()) <= 0.1) {
       yawCtl = Constants.PID.rotPID.calculate(ahrs.getAngle(), yawTarget);
     } else {
       // we are currently turning
@@ -183,20 +172,19 @@ public class DriveTrain extends SubsystemBase {
     System.out.println(yawTarget);
 
     // Enforce Limits
-    double driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrain.CUT_OFF_MOTOR_SPEED) * Constants.DriveTrain.MAX_DRIVE_SPEED;
+    double driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrain.CUT_OFF_MOTOR_SPEED)
+        * Constants.DriveTrain.MAX_DRIVE_SPEED;
 
     ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.Controller.DEADZONE),
-        Deadzone.deadZone(driveZ , Constants.Controller.DEADZONE));
+        -Deadzone.deadZone(driveZ, Constants.Controller.DEADZONE));
   }
 
   /** Sets speeds to the drivetrain motors. */
   public void setSpeeds(DifferentialDriveWheelSpeeds speeds) {
     var leftFeedforward = m_feedforward.calculate(speeds.leftMetersPerSecond);
     var rightFeedforward = m_feedforward.calculate(speeds.rightMetersPerSecond);
-    double leftOutput =
-        m_leftPIDController.calculate(m_leftEncoder.getRate(), speeds.leftMetersPerSecond);
-    double rightOutput =
-        m_rightPIDController.calculate(m_rightEncoder.getRate(), speeds.rightMetersPerSecond);
+    double leftOutput = m_leftPIDController.calculate(m_leftEncoder.getRate(), speeds.leftMetersPerSecond);
+    double rightOutput = m_rightPIDController.calculate(m_rightEncoder.getRate(), speeds.rightMetersPerSecond);
 
     m_leftGroup.setVoltage(leftOutput + leftFeedforward);
     m_rightGroup.setVoltage(rightOutput + rightFeedforward);
@@ -206,7 +194,7 @@ public class DriveTrain extends SubsystemBase {
    * Controls the robot using arcade drive.
    *
    * @param xSpeed the speed for the x axis
-   * @param rot the rotation
+   * @param rot    the rotation
    */
   public void drive(double xSpeed, double rot) {
     setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
@@ -216,7 +204,7 @@ public class DriveTrain extends SubsystemBase {
     ahrs.reset();
   }
 
-    // Todo: implement a reset method
+  // Todo: implement a reset method
   /** Update robot odometry. */
   public void updateOdometry() {
     m_odometry.update(
@@ -239,24 +227,25 @@ public class DriveTrain extends SubsystemBase {
     // driveBase = new MecanumDrive(motorFL, motorBL, motorFR, motorBR);
     // driveBase.setSafetyEnabled(false);
   }
+
   /**
    * Use to create a Tank Drive (Differential Drive)
    */
   private void tankDrive() {
     m_leftFollower.follow(m_leftLeader);
     m_rightFollower.follow(m_rightLeader);
-    driveBase = new DifferentialDrive(m_leftLeader, m_rightFollower);
+    driveBase = new DifferentialDrive(m_leftLeader, m_rightLeader);
   }
 
   private void setAll(double speed) {
     m_leftGroup.set(speed);
     m_rightGroup.set(speed);
   }
-  
-  /**Update all ShuffleBoard values */
+
+  /** Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
-   SmartShuffle.get("Stick Y").update(stick.getY() * -100);
-   SmartShuffle.get("Stick Z").update(stick.getZ() * 100);
+    SmartShuffle.get("Stick Y").update(stick.getY() * -100);
+    SmartShuffle.get("Stick Z").update(stick.getZ() * 100);
   }
 
   private void createValues() {
@@ -266,7 +255,7 @@ public class DriveTrain extends SubsystemBase {
     SmartShuffle.setWidget(BuiltInWidgets.kDial);
     SmartShuffle.add("Stick Z", 0);
   }
-  
+
   /** Check the current robot pose. */
   public Pose2d getPose() {
     return m_odometry.getPoseMeters();
@@ -299,4 +288,3 @@ public class DriveTrain extends SubsystemBase {
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
 }
-

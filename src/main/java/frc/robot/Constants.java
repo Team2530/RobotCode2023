@@ -25,6 +25,7 @@ public class Constants {
         System.out.println("Joystick port: " + Controller.JOYSTICK_PORT);
         System.out.println("Xbox port: " + Controller.XBOX_PORT);
     }
+
     /**
      * Ports for all sorts of motors and motor controllers
      */
@@ -34,6 +35,7 @@ public class Constants {
         public static final int MOTOR_BL_PORT = 30;
         public static final int MOTOR_BR_PORT = 40;
     }
+
     /**
      * Sensor Constants
      */
@@ -41,14 +43,16 @@ public class Constants {
         public static final int ENCODER_TICKS_PER_REVOLUTION = 2048;
         public static final double LIMELIGHT_HEIGHT = 1.5;
     }
+
     /**
      * PID Constants
      */
     public static class PID {
-        //! Values for FredBOt were: 0.05, 0.0, 0.005
-        /**PID for Robot Rotation */
+        // ! Values for FredBOt were: 0.05, 0.0, 0.005
+        /** PID for Robot Rotation */
         public static final PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
     }
+
     /**
      * All Field Constants
      */
@@ -60,6 +64,7 @@ public class Constants {
         public static final double FIELD_WIDTH = 8.1;
         public static final double FIELD_LENGTH = 16.48;
     }
+
     /**
      * Driving / DriveTrain Constants
      */
@@ -74,12 +79,13 @@ public class Constants {
         public static final double CUT_OFF_MOTOR_SPEED = 0.1;
         public static final double MAX_DRIVE_SPEED = 1;
     }
+
     /**
      * Controller Constants
      */
     public static class Controller {
         public static int JOYSTICK_PORT = 0;
-        public static int XBOX_PORT = 0;
+        public static int XBOX_PORT = 1;
 
         public static final double DEADZONE = 0.05;
         // Todo: Add all joystick buttons as Constants
