@@ -4,6 +4,9 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
@@ -38,7 +41,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.Navigation;
 import frc.robot.RobotContainer;
 import frc.robot.libraries.Deadzone;
 import frc.robot.libraries.SmartShuffle;
@@ -92,9 +94,17 @@ public class DriveTrain extends SubsystemBase {
   private double yawTarget = 0.0;
 
   // ---------- Kinematics & Odometry ----------\\
-  private final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
+  public Pose2d pose = new Pose2d();
+  public final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
   private final DifferentialDriveOdometry m_odometry = new DifferentialDriveOdometry(
       ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+
+  public static double leftVoltage = 0;
+  public static double rightVoltage = 0;
+  public static BiConsumer<Double, Double> voltage = (a, b) -> {
+    leftVoltage = a;
+    rightVoltage = b;
+  };
 
   // Gains are for example purposes only - must be determined for your own
   // robot!
@@ -147,15 +157,20 @@ public class DriveTrain extends SubsystemBase {
 
     m_rightGroup.setInverted(true);
     SmartDashboard.putData("Field", m_fieldSim);
+
+    // who needs Safelt?
+    m_leftFollower.setSafetyEnabled(false);
+    m_leftLeader.setSafetyEnabled(false);
+    m_rightLeader.setSafetyEnabled(false);
+    m_rightFollower.setSafetyEnabled(false);
   }
 
   @Override
   public void periodic() {
     updatePeriodic();
     updateShuffleBoardValues();
-    Navigation.pose = getPose();
-    Navigation.leftVoltage = m_leftLeader.getMotorOutputVoltage();
-    Navigation.rightVoltage = m_rightLeader.getMotorOutputVoltage();
+    pose = getPose();
+    voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
   }
 
   public void setMode(Modes m) {
@@ -212,15 +227,16 @@ public class DriveTrain extends SubsystemBase {
     setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
   }
 
-  public void reset() {
+  public void reset(Pose2d pose) {
     ahrs.reset();
+    m_odometry.resetPosition(ahrs.getRotation2d(), m_leftEncoder.get(), m_rightEncoder.get(), pose);
   }
 
   // Todo: implement a reset method
   /** Update robot odometry. */
   public void updateOdometry() {
     m_odometry.update(
-        ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+        ahrs.getRotation2d(), m_leftEncoder.get(), m_rightEncoder.get());
   }
 
   /** Resets robot odometry. */
@@ -299,4 +315,9 @@ public class DriveTrain extends SubsystemBase {
     updateOdometry();
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
+
+  public Supplier<DifferentialDriveWheelSpeeds> getWheelSpeeds() {
+    return () -> new DifferentialDriveWheelSpeeds(m_leftGroup.get(), m_rightGroup.get());
+  }
+
 }

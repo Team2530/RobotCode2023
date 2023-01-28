@@ -3,13 +3,23 @@ package frc.robot;
 import frc.robot.commands.*;
 import frc.robot.libraries.*;
 import frc.robot.subsystems.*;
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
+import java.util.HashMap;
+
 import com.kauailabs.navx.frc.AHRS;
+import com.pathplanner.lib.PathConstraints;
+import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.PIDConstants;
+import com.pathplanner.lib.auto.RamseteAutoBuilder;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -29,11 +39,26 @@ public class RobotContainer {
     private final static DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
 
     // ---------- Autonomous Commands ----------\\
+    PathPlannerTrajectory m_auto = PathPlanner.loadPath("New Path", new PathConstraints(1, 1));
 
     // ---------- Commands ----------\\
     InstantCommand example = new InstantCommand(() -> {
 
     });
+
+    HashMap<String, Command> eventMap = new HashMap<>();
+
+    RamseteAutoBuilder autoBuilder = new RamseteAutoBuilder(
+            m_driveTrain::getPose,
+            m_driveTrain::reset,
+            new RamseteController(),
+            m_driveTrain.m_kinematics,
+            new SimpleMotorFeedforward(1, 0),
+            m_driveTrain.getWheelSpeeds(),
+            new PIDConstants(1, 0, 0),
+            DriveTrain.voltage,
+            null,
+            m_driveTrain);
 
     // ---------- Global Toggles ----------\\
 
@@ -77,7 +102,9 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return new Autonomous(m_driveTrain, m_ahrs);
+        System.out.println(m_auto.sample(.5));
+        System.out.println(m_auto.sample(1));
+        return autoBuilder.fullAuto(m_auto);
     }
 
     /**
