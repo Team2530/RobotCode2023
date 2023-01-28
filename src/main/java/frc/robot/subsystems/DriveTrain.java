@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
@@ -71,6 +72,10 @@ public class DriveTrain extends SubsystemBase {
   private static final double kTrackWidth = 0.381 * 2;
   private static final double kWheelRadius = 0.0762;
   private static final int kEncoderResolution = -4096;
+
+  // For PID negation
+  private static double deltaTime = 0.0;
+  private static double startTime = 0.0;
 
   // ---------- Motors ----------\\
   private final WPI_TalonFX m_leftLeader = new WPI_TalonFX(30);
@@ -177,6 +182,18 @@ public class DriveTrain extends SubsystemBase {
     currentDriveMode = m;
   }
 
+  /**
+   * Single Joystick Drive
+   * <p>
+   * <h1>
+   * PID will activate after 0.5 seconds
+   * of "rest" from the Joystick Z (twist) axis.
+   * </h1>
+   * 
+   * @param x
+   * @param y
+   * @param z
+   */
   public void singleJoystickDrive(double x, double y, double z) {
     // if(currentDriveMode != Modes.Stop) {
     // // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive)
@@ -187,20 +204,38 @@ public class DriveTrain extends SubsystemBase {
     // // System.out.println(motor10.get());
     // }
 
+    // if we aren't turning the stick
+    if (!(Deadzone.deadZone(stick.getZ(), Constants.Controller.DEADZONE) > 0.05)) {
+      deltaTime = Timer.getFPGATimestamp() - startTime;
+    } else {
+      startTime = Timer.getFPGATimestamp();
+    }
+
     // If we are actualy turning the stick
-    if (Math.abs(stick.getZ()) <= 0.1) {
+    if (Math.abs(stick.getZ()) <= 0.1 || stick.getRawButton(Constants.Controller.J_DRIVE_STRAIGHT)) {
       yawCtl = Constants.PID.rotPID.calculate(ahrs.getAngle(), yawTarget);
+
     } else {
       // we are currently turning
       yawTarget = ahrs.getAngle();
       yawCtl = stick.getZ();
+
     }
 
-    System.out.println(yawTarget);
+    // System.out.println(yawTarget);
 
     // Enforce Limits
-    double driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrain.CUT_OFF_MOTOR_SPEED)
-        * Constants.DriveTrain.MAX_DRIVE_SPEED;
+
+    double driveZ;
+
+    if (deltaTime < .5) {
+      driveZ = stick.getZ();
+      yawTarget = ahrs.getAngle();
+      yawCtl = stick.getZ();
+    } else {
+      driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrain.CUT_OFF_MOTOR_SPEED)
+          * Constants.DriveTrain.MAX_DRIVE_SPEED;
+    }
 
     ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.Controller.DEADZONE),
         Deadzone.deadZone(driveZ, Constants.Controller.DEADZONE));
