@@ -43,6 +43,7 @@ public class Constants {
     public static class PIDConstants {
         // ! Values for FredBOt were: 0.05, 0.0, 0.005
         /** PID for Robot Rotation */
+        // P: 0.025, I: 0.0 D: 0.006
         public static final PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
     }
 
