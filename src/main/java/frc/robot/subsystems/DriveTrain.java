@@ -178,15 +178,15 @@ public class DriveTrain extends SubsystemBase {
   public void singleJoystickDrive(double x, double y, double z) {
 
     // if we aren't turning the stick
-    if (!(Deadzone.deadZone(stick.getZ(), Constants.Controller.DEADZONE) > 0.05)) {
+    if (!(Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE) > 0.05)) {
       deltaTime = Timer.getFPGATimestamp() - startTime;
     } else {
       startTime = Timer.getFPGATimestamp();
     }
 
     // If we are actualy turning the stick
-    if (Math.abs(stick.getZ()) <= 0.1 || stick.getRawButton(Constants.Controller.J_DRIVE_STRAIGHT)) {
-      yawCtl = Constants.PID.rotPID.calculate(ahrs.getAngle(), yawTarget);
+    if (Math.abs(stick.getZ()) <= 0.1 || stick.getRawButton(Constants.ControllerConstants.J_DRIVE_STRAIGHT)) {
+      yawCtl = Constants.PIDConstants.rotPID.calculate(ahrs.getAngle(), yawTarget);
 
     } else {
       // we are currently turning
@@ -206,12 +206,12 @@ public class DriveTrain extends SubsystemBase {
       yawTarget = ahrs.getAngle();
       yawCtl = stick.getZ();
     } else {
-      driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrain.CUT_OFF_MOTOR_SPEED)
-          * Constants.DriveTrain.MAX_DRIVE_SPEED;
+      driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrainConstants.CUT_OFF_MOTOR_SPEED)
+          * Constants.DriveTrainConstants.MAX_DRIVE_SPEED;
     }
 
-    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.Controller.DEADZONE),
-        -Deadzone.deadZone(driveZ, Constants.Controller.DEADZONE));
+    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.ControllerConstants.DEADZONE),
+        -Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
   }
 
   /** Sets speeds to the drivetrain motors. */
@@ -281,14 +281,18 @@ public class DriveTrain extends SubsystemBase {
   private void updateShuffleBoardValues() {
     SmartShuffle.get("Stick Y").update(stick.getY() * -100);
     SmartShuffle.get("Stick Z").update(stick.getZ() * 100);
+    SmartShuffle.get("Test Color").flashColor("blue", "red", 30);
   }
 
   private void createValues() {
     SmartShuffle.setPosx(0);
-    SmartShuffle.setPosy(2);
+    SmartShuffle.setPosy(0);
+    SmartShuffle.setWidth(5);
     SmartShuffle.add("Stick Y", 0);
     SmartShuffle.setWidget(BuiltInWidgets.kDial);
     SmartShuffle.add("Stick Z", 0);
+    SmartShuffle.setWidget(BuiltInWidgets.kBooleanBox);
+    SmartShuffle.add("Test Color", true);
   }
 
   /** Check the current robot pose. */
