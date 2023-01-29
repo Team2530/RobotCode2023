@@ -104,11 +104,11 @@ public class DriveTrain extends SubsystemBase {
   private final DifferentialDriveOdometry m_odometry = new DifferentialDriveOdometry(
       ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
 
-  public static double leftVoltage = 0;
-  public static double rightVoltage = 0;
-  public static BiConsumer<Double, Double> voltage = (a, b) -> {
-    leftVoltage = a;
-    rightVoltage = b;
+  public static double leftOutput = 0;
+  public static double rightOutput = 0;
+  public static BiConsumer<Double, Double> motorOutputs = (a, b) -> {
+    leftOutput = a;
+    rightOutput = b;
   };
 
   // Gains are for example purposes only - must be determined for your own
@@ -175,7 +175,7 @@ public class DriveTrain extends SubsystemBase {
     updatePeriodic();
     updateShuffleBoardValues();
     pose = getPose();
-    voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
+    motorOutputs.accept(m_leftLeader.get(), m_rightLeader.get());
   }
 
   public void setMode(Modes m) {
@@ -188,8 +188,6 @@ public class DriveTrain extends SubsystemBase {
    * <h1>
    * PID will activate after 0.5 seconds
    * of "rest" from the Joystick Z (twist) axis.
-   * </h1>
-   * 
    * @param x
    * @param y
    * @param z
@@ -259,6 +257,7 @@ public class DriveTrain extends SubsystemBase {
    * @param rot    the rotation
    */
   public void drive(double xSpeed, double rot) {
+    //! ONLY FOR SIMULATION DRIVING
     setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
   }
 
@@ -271,7 +270,7 @@ public class DriveTrain extends SubsystemBase {
   /** Update robot odometry. */
   public void updateOdometry() {
     m_odometry.update(
-        ahrs.getRotation2d(), m_leftEncoder.get(), m_rightEncoder.get());
+        ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
   }
 
   /** Resets robot odometry. */
@@ -281,14 +280,6 @@ public class DriveTrain extends SubsystemBase {
     m_drivetrainSimulator.setPose(pose);
     m_odometry.resetPosition(
         ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), pose);
-  }
-
-  /**
-   * Use to create a MecanumDrive
-   */
-  private void mecanumDrive() {
-    // driveBase = new MecanumDrive(motorFL, motorBL, motorFR, motorBR);
-    // driveBase.setSafetyEnabled(false);
   }
 
   /**
@@ -351,8 +342,7 @@ public class DriveTrain extends SubsystemBase {
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
 
-  public Supplier<DifferentialDriveWheelSpeeds> getWheelSpeeds() {
-    return () -> new DifferentialDriveWheelSpeeds(m_leftGroup.get(), m_rightGroup.get());
+  public BiConsumer<Double, Double> getWheelSpeeds() {
+    return motorOutputs;
   }
-
 }
