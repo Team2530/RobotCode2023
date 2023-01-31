@@ -27,6 +27,7 @@ public class RobotContainer {
 
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
+    private final Arm m_arm = new Arm(m_driveTrain);
 
     // ---------- Autonomous Commands ----------\\
 
@@ -55,6 +56,14 @@ public class RobotContainer {
         //         new InstantCommand(() -> {
         //         m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
         //     }));
+
+        new JoystickButton(stick, 1).onTrue(new InstantCommand(() -> {
+            m_arm.raiseArm();
+        }));
+
+        new JoystickButton(stick, 2).onTrue(new InstantCommand(() -> {
+            m_arm.lowerArm();
+        }));
         
     }
 

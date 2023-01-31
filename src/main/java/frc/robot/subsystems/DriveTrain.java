@@ -4,6 +4,9 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
@@ -25,7 +28,6 @@ import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
@@ -70,10 +72,6 @@ public class DriveTrain extends SubsystemBase {
   private static final double kWheelRadius = 0.0762;
   private static final int kEncoderResolution = -4096;
 
-  // For PID negation
-  private static double deltaTime = 0.0;
-  private static double startTime = 0.0;
-
   // ---------- Motors ----------\\
   private final WPI_TalonFX m_leftLeader = new WPI_TalonFX(30);
   private final WPI_TalonFX m_leftFollower = new WPI_TalonFX(40);
@@ -96,9 +94,17 @@ public class DriveTrain extends SubsystemBase {
   private double yawTarget = 0.0;
 
   // ---------- Kinematics & Odometry ----------\\
-  private final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
+  public Pose2d pose = new Pose2d();
+  public final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
   private final DifferentialDriveOdometry m_odometry = new DifferentialDriveOdometry(
       ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+
+  public static double leftVoltage = 0;
+  public static double rightVoltage = 0;
+  public static BiConsumer<Double, Double> voltage = (a, b) -> {
+    leftVoltage = a;
+    rightVoltage = b;
+  };
 
   // Gains are for example purposes only - must be determined for your own
   // robot!
@@ -120,10 +126,10 @@ public class DriveTrain extends SubsystemBase {
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
-    m_rightLeader.setInverted(!true);
-    m_rightFollower.setInverted(!true);
-    m_leftLeader.setInverted(!false);
-    m_leftFollower.setInverted(!false);
+    m_rightLeader.setInverted(false);
+    m_rightFollower.setInverted(false);
+    m_leftLeader.setInverted(true);
+    m_leftFollower.setInverted(true);
 
     // Todo: Declare using provided method based on DriveTrain type Ex:
     // tankDrive();s
@@ -151,67 +157,53 @@ public class DriveTrain extends SubsystemBase {
 
     m_rightGroup.setInverted(true);
     SmartDashboard.putData("Field", m_fieldSim);
+
+    // who needs Safelt?
+    m_leftFollower.setSafetyEnabled(false);
+    m_leftLeader.setSafetyEnabled(false);
+    m_rightLeader.setSafetyEnabled(false);
+    m_rightFollower.setSafetyEnabled(false);
   }
 
   @Override
   public void periodic() {
     updatePeriodic();
     updateShuffleBoardValues();
+    pose = getPose();
+    voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
   }
 
   public void setMode(Modes m) {
     currentDriveMode = m;
   }
 
-  /**
-   * Single Joystick Drive
-   * <p>
-   * <h1>
-   * PID will activate after 0.5 seconds
-   * of "rest" from the Joystick Z (twist) axis.
-   * </h1>
-   * 
-   * @param x
-   * @param y
-   * @param z
-   */
   public void singleJoystickDrive(double x, double y, double z) {
-
-    // if we aren't turning the stick
-    if (!(Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE) > 0.05)) {
-      deltaTime = Timer.getFPGATimestamp() - startTime;
-    } else {
-      startTime = Timer.getFPGATimestamp();
-    }
+    // if(currentDriveMode != Modes.Stop) {
+    // // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive)
+    // driveBase).arcadeDrive(x, z);
+    // ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(),
+    // Constants.DEADZONE),
+    // Deadzone.deadZone(stick.getZ(), Constants.DEADZONE));
+    // // System.out.println(motor10.get());
+    // }
 
     // If we are actualy turning the stick
-    if (Math.abs(stick.getZ()) <= 0.1 || stick.getRawButton(Constants.ControllerConstants.J_DRIVE_STRAIGHT)) {
+    if (Math.abs(stick.getZ()) <= 0.1) {
       yawCtl = Constants.PIDConstants.rotPID.calculate(ahrs.getAngle(), yawTarget);
-
     } else {
       // we are currently turning
       yawTarget = ahrs.getAngle();
       yawCtl = stick.getZ();
-
     }
 
-    // System.out.println(yawTarget);
+    System.out.println(yawTarget);
 
     // Enforce Limits
-
-    double driveZ;
-
-    if (deltaTime < .5) {
-      driveZ = stick.getZ();
-      yawTarget = ahrs.getAngle();
-      yawCtl = stick.getZ();
-    } else {
-      driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrainConstants.CUT_OFF_MOTOR_SPEED)
-          * Constants.DriveTrainConstants.MAX_DRIVE_SPEED;
-    }
+    double driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrainConstants.CUT_OFF_MOTOR_SPEED)
+        * Constants.DriveTrainConstants.MAX_DRIVE_SPEED;
 
     ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.ControllerConstants.DEADZONE),
-        -Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
+        Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
   }
 
   /** Sets speeds to the drivetrain motors. */
@@ -235,8 +227,9 @@ public class DriveTrain extends SubsystemBase {
     setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
   }
 
-  public void reset() {
+  public void reset(Pose2d pose) {
     ahrs.reset();
+    m_odometry.resetPosition(ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), pose);
   }
 
   // Todo: implement a reset method
@@ -269,7 +262,7 @@ public class DriveTrain extends SubsystemBase {
   private void tankDrive() {
     m_leftFollower.follow(m_leftLeader);
     m_rightFollower.follow(m_rightLeader);
-    driveBase = new DifferentialDrive(m_leftLeader, m_rightLeader);
+    driveBase = new DifferentialDrive(m_leftLeader, m_rightFollower);
   }
 
   private void setAll(double speed) {
@@ -322,4 +315,9 @@ public class DriveTrain extends SubsystemBase {
     updateOdometry();
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
+
+  public Supplier<DifferentialDriveWheelSpeeds> getWheelSpeeds() {
+    return () -> new DifferentialDriveWheelSpeeds(m_leftGroup.get(), m_rightGroup.get());
+  }
+
 }

@@ -27,6 +27,12 @@ public class Constants {
         public static final int MOTOR_FR_PORT = 20;
         public static final int MOTOR_BL_PORT = 30;
         public static final int MOTOR_BR_PORT = 40;
+
+        /** Arm Encoder port (UP down tilt axis) */
+        public static final int ARM_ENCODER_PORT = 5;
+
+        public static final int LINEAR_ACTUATOR_PORT = 15;
+        public static final int EXTENTION_PORT = 25;
     }
 
     /**
