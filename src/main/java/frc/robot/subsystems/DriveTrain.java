@@ -94,6 +94,12 @@ public class DriveTrain extends SubsystemBase {
   // Double for Rot PID
   private double yawCtl = 0.0;
   private double yawTarget = 0.0;
+  
+  // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
+  private double driveModeSpeed = 1.0;
+
+  // What is driveModeSpeed set to in Turtle Mode
+  private final double TURTLE_MODE_MULTIPLYER = 0.5;
 
   // ---------- Kinematics & Odometry ----------\\
   private final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
@@ -191,13 +197,13 @@ public class DriveTrain extends SubsystemBase {
     } else {
       // we are currently turning
       yawTarget = ahrs.getAngle();
-      yawCtl = stick.getZ();
+      yawCtl = Math.pow(stick.getZ(), 2) + Constants.ControllerConstants.DEADZONE * stick.getZ() + Constants.ControllerConstants.DEADZONE;
 
     }
 
     // System.out.println(yawTarget);
 
-    // Enforce Limits
+    // Enforce Limitss
 
     double driveZ;
 
@@ -207,10 +213,10 @@ public class DriveTrain extends SubsystemBase {
       yawCtl = stick.getZ();
     } else {
       driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrainConstants.CUT_OFF_MOTOR_SPEED)
-          * Constants.DriveTrainConstants.MAX_DRIVE_SPEED;
+          * Constants.DriveTrainConstants.MAX_DRIVE_SPEED * driveModeSpeed;
     }
 
-    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.ControllerConstants.DEADZONE),
+    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY() * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
         -Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
   }
 
@@ -321,5 +327,13 @@ public class DriveTrain extends SubsystemBase {
   public void updatePeriodic() {
     updateOdometry();
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
+  }
+
+  public void toggleTurtleMode(){
+    if(driveModeSpeed == 1.0){
+      driveModeSpeed = TURTLE_MODE_MULTIPLYER;
+    }else{
+      driveModeSpeed = 1.0;
+    }
   }
 }

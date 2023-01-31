@@ -43,12 +43,12 @@ public class RobotContainer {
     }
 
     public void configureButtonBindings() {
-        // Button 2 is used for drive straight
+        // Button 2 is used for Turtle Mode
 
-        // new JoystickButton(stick, Constants.J_DRIVETRAIN_TOGGLE).onTrue(
-        //   new InstantCommand(() -> {
-        //   m_driveTrain.toggleDriveMode();
-        // }));
+        new JoystickButton(stick, Constants.ControllerConstants.J_TURTLE_TOGGLE).toggleOnTrue(
+          new InstantCommand(() -> {
+          m_driveTrain.toggleTurtleMode();
+        }));
 
         // if(RobotBase.isSimulation()) {
         //     new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
