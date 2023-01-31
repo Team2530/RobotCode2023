@@ -30,9 +30,10 @@ public class Constants {
 
         /** Arm Encoder port (UP down tilt axis) */
         public static final int ARM_ENCODER_PORT = 5;
-
-        public static final int LINEAR_ACTUATOR_PORT = 15;
-        public static final int EXTENTION_PORT = 25;
+        
+        // Arm motor ports
+        public static final int LINEAR_ACTUATOR_PORT = 1;
+        public static final int EXTENTION_PORT = 2;
     }
 
     /**
@@ -48,7 +49,7 @@ public class Constants {
      */
     public static class PIDConstants {
         // ! Values for FredBOt were: 0.05, 0.0, 0.005
-        /** PID for Robot Rotation */
+        /** PID for Robot Rotation (when we tuned) */
         // P: 0.025, I: 0.0 D: 0.006
         public static final PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
     }

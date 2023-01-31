@@ -64,6 +64,10 @@ public class RobotContainer {
         new JoystickButton(stick, 2).onTrue(new InstantCommand(() -> {
             m_arm.lowerArm();
         }));
+
+        new JoystickButton(stick, 3).onTrue(new InstantCommand(() -> {
+            m_arm.setArmPosition(Arm.Position.HALF);
+        }));
         
     }
 

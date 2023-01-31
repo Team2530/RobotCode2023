@@ -5,17 +5,22 @@ import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.fasterxml.jackson.databind.node.POJONode;
 
+import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Arm extends SubsystemBase {
 
     //---------- Motors ----------\\
-    TalonSRX positionMotor = new TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
-    TalonFX extentionMotor = new TalonFX(Constants.PortsConstants.EXTENTION_PORT);
+    private TalonSRX positionMotor = new TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
+    private TalonFX extentionMotor = new TalonFX(Constants.PortsConstants.EXTENTION_PORT);
 
     private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT, Constants.PortsConstants.ARM_ENCODER_PORT + 1);
+    // For simulation purposes
+    private EncoderSim simPositionEncoder = new EncoderSim(positionEncoder);
 
     //---------- Subsystems ----------\\
     private DriveTrain driveTrain;
@@ -39,6 +44,7 @@ public class Arm extends SubsystemBase {
     public enum Position {
         HIGH(1),
         MEDIUM(.66),
+        HALF(0.5),
         LOW(.2),
         FLOOR(0),
         Custom(-1);
@@ -53,7 +59,7 @@ public class Arm extends SubsystemBase {
 
         public Position raise() {
             if(this != HIGH) {
-                return vals[(this.ordinal() + 1)];
+                return vals[(this.ordinal() - 1)];
             } else {
                 return HIGH;
             }   
@@ -67,6 +73,7 @@ public class Arm extends SubsystemBase {
             }   
         }
     }
+
     /**Our wanted position */
     private double position;
     /**An Enum representation of our wanted position*/
@@ -87,16 +94,25 @@ public class Arm extends SubsystemBase {
      */
     public Arm(DriveTrain driveTrain) {
         this.driveTrain = driveTrain;
+
+        // Initial Arm Conditions
+        this.positionValue = Position.HIGH;
+        this.extentionValue = Extention.RETRACTED;
+        // More initial Conditions
+        this.position = 1.0;
+        this.extention = 0.0;
     }
 
     @Override
     public void periodic() {
+
         currentPosition = positionEncoder.getDistance();
 
         if(Math.abs(currentPosition - position) > kPositionTolerance) {
             positionMotor.set(TalonSRXControlMode.PercentOutput, Math.signum(position - currentExtention));
         }
-        System.out.println(currentPosition + " " + position);
+
+        // System.out.println(currentPosition + " " + position + " " + positionValue.toString());
     }
 
     /**
