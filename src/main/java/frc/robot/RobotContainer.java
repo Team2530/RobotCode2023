@@ -58,15 +58,15 @@ public class RobotContainer {
         //     }));
 
         new JoystickButton(stick, 1).onTrue(new InstantCommand(() -> {
-            m_arm.raiseArm();
+            m_arm.extendArm();
         }));
 
         new JoystickButton(stick, 2).onTrue(new InstantCommand(() -> {
-            m_arm.lowerArm();
+            m_arm.retractArm();
         }));
 
         new JoystickButton(stick, 3).onTrue(new InstantCommand(() -> {
-            m_arm.setArmPosition(Arm.Position.HALF);
+            m_arm.setArmPosition(0.3451);
         }));
         
     }

@@ -3,6 +3,8 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.fasterxml.jackson.databind.node.POJONode;
 
 import edu.wpi.first.hal.SimDevice;
@@ -11,12 +13,13 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.libraries.*;
 
 public class Arm extends SubsystemBase {
 
     //---------- Motors ----------\\
-    private TalonSRX positionMotor = new TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
-    private TalonFX extentionMotor = new TalonFX(Constants.PortsConstants.EXTENTION_PORT);
+    private WPI_TalonSRX positionMotor = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
+    private WPI_TalonFX extensionMotor = new WPI_TalonFX(Constants.PortsConstants.EXTENTION_PORT);
 
     private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT, Constants.PortsConstants.ARM_ENCODER_PORT + 1);
     // For simulation purposes
@@ -27,17 +30,37 @@ public class Arm extends SubsystemBase {
 
 
     //---------- Preset Positions ----------\\
-    public enum Extention {
+    public enum Extension {
         FULL(1),
         TWOTHIRDS(.66),
         HALF(.5),
         ONEQUARTER(.25),
-        RETRACTED(0);
+        RETRACTED(0),
+        CUSTOM(-1);
 
+        /**The double value represented by the extension enum */
         private double length;
 
-        private Extention(double length){
+        private static final Extension[] vals = values();
+
+        private Extension(double length){
             this.length = length;
+        }
+
+        public Extension extend() {
+            if(this != FULL) {
+                return vals[(this.ordinal() - 1)];
+            } else {
+                return FULL;
+            }   
+        }
+
+        public Extension retract() {
+            if(this != RETRACTED) {
+                return vals[(this.ordinal() + 1)];
+            } else {
+                return RETRACTED;
+            }   
         }
     }
 
@@ -49,12 +72,13 @@ public class Arm extends SubsystemBase {
         FLOOR(0),
         Custom(-1);
 
-        private double position;
+        /**The double value represented by the position enum */
+        private double angle;
 
         private static final Position[] vals = values();
 
         private Position(double position){
-            this.position = position;
+            this.angle = position;
         }
 
         public Position raise() {
@@ -74,16 +98,16 @@ public class Arm extends SubsystemBase {
         }
     }
 
-    /**Our wanted position */
-    private double position;
+    /**Our wanted position (double) */
+    private double positionValue;
     /**An Enum representation of our wanted position*/
-    private Position positionValue;
-    /**Our wanted extention */
-    private double extention;
+    private Position position;
+    /**Our wanted extension (double) */
+    private double extensionValue;
     /**An Enum representation of our wanted extetnion*/
-    private Extention extentionValue;
+    private Extension extension;
 
-    private double currentExtention;
+    private double currentExtension;
     private double currentPosition;
 
     private static final double kPositionTolerance = 0.05;
@@ -96,11 +120,18 @@ public class Arm extends SubsystemBase {
         this.driveTrain = driveTrain;
 
         // Initial Arm Conditions
-        this.positionValue = Position.HIGH;
-        this.extentionValue = Extention.RETRACTED;
+        this.position = Position.HIGH;
+        this.extension = Extension.RETRACTED;
         // More initial Conditions
-        this.position = 1.0;
-        this.extention = 0.0;
+        this.positionValue = 1.0;
+        this.extensionValue = 0.0;
+
+        //---------- Shuffle Things ----------\\
+        SmartShuffle.add("Arm Position", "");
+        SmartShuffle.add("Arm Extension", "");
+        positionEncoder.reset();
+
+        //TODO: Reverse Motors if needed!
     }
 
     @Override
@@ -108,11 +139,22 @@ public class Arm extends SubsystemBase {
 
         currentPosition = positionEncoder.getDistance();
 
-        if(Math.abs(currentPosition - position) > kPositionTolerance) {
-            positionMotor.set(TalonSRXControlMode.PercentOutput, Math.signum(position - currentExtention));
+        if(Math.abs(currentPosition - positionValue) > kPositionTolerance) {
+            positionMotor.set(Math.signum(positionValue - currentPosition));
+        } else {
+            positionMotor.set(0);
         }
 
-        // System.out.println(currentPosition + " " + position + " " + positionValue.toString());
+        currentExtension = extensionMotor.getSelectedSensorPosition();
+
+        if(Math.abs(currentExtension - extensionValue) > kPositionTolerance) {
+            // This motor will be a lot more zoomy
+            extensionMotor.set(Math.signum(extensionValue - currentExtension) * 0.2);
+        } else {
+            extensionMotor.set(0);
+        }
+
+        updateShuffleBoardValues();
     }
 
     /**
@@ -120,50 +162,78 @@ public class Arm extends SubsystemBase {
      * @param position the Position value in {@code Position}
      */
     public void setArmPosition(Position position) {
-        this.position = position.position;
-        this.positionValue = position;
+        this.positionValue = position.angle;
+        this.position = position;
     }
 
     /**
-     * Sets the arm to the passed in position
+     * Sets the arm to the passed in position. This will set the position enum to 
+     * custom so we may move more freely as we choose a position
      * @param position the double value of position to move the arm to
      */
     public void setArmPosition(double position) {
-        this.position = position;
-        positionValue = Position.Custom;
+        this.positionValue = position;
+        this.position = Position.Custom;
     }
 
     /**
-     * Sets the arm to the preset extention
-     * @param extention the Extention value in {@code Extention}
+     * Sets the arm to the preset extension
+     * @param extension the extension value in {@code extension}
      */
-    public void setArmExtention(Extention extention) {
-        this.extention = extention.length;
+    public void setArmextension(Extension extension) {
+        this.positionValue = extension.length;
+        this.extension = extension;
     }
 
     /**
-     * Sets the arm extention to the double extention
-     * @param extention the double value of extention to move the arm to
+     * Sets the arm extension to the double extension
+     * @param extension the double value of extension to move the arm to
      */
-    public void setArmExtention(double extention) {
-        this.extention = extention;
+    public void setArmextension(double extension) {
+        this.extensionValue = extension;
+        this.extension = Extension.CUSTOM;
     }
 
     /**
-     * Raises the arm by a Setpoint
+     * Raises the arm by a setpoint
      */
 
     public void raiseArm() {
-        positionValue = positionValue.raise();
-        position = positionValue.position;
+        position = position.raise();
+        positionValue = position.angle;
     }
 
     /**
-     * Lowers the arm by a Setpoint
+     * Lowers the arm by a setpoint
      */
     public void lowerArm() {
-        positionValue = positionValue.lower();
-        position = positionValue.position;
+        position = position.lower();
+        positionValue = position.angle;
+    }
+
+    /**
+     * Extends the arm by a setpoint
+     */
+    public void extendArm() {
+        extension = extension.extend();
+        extensionValue = extension.length;
+    }
+
+    /**
+     * Retracts the arm by a setpoint
+     */
+    public void retractArm() {
+        extension = extension.retract();
+        extensionValue = extension.length;
+    }
+
+    /**
+     * Use to update the values on Shuffleboard
+     * ! Make sure method is called in periodic or values won't update
+     */
+    public void updateShuffleBoardValues() {
+        SmartShuffle.get("Arm Position").update(position + " " + positionValue);
+        SmartShuffle.get("Arm Extension").update(extension + " " + extensionValue);
     }
 
 
