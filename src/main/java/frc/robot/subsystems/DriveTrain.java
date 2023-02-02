@@ -94,7 +94,7 @@ public class DriveTrain extends SubsystemBase {
   // Double for Rot PID
   private double yawCtl = 0.0;
   private double yawTarget = 0.0;
-  
+
   // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
   private double driveModeSpeed = 1.0;
 
@@ -183,7 +183,7 @@ public class DriveTrain extends SubsystemBase {
    */
   public void singleJoystickDrive(double x, double y, double z) {
 
-    // if we aren't turning the stick
+    // if we aren't turning the stick we disable PID for 0.5 seconds
     if (!(Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE) > 0.05)) {
       deltaTime = Timer.getFPGATimestamp() - startTime;
     } else {
@@ -197,7 +197,8 @@ public class DriveTrain extends SubsystemBase {
     } else {
       // we are currently turning
       yawTarget = ahrs.getAngle();
-      yawCtl = Math.pow(stick.getZ(), 2) + Constants.ControllerConstants.DEADZONE * stick.getZ() + Constants.ControllerConstants.DEADZONE;
+      yawCtl = Math.signum(stick.getZ()) * Math.pow(stick.getZ(), 2)
+          + Constants.ControllerConstants.DEADZONE * stick.getZ() + Constants.ControllerConstants.DEADZONE;
 
     }
 
@@ -208,15 +209,16 @@ public class DriveTrain extends SubsystemBase {
     double driveZ;
 
     if (deltaTime < .5) {
-      driveZ = stick.getZ();
+      driveZ = stick.getZ() * driveModeSpeed;
       yawTarget = ahrs.getAngle();
-      yawCtl = stick.getZ();
+      yawCtl = stick.getZ() * driveModeSpeed;
     } else {
       driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrainConstants.CUT_OFF_MOTOR_SPEED)
           * Constants.DriveTrainConstants.MAX_DRIVE_SPEED * driveModeSpeed;
     }
 
-    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY() * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
+    ((DifferentialDrive) driveBase).arcadeDrive(
+        Deadzone.deadZone(stick.getY() * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
         -Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
   }
 
@@ -329,11 +331,7 @@ public class DriveTrain extends SubsystemBase {
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
 
-  public void toggleTurtleMode(){
-    if(driveModeSpeed == 1.0){
-      driveModeSpeed = TURTLE_MODE_MULTIPLYER;
-    }else{
-      driveModeSpeed = 1.0;
-    }
+  public void toggleTurtleMode(double maxSpeed) {
+    driveModeSpeed = maxSpeed;
   }
 }

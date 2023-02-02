@@ -34,7 +34,6 @@ public class RobotContainer {
     InstantCommand example = new InstantCommand(() -> {
 
     });
-        
 
     // ---------- Global Toggles ----------\\
 
@@ -45,17 +44,19 @@ public class RobotContainer {
     public void configureButtonBindings() {
         // Button 2 is used for Turtle Mode
 
-        new JoystickButton(stick, Constants.ControllerConstants.J_TURTLE_TOGGLE).toggleOnTrue(
-          new InstantCommand(() -> {
-          m_driveTrain.toggleTurtleMode();
-        }));
+        new JoystickButton(stick, Constants.ControllerConstants.J_TURTLE_TOGGLE).onTrue(
+                new InstantCommand(() -> {
+                    m_driveTrain.toggleTurtleMode(0.5);
+                })).onFalse(new InstantCommand(() -> {
+                    m_driveTrain.toggleTurtleMode(1.0);
+                }));
 
         // if(RobotBase.isSimulation()) {
-        //     new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
-        //         new InstantCommand(() -> {
-        //         m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
-        //     }));
-        
+        // new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
+        // new InstantCommand(() -> {
+        // m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
+        // }));
+
     }
 
     public DriveTrain getDriveTrain() {
@@ -85,13 +86,16 @@ public class RobotContainer {
 
     /**
      * Command to run in Telop mode
+     * 
      * @return the command to run in Telop
      */
     public Command getTelopCommand() {
         return new SingleJoystickDrive(m_driveTrain, stick, xbox);
     }
+
     /**
      * Command to run in Test Mode
+     * 
      * @return the command to run in Test
      */
     public Command getTestCommand() {
