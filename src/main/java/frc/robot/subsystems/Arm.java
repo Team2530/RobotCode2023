@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.POJONode;
 import edu.wpi.first.hal.SimDevice;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -20,6 +21,7 @@ public class Arm extends SubsystemBase {
     //---------- Motors ----------\\
     private WPI_TalonSRX positionMotor = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(Constants.PortsConstants.EXTENTION_PORT);
+    private Servo grabberServo = new Servo(Constants.PortsConstants.GRABBER_PORT);
 
     private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT, Constants.PortsConstants.ARM_ENCODER_PORT + 1);
     // For simulation purposes
@@ -140,7 +142,6 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
-
         currentPosition = positionEncoder.getDistance();
 
         if(Math.abs(currentPosition - positionValue) > kPositionTolerance) {
@@ -229,6 +230,14 @@ public class Arm extends SubsystemBase {
     public void retractArm() {
         extension = extension.retract();
         extensionValue = extension.length;
+    }
+
+    public void grab(){
+        grabberServo.set(1);
+    }
+
+    public void release(){
+        grabberServo.set(-1);
     }
 
     /**

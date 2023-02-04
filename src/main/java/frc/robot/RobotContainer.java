@@ -56,19 +56,14 @@ public class RobotContainer {
         //         new InstantCommand(() -> {
         //         m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
         //     }));
-
-        new JoystickButton(stick, 1).onTrue(new InstantCommand(() -> {
-            m_arm.extendArm();
-        }));
-
-        new JoystickButton(stick, 2).onTrue(new InstantCommand(() -> {
-            m_arm.retractArm();
-        }));
-
-        new JoystickButton(stick, 3).onTrue(new InstantCommand(() -> {
-            m_arm.setArmPosition(0.3451);
-        }));
-        
+        new JoystickButton(stick, 11).onTrue(
+                    new InstantCommand(() -> {
+                    m_arm.grab();
+                }));
+        new JoystickButton(stick, 12).onTrue(
+                    new InstantCommand(() -> {
+                    m_arm.release();
+                }));
     }
 
     public DriveTrain getDriveTrain() {

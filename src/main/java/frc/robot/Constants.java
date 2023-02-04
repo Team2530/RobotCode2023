@@ -30,6 +30,9 @@ public class Constants {
 
         /** Arm Encoder port (UP down tilt axis) */
         public static final int ARM_ENCODER_PORT = 5;
+
+        /* Servo Port */
+        public static final int GRABBER_PORT = 0;
         
         // Arm motor ports
         public static final int LINEAR_ACTUATOR_PORT = 1;
