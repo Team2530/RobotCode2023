@@ -27,7 +27,14 @@ public class RobotContainer {
 
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
-    private final USBCamera driveCamera = new USBCamera();
+
+    static {
+        if(RobotBase.isReal()){
+            final USBCamera driveCamera = new USBCamera();
+        }
+        
+    }
+    
 
     // ---------- Autonomous Commands ----------\\
 

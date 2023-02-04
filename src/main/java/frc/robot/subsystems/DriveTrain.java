@@ -4,7 +4,7 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
@@ -40,8 +40,8 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
-import frc.robot.libraries.Deadzone;
-import frc.robot.libraries.SmartShuffle;
+import frc.robot.libraries.*;
+import frc.robot.libraries.SmartShuffle; 
 import frc.robot.logging.*;
 
 public class DriveTrain extends SubsystemBase {
@@ -75,10 +75,10 @@ public class DriveTrain extends SubsystemBase {
   private static double startTime = 0.0;
 
   // ---------- Motors ----------\\
-  private final WPI_TalonFX m_leftLeader = new WPI_TalonFX(30);
-  private final WPI_TalonFX m_leftFollower = new WPI_TalonFX(40);
-  private final WPI_TalonFX m_rightLeader = new WPI_TalonFX(10);
-  private final WPI_TalonFX m_rightFollower = new WPI_TalonFX(20);
+  private final WPI_VictorSPX m_leftLeader = new WPI_VictorSPX(30);
+  private final WPI_VictorSPX m_leftFollower = new WPI_VictorSPX(40);
+  private final WPI_VictorSPX m_rightLeader = new WPI_VictorSPX(10);
+  private final WPI_VictorSPX m_rightFollower = new WPI_VictorSPX(20);
 
   private final MotorControllerGroup m_leftGroup = new MotorControllerGroup(m_leftLeader, m_leftFollower);
   private final MotorControllerGroup m_rightGroup = new MotorControllerGroup(m_rightLeader, m_rightFollower);
@@ -330,7 +330,11 @@ public class DriveTrain extends SubsystemBase {
     updateOdometry();
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
-
+  
+  /**
+   * Toggles the max drive speed to the passed in speed
+   * @param maxSpeed the speed
+   */
   public void toggleTurtleMode(double maxSpeed) {
     driveModeSpeed = maxSpeed;
   }
