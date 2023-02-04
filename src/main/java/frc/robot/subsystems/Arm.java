@@ -97,6 +97,10 @@ public class Arm extends SubsystemBase {
             }   
         }
     }
+    /**Max Angle between the bottom position and the top position */
+    private double kmaxAngle = 57.01;
+
+    private double kmaxExtension = 42.357;
 
     /**Our wanted position (double) */
     private double positionValue;
