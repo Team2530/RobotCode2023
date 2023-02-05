@@ -106,7 +106,7 @@ public class DriveTrain extends SubsystemBase {
 
   public static double leftOutput = 0;
   public static double rightOutput = 0;
-  public static BiConsumer<Double, Double> motorOutputs = (a, b) -> {
+  public BiConsumer<Double, Double> wheelspeed_setter = (a, b) -> {
     leftOutput = a;
     rightOutput = b;
   };
@@ -175,7 +175,8 @@ public class DriveTrain extends SubsystemBase {
     updatePeriodic();
     updateShuffleBoardValues();
     pose = getPose();
-    motorOutputs.accept(m_leftLeader.get(), m_rightLeader.get());
+    setSpeeds(new DifferentialDriveWheelSpeeds(leftOutput, rightOutput));
+    // motorOutputs.accept(m_leftLeader.get(), m_rightLeader.get());
   }
 
   public void setMode(Modes m) {
@@ -188,6 +189,7 @@ public class DriveTrain extends SubsystemBase {
    * <h1>
    * PID will activate after 0.5 seconds
    * of "rest" from the Joystick Z (twist) axis.
+   * 
    * @param x
    * @param y
    * @param z
@@ -257,7 +259,7 @@ public class DriveTrain extends SubsystemBase {
    * @param rot    the rotation
    */
   public void drive(double xSpeed, double rot) {
-    //! ONLY FOR SIMULATION DRIVING
+    // ! ONLY FOR SIMULATION DRIVING
     setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
   }
 
@@ -340,9 +342,5 @@ public class DriveTrain extends SubsystemBase {
   public void updatePeriodic() {
     updateOdometry();
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
-  }
-
-  public BiConsumer<Double, Double> getWheelSpeeds() {
-    return motorOutputs;
   }
 }

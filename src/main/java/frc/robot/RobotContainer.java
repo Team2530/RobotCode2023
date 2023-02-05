@@ -92,14 +92,13 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return new PPRamseteCommand(m_auto, 
-            m_driveTrain::getPose,
-            new RamseteController(),
-            m_driveTrain.m_kinematics,
-            m_driveTrain.getWheelSpeeds(),
-            true,
-            m_driveTrain
-            );
+        return new PPRamseteCommand(m_auto,
+                m_driveTrain::getPose,
+                new RamseteController(),
+                m_driveTrain.m_kinematics,
+                m_driveTrain.wheelspeed_setter,
+                true,
+                m_driveTrain);
     }
 
     /**
