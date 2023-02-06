@@ -1,17 +1,14 @@
 package frc.robot.subsystems;
 
-import com.ctre.phoenix.motorcontrol.TalonSRXControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonFX;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.fasterxml.jackson.databind.node.POJONode;
+import com.ctre.phoenix.sensors.CANCoder;
 
-import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.libraries.*;
@@ -24,11 +21,46 @@ public class Arm extends SubsystemBase {
     private Servo grabberServo = new Servo(Constants.PortsConstants.GRABBER_PORT);
 
     private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT, Constants.PortsConstants.ARM_ENCODER_PORT + 1);
+    private CANCoder extensionEncoder = new CANCoder(Constants.PortsConstants.EXTENTION_PORT);
     // For simulation purposes
     private EncoderSim simPositionEncoder = new EncoderSim(positionEncoder);
 
+    private SingleJointedArmSim armSim = new SingleJointedArmSim(DCMotor.getFalcon500(1), 1, 2, 1, Math.PI / 6, Math.PI / 3, 2, false);
+
     //---------- Subsystems ----------\\
     private DriveTrain driveTrain;
+
+    //--------- Values ----------\\
+    /**Max Angle between the bottom position and the top position */
+    private final double kMaxAngleAboveHorizontal = 62.953;
+    /**Max Extension (how far we can extend from the base of the arm) */
+    private final double kMaxExtension = 42.357; // refrenced from the back of the arm
+
+    /**Our wanted position (double) */
+    private double positionValue;
+    /**An Enum representation of our wanted position*/
+    private Position position;
+    /**Our wanted extension (double) */
+    private double extensionValue;
+    /**An Enum representation of our wanted extetnion*/
+    private Extension extension;
+
+    /**Current encoder reading of extension (how much out/in the arm is)*/
+    private double currentExtension;
+
+    /**Current encoder reading of position (how much angle the arm has)
+    * <p><em>Zero should be the equilvalent to zero degrees relative to the ground</em>
+    */
+    private double currentPosition;
+
+    private static final double kPositionTolerance = 0.05;
+    /**How far the arm moves relative to an encoder tick */
+    private static final double kExtensionPerTick = 0.001;
+    /**How much the arm rotates in degrees per encoder tick */
+    private static final double kDeltaAnglePerPulse = 0.1;
+    /**How far the endmost point of the arm is relative to the end of the robot */
+    private static final double kEndpointToRobot = 4.826;
+
 
 
     //---------- Preset Positions ----------\\
@@ -99,24 +131,6 @@ public class Arm extends SubsystemBase {
             }   
         }
     }
-    /**Max Angle between the bottom position and the top position */
-    private double kmaxAngle = 57.01;
-
-    private double kmaxExtension = 42.357;
-
-    /**Our wanted position (double) */
-    private double positionValue;
-    /**An Enum representation of our wanted position*/
-    private Position position;
-    /**Our wanted extension (double) */
-    private double extensionValue;
-    /**An Enum representation of our wanted extetnion*/
-    private Extension extension;
-
-    private double currentExtension;
-    private double currentPosition;
-
-    private static final double kPositionTolerance = 0.05;
 
     /**
      * Constructs a new Arm
@@ -135,7 +149,7 @@ public class Arm extends SubsystemBase {
         //---------- Shuffle Things ----------\\
         SmartShuffle.add("Arm Position", "");
         SmartShuffle.add("Arm Extension", "");
-        positionEncoder.reset();
+        positionEncoder.setDistancePerPulse(kDeltaAnglePerPulse);
 
         //TODO: Reverse Motors if needed!
     }
@@ -150,7 +164,7 @@ public class Arm extends SubsystemBase {
             positionMotor.set(0);
         }
 
-        currentExtension = extensionMotor.getSelectedSensorPosition();
+        currentExtension = extensionEncoder.getPosition();
 
         if(Math.abs(currentExtension - extensionValue) > kPositionTolerance) {
             // This motor will be a lot more zoomy
@@ -185,7 +199,7 @@ public class Arm extends SubsystemBase {
      * Sets the arm to the preset extension
      * @param extension the extension value in {@code extension}
      */
-    public void setArmextension(Extension extension) {
+    public void setArmExtension(Extension extension) {
         this.positionValue = extension.length;
         this.extension = extension;
     }
@@ -194,7 +208,7 @@ public class Arm extends SubsystemBase {
      * Sets the arm extension to the double extension
      * @param extension the double value of extension to move the arm to
      */
-    public void setArmextension(double extension) {
+    public void setArmExtension(double extension) {
         this.extensionValue = extension;
         this.extension = Extension.CUSTOM;
     }
@@ -240,6 +254,22 @@ public class Arm extends SubsystemBase {
         grabberServo.set(-1);
     }
 
+    /**Makes sure the Arm doesn't become <em>illegal</em>*/
+    private void ensureLength() {
+        // Normalized Values
+        double cExtension = currentExtension * kExtensionPerTick;
+        double cPosition = currentPosition * kDeltaAnglePerPulse;
+
+        double extensionFromRobot = cExtension * Math.cos(cPosition) + kEndpointToRobot;
+        // If we are greater than our maximum
+        if(extensionFromRobot >= 47) {
+            extensionValue = 47;
+            extension = Extension.FULL;
+            extensionMotor.set(0.0);
+        }
+
+    }
+
     /**
      * Use to update the values on Shuffleboard
      * ! Make sure method is called in periodic or values won't update
@@ -248,6 +278,4 @@ public class Arm extends SubsystemBase {
         SmartShuffle.get("Arm Position").update(position + " " + positionValue);
         SmartShuffle.get("Arm Extension").update(extension + " " + extensionValue);
     }
-
-
 }

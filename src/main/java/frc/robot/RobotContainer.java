@@ -56,6 +56,7 @@ public class RobotContainer {
         //         new InstantCommand(() -> {
         //         m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
         //     }));
+
         new JoystickButton(stick, 11).onTrue(
                     new InstantCommand(() -> {
                     m_arm.grab();
