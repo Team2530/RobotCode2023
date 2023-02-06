@@ -41,6 +41,20 @@ public class Constants {
         public static final int ENCODER_TICKS_PER_REVOLUTION = 2048;
         public static final double LIMELIGHT_HEIGHT = 1.5;
     }
+
+    /**
+     * LimeLight Constants
+     */
+    public static class LimeLightConstants {
+        // how many degrees back is your limelight rotated from perfectly vertical?
+        public static final double LIMELIGHT_MOUNT_ANGLE_DEGREES = 25.0;
+
+        // distance from the center of the Limelight lens to the floor
+        public static final double LIMELIGHT_LENS_HEIGHT_INCHES = 20.0;
+
+        // distance from the target to the floor
+        public static final double GOAL_HEIGHT_INCHES= 60.0;
+    }
     /**
      * PID Constants
      */

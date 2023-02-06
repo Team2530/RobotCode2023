@@ -4,11 +4,24 @@
 
 package frc.robot.subsystems;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.LimeLightConstants;
+import frc.robot.libraries.Deadzone;
 
 
 /**
@@ -17,11 +30,18 @@ import frc.robot.Constants;
  * <p>Note that values from year to year will change and constants as well as PID values will need to be adjusted accordingly.
  */
 public class LimeLight extends SubsystemBase {
-  DriveTrain driveTrain;
+  static DriveTrain driveTrain;
 
   static double xoff;
   static double yoff;
   static double area;
+  static double istargetvalid;
+  static double limelightlatency;
+  static double[] botpose;
+  static double[] robottargpose;
+  static double[] camerapose;
+  static double[] targetbotpose;
+  static double[] camtargpose;
   /** Any targets? */
   static double tv;
 
@@ -38,6 +58,9 @@ public class LimeLight extends SubsystemBase {
   static int lightMode = 3;
 
   int cameraMode = 0;
+
+  private final static SlewRateLimiter m_speedLimiter = new SlewRateLimiter(3);
+  private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
   /** Creates a new LimeLight. */
   public LimeLight(DriveTrain driveTrain) {
@@ -60,16 +83,40 @@ public class LimeLight extends SubsystemBase {
    * Updates the LimeLight's values
    */
   public static void updateValues() {
-    xoff = getLimeValues("tx");
-    yoff = getLimeValues("ty");
-    // tv = table.getEntry("tv").getDouble(0.0);
-    area = getLimeValues("ta");
+    xoff = getlimevalue("tx");
+    yoff = getlimevalue("ty");
+    istargetvalid = getlimevalue("tv");
+    limelightlatency = getlimevalue("tl") + 11;
+  
+    // arrays
+    camerapose = getlimevalues("camerapose_targetspace");
+    camtargpose = getlimevalues("targetpose_cameraspace");
+    robottargpose = getlimevalues("targetpose_robotspace");
+    targetbotpose = getlimevalues("botpose_targetspace");
+  
+    if (true/*Team alliance none*/) {
+      botpose = getlimevalues("botpose");
+    }
+    //*else if (true/*Team alliance blue*/) {
+    //  botpose = getlimevalues("botpose_wpiblue");
+    //}
+    //else if (true/*Team alliance red*/) {
+    //  botpose = getlimevalues("botpose_wpired");
+    //}
+  
   }
 
   public void showValues() {
     SmartDashboard.putNumber("LimelightX", xoff);
     SmartDashboard.putNumber("LimelightY", yoff);
-    SmartDashboard.putNumber("LimelightArea", area);
+    SmartDashboard.putNumber("Tags?", istargetvalid);
+    SmartDashboard.putNumber("LATENCYYYYYYYYYYY", limelightlatency);
+    SmartDashboard.putNumberArray("Camera Pose Target Space", camerapose);
+    SmartDashboard.putNumberArray("TargetPose Camera Space", camtargpose);
+    SmartDashboard.putNumberArray("Target Pose Robot Space", robottargpose);
+    SmartDashboard.putNumberArray("Bot Pose Target Space", targetbotpose);
+    SmartDashboard.putNumberArray("Bot Space", botpose);
+    
 
   }
 
@@ -81,6 +128,17 @@ public class LimeLight extends SubsystemBase {
     double r = toRadians(Constants.Sensor.LIMELIGHT_HEIGHT + yoff);
     return (Constants.Field.TARGET_HEIGHT - Constants.Sensor.LIMELIGHT_HEIGHT) / Math.tan(r);
   }
+
+  /*public double distanceToTargetInInches() {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+    NetworkTableEntry ty = table.getEntry("ty");
+    
+    double angleToGoalDegrees = LimeLightConstants.LIMELIGHT_MOUNT_ANGLE_DEGREES + targetOffsetAngle_Vertical;
+    double angleToGoalRadians = angleToGoalDegrees * (3.14159 / 180.0);
+
+    //calculate distance
+    return (LimeLightConstants.GOAL_HEIGHT_INCHES - LimeLightConstants.LIMELIGHT_LENS_HEIGHT_INCHES)/Math.tan(angleToGoalRadians);
+  }*/
 
   public void changeMode() {
     if (lightMode == 3) {
@@ -125,8 +183,55 @@ public class LimeLight extends SubsystemBase {
    * or you won't get anything returned
    */
 
-  public static double getLimeValues(String tvar) {
+  public static double getlimevalue(String tvar) {
     return NetworkTableInstance.getDefault().getTable("limelight").getEntry(tvar).getDouble(0.0);
+  }
+
+  public static double[] getlimevalues(String vals) {
+    return NetworkTableInstance.getDefault().getTable("limelight").getEntry(vals).getDoubleArray(new double[6]);
+  }
+
+  public static boolean setlimevalue(String pals, double value) {
+    return NetworkTableInstance.getDefault().getTable("limelight").getEntry(pals).setNumber(value);
+  }
+
+  public static void driveBasedOnLimeLight()
+  {
+    //if yoff greater than 0.1 turn left
+    if(yoff > 0.1){
+      driveTrain.drive(0, -yoff);
+    }
+    //if yoff less than 0.1 turn left
+    else if (yoff < -0.1){
+      driveTrain.drive(0, yoff);
+    }
+    //if yoff equal to 0.1 go straight
+    else {
+      driveTrain.drive(1,0);
+    }
+
+  }
+
+  public static JSONArray readJSONTemplateAndUpdateLimeLightValue(){
+    JSONParser parser = new JSONParser();
+    JSONArray jsonArray = null;
+    try {
+      JSONObject josnObject= (JSONObject) parser.parse(new FileReader("C:\\Users\\psent\\Documents\\2530\\RobotCode2023\\src\\main\\deploy\\LimeLightPathTemplate.json"));
+      JSONArray jArrayWaypoints = (JSONArray) josnObject.get("waypoints");
+      JSONObject jArrayWaypoint = (JSONObject) jArrayWaypoints.get(0);
+      JSONObject jAnchorObject = (JSONObject) jArrayWaypoint.get("anchorPoint");
+      System.out.println(jAnchorObject);
+    } catch (FileNotFoundException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    } catch (ParseException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    return jsonArray;
   }
 
 }
