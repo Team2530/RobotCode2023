@@ -59,8 +59,8 @@ public class LimeLight extends SubsystemBase {
 
   int cameraMode = 0;
 
-  private final static SlewRateLimiter m_speedLimiter = new SlewRateLimiter(3);
-  private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
+  private final static SlewRateLimiter m_speedLimiter = new SlewRateLimiter(3);// TODO: change
+  private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);// TODO: change
 
   /** Creates a new LimeLight. */
   public LimeLight(DriveTrain driveTrain) {
@@ -73,7 +73,7 @@ public class LimeLight extends SubsystemBase {
     // This method will be called once per scheduler run
     updateValues();
     showValues();
-    double distanceFromTarget = distanceToTarget();
+    double distanceFromTarget = distanceToTarget();// TODO: change
     // System.out.println(distanceFromTarget);
     // Shuffleboard.getTab("limelight").addNumber("Distance", distanceFromTarget);
     SmartDashboard.putNumber("Lime Distance", distanceFromTarget);
@@ -83,19 +83,19 @@ public class LimeLight extends SubsystemBase {
    * Updates the LimeLight's values
    */
   public static void updateValues() {
-    xoff = getlimevalue("tx");
-    yoff = getlimevalue("ty");
-    istargetvalid = getlimevalue("tv");
-    limelightlatency = getlimevalue("tl") + 11;
+    xoff = getlimevalue("tx");// TODO: change
+    yoff = getlimevalue("ty");// TODO: change
+    istargetvalid = getlimevalue("tv");// TODO: change
+    limelightlatency = getlimevalue("tl") + 11;// TODO: change
   
     // arrays
-    camerapose = getlimevalues("camerapose_targetspace");
-    camtargpose = getlimevalues("targetpose_cameraspace");
-    robottargpose = getlimevalues("targetpose_robotspace");
-    targetbotpose = getlimevalues("botpose_targetspace");
+    camerapose = getlimevalues("camerapose_targetspace");// TODO: change?
+    camtargpose = getlimevalues("targetpose_cameraspace");// TODO: change?
+    robottargpose = getlimevalues("targetpose_robotspace");// TODO: change?
+    targetbotpose = getlimevalues("botpose_targetspace");// TODO: change?
   
     if (true/*Team alliance none*/) {
-      botpose = getlimevalues("botpose");
+      botpose = getlimevalues("botpose");// TODO: change?
     }
     //*else if (true/*Team alliance blue*/) {
     //  botpose = getlimevalues("botpose_wpiblue");
@@ -106,7 +106,7 @@ public class LimeLight extends SubsystemBase {
   
   }
 
-  public void showValues() {
+  public void showValues() {// TODO: make sure these work
     SmartDashboard.putNumber("LimelightX", xoff);
     SmartDashboard.putNumber("LimelightY", yoff);
     SmartDashboard.putNumber("Tags?", istargetvalid);
@@ -121,10 +121,10 @@ public class LimeLight extends SubsystemBase {
   }
 
   public double toRadians(double input) {
-    return input * (Math.PI / 180.0);
+    return input * (Math.PI / 180.0);// TODO: change..........? proably not but make sure
   }
 
-  public double distanceToTarget() {
+  public double distanceToTarget() {// TODO: Definetly change. Chnage^2
     double r = toRadians(Constants.Sensor.LIMELIGHT_HEIGHT + yoff);
     return (Constants.Field.TARGET_HEIGHT - Constants.Sensor.LIMELIGHT_HEIGHT) / Math.tan(r);
   }
@@ -151,7 +151,7 @@ public class LimeLight extends SubsystemBase {
   /**
    * Assume that there is a valid target, we will turn to aim at it
    */
-  public void aimAtTarget() {
+  public void aimAtTarget() {// TODO: change
     double error = -xoff;
     System.out.println("Error: " + error);
 
@@ -198,20 +198,21 @@ public class LimeLight extends SubsystemBase {
   public static void driveBasedOnLimeLight()
   {
     //if yoff greater than 0.1 turn left
-    if(yoff > 0.1){
-      driveTrain.drive(0, -yoff);
+    if(xoff > 0.1){
+      driveTrain.singleJoystickDrive(0, 0, xoff);
     }
     //if yoff less than 0.1 turn left
-    else if (yoff < -0.1){
-      driveTrain.drive(0, yoff);
+    else if (xoff < -0.1){
+      driveTrain.singleJoystickDrive(0, 0, xoff); 
     }
     //if yoff equal to 0.1 go straight
     else {
-      driveTrain.drive(1,0);
+      driveTrain.singleJoystickDrive(0.1, 0, 0);
     }
 
   }
 
+  //This method for future to get path planner to hookup with lime light reading
   public static JSONArray readJSONTemplateAndUpdateLimeLightValue(){
     JSONParser parser = new JSONParser();
     JSONArray jsonArray = null;
