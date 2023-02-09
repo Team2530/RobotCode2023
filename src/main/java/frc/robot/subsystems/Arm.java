@@ -6,6 +6,7 @@ import com.ctre.phoenix.sensors.CANCoder;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
@@ -29,6 +30,8 @@ public class Arm extends SubsystemBase {
 
     //---------- Subsystems ----------\\
     private DriveTrain driveTrain;
+
+    private Joystick stick;
 
     //--------- Values ----------\\
     /**Max Angle between the bottom position and the top position */
@@ -136,8 +139,9 @@ public class Arm extends SubsystemBase {
      * Constructs a new Arm
      * @param driveTrain our DriveTrain
      */
-    public Arm(DriveTrain driveTrain) {
+    public Arm(DriveTrain driveTrain, Joystick stick) {
         this.driveTrain = driveTrain;
+        this.stick = stick;
 
         // Initial Arm Conditions
         this.position = Position.HIGH;
@@ -174,6 +178,10 @@ public class Arm extends SubsystemBase {
         }
 
         updateShuffleBoardValues();
+
+        // System.out.println(stick.getRawAxis(3));
+        // For testing grabber servo
+        // grabberServo.setRelativeAngle(stick.getRawAxis(3));
     }
 
     /**
