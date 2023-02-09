@@ -7,19 +7,37 @@ package frc.robot.subsystems;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
+
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.LimeLightConstants;
 import frc.robot.libraries.Deadzone;
 
@@ -213,26 +231,61 @@ public class LimeLight extends SubsystemBase {
   }
 
   //This method for future to get path planner to hookup with lime light reading
-  public static JSONArray readJSONTemplateAndUpdateLimeLightValue(){
-    JSONParser parser = new JSONParser();
-    JSONArray jsonArray = null;
-    try {
-      JSONObject josnObject= (JSONObject) parser.parse(new FileReader("C:\\Users\\psent\\Documents\\2530\\RobotCode2023\\src\\main\\deploy\\LimeLightPathTemplate.json"));
-      JSONArray jArrayWaypoints = (JSONArray) josnObject.get("waypoints");
-      JSONObject jArrayWaypoint = (JSONObject) jArrayWaypoints.get(0);
-      JSONObject jAnchorObject = (JSONObject) jArrayWaypoint.get("anchorPoint");
-      System.out.println(jAnchorObject);
-    } catch (FileNotFoundException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (IOException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    } catch (ParseException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+  public static Command getRamseteCommand(DriveTrain m_driveTrain){
+    RamseteCommand ramseteCommand=null;
+    Boolean isValidTarget = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getBoolean(false);
+    isValidTarget = true;
+    if(isValidTarget){
+      // Create a voltage constraint to ensure we don't accelerate too fast
+      var autoVoltageConstraint =
+      new DifferentialDriveVoltageConstraint(
+          new SimpleMotorFeedforward(
+              DriveConstants.KS_VOLTS,
+              DriveConstants.KV_VOLT_SECONDS_PER_METER,
+              DriveConstants.KA_VOLT_SECONDS_SQURED_PER_METER),
+          DriveConstants.kDriveKinematics,
+          10);
+      // Create config for trajectory
+      TrajectoryConfig config =
+      new TrajectoryConfig(
+              AutoConstants.K_MAX_SPEED_METERS_PER_SECOND,
+              AutoConstants.K_MAX_ACCELERATION_METERS_PER_SECOND_SQUARED)
+          // Add kinematics to ensure max speed is actually obeyed
+          .setKinematics(DriveConstants.kDriveKinematics)
+          // Apply the voltage constraint
+          .addConstraint(autoVoltageConstraint);
+      // An example trajectory to follow.  All units in meters.
+      Trajectory exampleTrajectory =
+      TrajectoryGenerator.generateTrajectory(
+      // Start at the origin facing the +X direction
+      m_driveTrain.getPose(),
+      // Pass through these two interior waypoints, making an 's' curve path
+      List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
+      // End 3 meters straight ahead of where we started, facing forward
+      //new Pose2d(getlimevalue("tx"), getlimevalue("ty"), new Rotation2d(0)),
+      new Pose2d(3,5, new Rotation2d(0)),
+      // Pass config
+      config);
+
+      ramseteCommand =
+        new RamseteCommand(
+            exampleTrajectory,
+            m_driveTrain::getPose,
+            new RamseteController(AutoConstants.K_RAMSETE_B, AutoConstants.K_RAMSETE_ZETA),
+            new SimpleMotorFeedforward(
+                DriveConstants.KS_VOLTS,
+                DriveConstants.KV_VOLT_SECONDS_PER_METER,
+                DriveConstants.KA_VOLT_SECONDS_SQURED_PER_METER),
+            DriveConstants.kDriveKinematics,
+            m_driveTrain::getWheelSpeeds,
+            new PIDController(DriveConstants.KP_DRIVE_VEL, 0, 0),
+            new PIDController(DriveConstants.KP_DRIVE_VEL, 0, 0),
+            // RamseteCommand passes volts to the callback
+            m_driveTrain::tankDriveVolts,
+            m_driveTrain);
+            return ramseteCommand;
     }
-    return jsonArray;
+    return new SequentialCommandGroup(new InstantCommand(() -> m_driveTrain.resetOdometry(m_driveTrain.getPose())));
   }
 
 }

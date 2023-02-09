@@ -85,7 +85,8 @@ public class DriveTrain extends SubsystemBase {
 
   private final MotorControllerGroup m_leftGroup = new MotorControllerGroup(m_leftLeader, m_leftFollower);
   private final MotorControllerGroup m_rightGroup = new MotorControllerGroup(m_rightLeader, m_rightFollower);
-
+  DifferentialDrive differentialDrive = new DifferentialDrive(m_leftGroup, m_rightGroup);
+  
   // ---------- Encoders ----------\\
   private final Encoder m_leftEncoder = new Encoder(0, 1);
   private final Encoder m_rightEncoder = new Encoder(2, 3);
@@ -315,6 +316,27 @@ public class DriveTrain extends SubsystemBase {
   /** Check the current robot pose. */
   public Pose2d getPose() {
     return m_odometry.getPoseMeters();
+  }
+
+  /**
+   * Controls the left and right sides of the drive directly with voltages.
+   *
+   * @param leftVolts the commanded left output
+   * @param rightVolts the commanded right output
+   */
+  public void tankDriveVolts(double leftVolts, double rightVolts) {
+    m_leftGroup.setVoltage(leftVolts);
+    m_rightGroup.setVoltage(rightVolts);
+    differentialDrive.feed();
+  }
+
+  /**
+   * Returns the current wheel speeds of the robot.
+   *
+   * @return The current wheel speeds.
+   */
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(m_leftEncoder.getRate(), m_rightEncoder.getRate());
   }
 
   /** Update our simulation. This should be run every robot loop in simulation. */

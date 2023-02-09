@@ -4,6 +4,7 @@ import java.sql.Driver;
 import java.util.function.Supplier;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -108,5 +109,25 @@ public class Constants {
         // Xbox Buttons (Use X_ before the button name to indicate use with Xbox
         // controller)
         public static final int X_AIM_TOWARDS_TARGET = 1;
+    }
+
+    /**
+     * Controller Constants
+     */
+    public static class DriveConstants {
+        public static final double KS_VOLTS = 0.22;
+        public static final double KV_VOLT_SECONDS_PER_METER = 1.98;
+        public static final double KA_VOLT_SECONDS_SQURED_PER_METER = 0.2;
+        public static final double KP_DRIVE_VEL = 8.5;
+        public static final double K_TRACK_WIDTH_METERS = 0.69;
+        public static final DifferentialDriveKinematics kDriveKinematics =
+            new DifferentialDriveKinematics(K_TRACK_WIDTH_METERS);
+    }
+
+    public static class AutoConstants {
+        public static final double K_MAX_SPEED_METERS_PER_SECOND = 3;
+        public static final double K_MAX_ACCELERATION_METERS_PER_SECOND_SQUARED = 1;
+        public static final double K_RAMSETE_B = 2;
+        public static final double K_RAMSETE_ZETA = 0.7;
     }
 }
