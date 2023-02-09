@@ -10,6 +10,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -282,7 +283,14 @@ public class Arm extends SubsystemBase {
             extensionValue = 47;
             extension = Extension.FULL;
             extensionMotor.set(0.0);
-            //TODO make vibrate when fully extended
+            
+             // vibrate xbox controler
+            xbox.setRumble(RumbleType.kLeftRumble, 1);
+            xbox.setRumble(RumbleType.kRightRumble, 1);
+             } 
+             else {
+                xbox.setRumble(RumbleType.kLeftRumble, 0);
+                xbox.setRumble(RumbleType.kRightRumble, 0);
         }
 
         // If we are greater than our maximum height extension
@@ -290,7 +298,14 @@ public class Arm extends SubsystemBase {
             extensionValue = 77;
             extension = Extension.FULL;
             extensionMotor.set(0.0);
-            //TODO make vibrate when fully extended
+
+            //vibrate xbox controlers
+            xbox.setRumble(RumbleType.kLeftRumble, 1);
+            xbox.setRumble(RumbleType.kRightRumble, 1);
+        }
+        else {
+            xbox.setRumble(RumbleType.kLeftRumble, 0);
+            xbox.setRumble(RumbleType.kRightRumble, 0);
         }
 
     }
