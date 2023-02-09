@@ -27,7 +27,7 @@ public class RobotContainer {
 
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
-    private final Arm m_arm = new Arm(m_driveTrain);
+    private final Arm m_arm = new Arm(m_driveTrain, xbox);
 
     // ---------- Autonomous Commands ----------\\
 
@@ -35,7 +35,6 @@ public class RobotContainer {
     InstantCommand example = new InstantCommand(() -> {
 
     });
-        
 
     // ---------- Global Toggles ----------\\
 
@@ -47,24 +46,33 @@ public class RobotContainer {
         // Button 2 is used for drive straight
 
         // new JoystickButton(stick, Constants.J_DRIVETRAIN_TOGGLE).onTrue(
-        //   new InstantCommand(() -> {
-        //   m_driveTrain.toggleDriveMode();
+        // new InstantCommand(() -> {
+        // m_driveTrain.toggleDriveMode();
         // }));
 
         // if(RobotBase.isSimulation()) {
-        //     new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
-        //         new InstantCommand(() -> {
-        //         m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
-        //     }));
+        // new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
+        // new InstantCommand(() -> {
+        // m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
+        // }));
 
         new JoystickButton(stick, 11).onTrue(
-                    new InstantCommand(() -> {
+                new InstantCommand(() -> {
                     m_arm.grab();
                 }));
         new JoystickButton(stick, 12).onTrue(
-                    new InstantCommand(() -> {
+                new InstantCommand(() -> {
                     m_arm.release();
                 }));
+        new JoystickButton(xbox, 6).onTrue(
+                new InstantCommand(() -> {
+                    m_arm.extendArm();
+                }));
+        new JoystickButton(xbox, 5).onTrue(
+                new InstantCommand(() -> {
+                    m_arm.retractArm();
+                }));
+
     }
 
     public DriveTrain getDriveTrain() {
@@ -94,13 +102,16 @@ public class RobotContainer {
 
     /**
      * Command to run in Telop mode
+     * 
      * @return the command to run in Telop
      */
     public Command getTelopCommand() {
         return new SingleJoystickDrive(m_driveTrain, stick, xbox);
     }
+
     /**
      * Command to run in Test Mode
+     * 
      * @return the command to run in Test
      */
     public Command getTestCommand() {

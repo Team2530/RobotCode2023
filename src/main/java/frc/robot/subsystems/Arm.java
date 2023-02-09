@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.function.Supplier;
+
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.sensors.CANCoder;
@@ -7,6 +9,7 @@ import com.ctre.phoenix.sensors.CANCoder;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -29,6 +32,9 @@ public class Arm extends SubsystemBase {
 
     //---------- Subsystems ----------\\
     private DriveTrain driveTrain;
+
+    //---------- Controllers ----------\\
+    private XboxController xbox;
 
     //--------- Values ----------\\
     /**Max Angle between the bottom position and the top position */
@@ -53,14 +59,6 @@ public class Arm extends SubsystemBase {
     */
     private double currentPosition;
 
-    private static final double kPositionTolerance = 0.05;
-    /**How far the arm moves relative to an encoder tick */
-    private static final double kExtensionPerTick = 0.001;
-    /**How much the arm rotates in degrees per encoder tick */
-    private static final double kDeltaAnglePerPulse = 0.1;
-    /**How far the endmost point of the arm is relative to the end of the robot */
-    private static final double kEndpointToRobot = 4.826;
-
 
 
     //---------- Preset Positions ----------\\
@@ -74,6 +72,20 @@ public class Arm extends SubsystemBase {
 
         /**The double value represented by the extension enum */
         private double length;
+
+        /*Get angle of robot arm */
+        private double angle;
+
+        public static double heightToEncoder = 15;
+
+        
+        /* gets height and base of grabber */
+        public Supplier<Double> heightSupplier = () -> length * Math.sin(angle);
+        public Supplier<Double> baseSupplier = () -> length * Math.cos(angle);
+
+       // heightSupplier.get();
+        //baseSupplier.get();
+
 
         private static final Extension[] vals = values();
 
@@ -136,8 +148,9 @@ public class Arm extends SubsystemBase {
      * Constructs a new Arm
      * @param driveTrain our DriveTrain
      */
-    public Arm(DriveTrain driveTrain) {
+    public Arm(DriveTrain driveTrain, XboxController xbox) {
         this.driveTrain = driveTrain;
+        this.xbox = xbox;
 
         // Initial Arm Conditions
         this.position = Position.HIGH;
@@ -149,7 +162,7 @@ public class Arm extends SubsystemBase {
         //---------- Shuffle Things ----------\\
         SmartShuffle.add("Arm Position", "");
         SmartShuffle.add("Arm Extension", "");
-        positionEncoder.setDistancePerPulse(kDeltaAnglePerPulse);
+        positionEncoder.setDistancePerPulse(Constants.ArmConstants.DELTA_ANGLE_PER_PULSE);
 
         //TODO: Reverse Motors if needed!
     }
@@ -158,7 +171,7 @@ public class Arm extends SubsystemBase {
     public void periodic() {
         currentPosition = positionEncoder.getDistance();
 
-        if(Math.abs(currentPosition - positionValue) > kPositionTolerance) {
+        if(Math.abs(currentPosition - positionValue) > Constants.ArmConstants.POSITION_TOLERANCE) {
             positionMotor.set(Math.signum(positionValue - currentPosition));
         } else {
             positionMotor.set(0);
@@ -166,7 +179,7 @@ public class Arm extends SubsystemBase {
 
         currentExtension = extensionEncoder.getPosition();
 
-        if(Math.abs(currentExtension - extensionValue) > kPositionTolerance) {
+        if(Math.abs(currentExtension - extensionValue) > Constants.ArmConstants.POSITION_TOLERANCE) {
             // This motor will be a lot more zoomy
             extensionMotor.set(Math.signum(extensionValue - currentExtension) * 0.2);
         } else {
@@ -257,18 +270,31 @@ public class Arm extends SubsystemBase {
     /**Makes sure the Arm doesn't become <em>illegal</em>*/
     private void ensureLength() {
         // Normalized Values
-        double cExtension = currentExtension * kExtensionPerTick;
-        double cPosition = currentPosition * kDeltaAnglePerPulse;
+        double cExtension = currentExtension * Constants.ArmConstants.EXTENSION_PER_TICK;
+        double cPosition = currentPosition * Constants.ArmConstants.DELTA_ANGLE_PER_PULSE;
+        double heightToEncoder = 13.22;
 
-        double extensionFromRobot = cExtension * Math.cos(cPosition) + kEndpointToRobot;
-        // If we are greater than our maximum
+        //get height and base of extention
+        double extensionFromRobot = cExtension * Math.cos(cPosition) + Constants.ArmConstants.ENDPOINT_TO_ROBOT;
+        double height = cExtension * Math.sin(cPosition) + Constants.ArmConstants.ENCODER_HEIGHT;
+        // If we are greater than our maximum base extension
         if(extensionFromRobot >= 47) {
             extensionValue = 47;
             extension = Extension.FULL;
             extensionMotor.set(0.0);
+            //TODO make vibrate when fully extended
+        }
+
+        // If we are greater than our maximum height extension
+        if (height >= 77){
+            extensionValue = 77;
+            extension = Extension.FULL;
+            extensionMotor.set(0.0);
+            //TODO make vibrate when fully extended
         }
 
     }
+
 
     /**
      * Use to update the values on Shuffleboard

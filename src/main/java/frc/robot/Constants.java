@@ -104,4 +104,16 @@ public class Constants {
         // controller)
         public static final int X_AIM_TOWARDS_TARGET = 1;
     }
+
+    public static class ArmConstants{ 
+        //height from ground to encoder
+        public static final double ENCODER_HEIGHT = 13.22;
+        public static final double POSITION_TOLERANCE = 0.05;
+        /**How far the arm moves relative to an encoder tick */
+        public static final double EXTENSION_PER_TICK = 0.001;
+        /**How much the arm rotates in degrees per encoder tick */
+        public static final double DELTA_ANGLE_PER_PULSE = 0.1;
+        /**How far the endmost point of the arm is relative to the end of the robot */
+        public static final double ENDPOINT_TO_ROBOT = 4.826;
+    }
 }
