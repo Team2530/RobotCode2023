@@ -18,7 +18,7 @@ public class Arm extends SubsystemBase {
     //---------- Motors ----------\\
     private WPI_TalonSRX positionMotor = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(Constants.PortsConstants.EXTENTION_PORT);
-    private Servo grabberServo = new Servo(Constants.PortsConstants.GRABBER_PORT);
+    private SpecialServo grabberServo = new SpecialServo(Constants.PortsConstants.GRABBER_PORT);
 
     private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT, Constants.PortsConstants.ARM_ENCODER_PORT + 1);
     private CANCoder extensionEncoder = new CANCoder(Constants.PortsConstants.EXTENTION_PORT);
@@ -247,11 +247,11 @@ public class Arm extends SubsystemBase {
     }
 
     public void grab(){
-        grabberServo.set(1);
+        grabberServo.setRelativeAngle(1);
     }
 
     public void release(){
-        grabberServo.set(-1);
+        grabberServo.setRelativeAngle(0);
     }
 
     /**Makes sure the Arm doesn't become <em>illegal</em>*/
