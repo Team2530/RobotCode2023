@@ -38,10 +38,7 @@ public class Arm extends SubsystemBase {
     private XboxController xbox;
 
     //--------- Values ----------\\
-    /**Max Angle between the bottom position and the top position */
-    private final double kMaxAngleAboveHorizontal = 62.953;
-    /**Max Extension (how far we can extend from the base of the arm) */
-    private final double kMaxExtension = 42.357; // refrenced from the back of the arm
+    //lots of constants in constants folder
 
     /**Our wanted position (double) */
     private double positionValue;
@@ -73,19 +70,6 @@ public class Arm extends SubsystemBase {
 
         /**The double value represented by the extension enum */
         private double length;
-
-        /*Get angle of robot arm */
-        private double angle;
-
-        public static double heightToEncoder = 15;
-
-        
-        /* gets height and base of grabber */
-        public Supplier<Double> heightSupplier = () -> length * Math.sin(angle);
-        public Supplier<Double> baseSupplier = () -> length * Math.cos(angle);
-
-       // heightSupplier.get();
-        //baseSupplier.get();
 
 
         private static final Extension[] vals = values();
