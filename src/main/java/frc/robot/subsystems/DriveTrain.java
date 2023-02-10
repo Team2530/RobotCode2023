@@ -41,7 +41,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.libraries.*;
-import frc.robot.libraries.SmartShuffle; 
+import frc.robot.libraries.SmartShuffle;
 import frc.robot.logging.*;
 
 public class DriveTrain extends SubsystemBase {
@@ -170,7 +170,7 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /**
-   * Single Joystick Drive
+   * Single Joystick Drive (Our Drive Method)
    * <p>
    * <h1>
    * PID will activate after 0.5 seconds
@@ -219,7 +219,7 @@ public class DriveTrain extends SubsystemBase {
 
     ((DifferentialDrive) driveBase).arcadeDrive(
         Deadzone.deadZone(stick.getY() * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-        -Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
+        Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
   }
 
   /** Sets speeds to the drivetrain motors. */
@@ -330,9 +330,10 @@ public class DriveTrain extends SubsystemBase {
     updateOdometry();
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
-  
+
   /**
    * Toggles the max drive speed to the passed in speed
+   * 
    * @param maxSpeed the speed
    */
   public void toggleTurtleMode(double maxSpeed) {
