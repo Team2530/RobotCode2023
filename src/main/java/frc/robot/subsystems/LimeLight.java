@@ -8,12 +8,17 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import org.json.simple.JSONObject;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
@@ -40,14 +45,19 @@ import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.LimeLightConstants;
 import frc.robot.libraries.Deadzone;
+import frc.robot.limelight.LimelightResults;
+import frc.robot.limelight.LimelightResultsWrapper;
 
 
 /**
  * This is meant to serve as a base class for all Limelight operations. It contains the base code for operating the robot
  * from vision using the Limelight.
  * <p>Note that values from year to year will change and constants as well as PID values will need to be adjusted accordingly.
+ * @param <LimelightRetroTarget>
  */
-public class LimeLight extends SubsystemBase {
+public class LimeLight<LimelightRetroTarget> extends SubsystemBase {
+  private LimelightResults latestLimelightResults = null;
+  private ObjectMapper mapper;
   static DriveTrain driveTrain;
 
   static double xoff;
@@ -229,11 +239,24 @@ public class LimeLight extends SubsystemBase {
     }
 
   }
+  
 
   //This method for future to get path planner to hookup with lime light reading
   public static Command getRamseteCommand(DriveTrain m_driveTrain){
     RamseteCommand ramseteCommand=null;
-    Boolean isValidTarget = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getBoolean(false);
+    Pose2d endPose2d = null;
+    Pose2d initialPose2d = null;
+    Boolean isValidTarget = false; 
+    //if(mode == "Autonomous"){
+      initialPose2d = m_driveTrain.getPose();
+      endPose2d = new Pose2d(1, 0, new Rotation2d(0));
+      isValidTarget = true;
+    //}
+    // else if(mode == "LimeLight"){
+    //   initialPose2d = m_driveTrain.getPose();
+    //   endPose2d = new Pose2d(getlimevalue("tx"), getlimevalue("ty"), new Rotation2d(0));
+    //   isValidTarget = NetworkTableInstance.getDefault().getTable("limelight").getEntry("tv").getBoolean(false);
+    // }
     isValidTarget = true;
     if(isValidTarget){
       // Create a voltage constraint to ensure we don't accelerate too fast
@@ -257,13 +280,19 @@ public class LimeLight extends SubsystemBase {
       // An example trajectory to follow.  All units in meters.
       Trajectory exampleTrajectory =
       TrajectoryGenerator.generateTrajectory(
-      // Start at the origin facing the +X direction
-      m_driveTrain.getPose(),
-      // Pass through these two interior waypoints, making an 's' curve path
-      List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
-      // End 3 meters straight ahead of where we started, facing forward
-      //new Pose2d(getlimevalue("tx"), getlimevalue("ty"), new Rotation2d(0)),
-      new Pose2d(3,5, new Rotation2d(0)),
+        // Start at the origin facing the +X direction
+        initialPose2d,
+        // Pass through these no interior waypoints
+        List.of(),
+        // End 3 meters straight ahead of where we started, facing forward
+        endPose2d,
+        // // Start at the origin facing the +X direction
+        // m_driveTrain.getPose(),
+        // // Pass through these two interior waypoints, making an 's' curve path
+        // List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
+        // // End 3 meters straight ahead of where we started, facing forward
+        // //new Pose2d(getlimevalue("tx"), getlimevalue("ty"), new Rotation2d(0)),
+        // new Pose2d(3,5, new Rotation2d(0)),
       // Pass config
       config);
 
@@ -287,5 +316,34 @@ public class LimeLight extends SubsystemBase {
     }
     return new SequentialCommandGroup(new InstantCommand(() -> m_driveTrain.resetOdometry(m_driveTrain.getPose())));
   }
+
+  public Optional<frc.robot.limelight.LimelightRetroTarget> getLatestRetroTarget() {
+    LimelightResults results = getLatestResults();
+    if (results != null && results.valid && results.RetroreflectiveTargets.length > 0) {
+      return Optional.of(results.RetroreflectiveTargets[0]);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Parses Limelight's JSON results dump into a LimelightResults Object
+   */
+  public LimelightResults getLatestResults() {
+    if (latestLimelightResults == null) {
+      if (mapper == null) {
+        mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      }
+
+      try {
+        var json = NetworkTableInstance.getDefault().getTable("limelight").getEntry("json").getString("");
+        var wrapper = mapper.readValue(json, LimelightResultsWrapper.class);
+        latestLimelightResults = wrapper.targetingResults;
+      } catch (JsonProcessingException e) {
+        System.err.println("lljson error: " + e.getMessage());
+      }
+    }
+    return latestLimelightResults;
+  }
+  
 
 }

@@ -115,11 +115,11 @@ public class Constants {
      * Controller Constants
      */
     public static class DriveConstants {
-        public static final double KS_VOLTS = 0.22;
-        public static final double KV_VOLT_SECONDS_PER_METER = 1.98;
+        public static final double KS_VOLTS = 0.01;
+        public static final double KV_VOLT_SECONDS_PER_METER = .25;
         public static final double KA_VOLT_SECONDS_SQURED_PER_METER = 0.2;
-        public static final double KP_DRIVE_VEL = 8.5;
-        public static final double K_TRACK_WIDTH_METERS = 0.69;
+        public static final double KP_DRIVE_VEL = 5;
+        public static final double K_TRACK_WIDTH_METERS = 0.31 * 2;;
         public static final DifferentialDriveKinematics kDriveKinematics =
             new DifferentialDriveKinematics(K_TRACK_WIDTH_METERS);
     }
