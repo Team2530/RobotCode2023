@@ -135,7 +135,7 @@ public class Arm extends SubsystemBase {
      * Constructs a new Arm
      * @param driveTrain our DriveTrain
      */
-    public Arm(DriveTrain driveTrain, XboxController xbox) {
+    public Arm(DriveTrain driveTrain, Joystick stick, XboxController xbox) {
         this.driveTrain = driveTrain;
         this.xbox = xbox;
         this.stick = stick;
