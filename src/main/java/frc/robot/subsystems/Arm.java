@@ -8,6 +8,7 @@ import com.ctre.phoenix.sensors.CANCoder;
 
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -22,7 +23,7 @@ public class Arm extends SubsystemBase {
     //---------- Motors ----------\\
     private WPI_TalonSRX positionMotor = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(Constants.PortsConstants.EXTENTION_PORT);
-    private Servo grabberServo = new Servo(Constants.PortsConstants.GRABBER_PORT);
+    private SpecialServo grabberServo = new SpecialServo(Constants.PortsConstants.GRABBER_PORT);
 
     private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT, Constants.PortsConstants.ARM_ENCODER_PORT + 1);
     private CANCoder extensionEncoder = new CANCoder(Constants.PortsConstants.EXTENTION_PORT);
@@ -36,6 +37,7 @@ public class Arm extends SubsystemBase {
 
     //---------- Controllers ----------\\
     private XboxController xbox;
+    private Joystick stick;
 
     //--------- Values ----------\\
     //lots of constants in constants folder
@@ -136,6 +138,7 @@ public class Arm extends SubsystemBase {
     public Arm(DriveTrain driveTrain, XboxController xbox) {
         this.driveTrain = driveTrain;
         this.xbox = xbox;
+        this.stick = stick;
 
         // Initial Arm Conditions
         this.position = Position.HIGH;
@@ -172,6 +175,10 @@ public class Arm extends SubsystemBase {
         }
 
         updateShuffleBoardValues();
+
+        // System.out.println(stick.getRawAxis(3));
+        // For testing grabber servo
+        // grabberServo.setRelativeAngle(stick.getRawAxis(3));
     }
 
     /**
@@ -245,11 +252,11 @@ public class Arm extends SubsystemBase {
     }
 
     public void grab(){
-        grabberServo.set(1);
+        grabberServo.setRelativeAngle(1);
     }
 
     public void release(){
-        grabberServo.set(-1);
+        grabberServo.setRelativeAngle(0);
     }
 
     /**Makes sure the Arm doesn't become <em>illegal</em>*/

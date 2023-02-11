@@ -196,7 +196,7 @@ public class DriveTrain extends SubsystemBase {
       yawCtl = stick.getZ();
     }
 
-    System.out.println(yawTarget);
+    // System.out.println(yawTarget);
 
     // Enforce Limits
     double driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrainConstants.CUT_OFF_MOTOR_SPEED)

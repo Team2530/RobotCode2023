@@ -28,6 +28,7 @@ public class RobotContainer {
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
     private final Arm m_arm = new Arm(m_driveTrain, xbox);
+    private final Arm m_arm = new Arm(m_driveTrain, stick);
 
     // ---------- Autonomous Commands ----------\\
 
