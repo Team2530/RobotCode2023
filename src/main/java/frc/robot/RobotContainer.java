@@ -29,12 +29,11 @@ public class RobotContainer {
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
 
     static {
-        if(RobotBase.isReal()){
+        if (RobotBase.isReal()) {
             final USBCamera driveCamera = new USBCamera();
         }
-        
+
     }
-    
 
     // ---------- Autonomous Commands ----------\\
 
@@ -58,6 +57,9 @@ public class RobotContainer {
                 })).onFalse(new InstantCommand(() -> {
                     m_driveTrain.toggleTurtleMode(1.0);
                 }));
+
+        new JoystickButton(stick, 12).toggleOnTrue(
+                new WaitUntilCommand(m_driveTrain::level));
 
         // if(RobotBase.isSimulation()) {
         // new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(

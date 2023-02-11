@@ -22,6 +22,7 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotController;
@@ -90,6 +91,8 @@ public class DriveTrain extends SubsystemBase {
   // ---------- PID Controllers ----------\\
   private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
   private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
+
+  private final PIDController levelPID = new PIDController(0.1, 0.01, 0.2);
   private AHRS ahrs = RobotContainer.getAhrs();
   // Double for Rot PID
   private double yawCtl = 0.0;
@@ -338,5 +341,39 @@ public class DriveTrain extends SubsystemBase {
    */
   public void toggleTurtleMode(double maxSpeed) {
     driveModeSpeed = maxSpeed;
+  }
+
+  public void setSides(double speed) {
+    ((DifferentialDrive) driveBase).arcadeDrive(speed, 0);
+  }
+
+  /**
+   * We assume that there isn't any control wanted during this time,
+   * so the robot will take over from here. Assuming the NavX is attached
+   * correctly,
+   * we will want to use the pitch axis to read our current state of "levelness"
+   */
+  public boolean level() {
+    if (DriverStation.isEnabled()) {
+      double currentPitch = ahrs.getRoll();
+      // PID output for achieving "levelness"
+      double speed = levelPID.calculate(currentPitch, 0.0);
+      // Keep speed maxed at 100%
+
+      speed = Math.abs(speed) > 1 ? 1 * Math.signum(speed) * .75 : speed * .75;
+      setSides(-speed);
+
+      // ! for simulation purposes only
+      // currentPitch += speed;
+
+      // See values
+      System.out.println(speed + " " + currentPitch);
+
+      // If the charge station is level, we can stop moving
+      return Math.abs(currentPitch) < 0.2;
+    }
+
+    return true;
+
   }
 }
