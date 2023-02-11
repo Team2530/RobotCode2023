@@ -7,6 +7,10 @@ package frc.robot.subsystems;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
@@ -147,6 +151,14 @@ public class DriveTrain extends SubsystemBase {
     m_rightFollower.setInverted(false);
     m_leftLeader.setInverted(true);
     m_leftFollower.setInverted(true);
+
+    m_leftFollower.setNeutralMode(NeutralMode.Brake);
+    m_leftLeader.setNeutralMode(NeutralMode.Brake);
+    m_rightLeader.setNeutralMode(NeutralMode.Brake);
+    m_rightFollower.setNeutralMode(NeutralMode.Brake);
+
+
+
 
     // Todo: Declare using provided method based on DriveTrain type Ex:
     // tankDrive();s

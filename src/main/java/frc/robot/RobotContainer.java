@@ -53,6 +53,7 @@ public class RobotContainer {
 
     // ---------- Subsystems ----------\\
     private final static DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
+    private final AutonomousTrajectory autonomousTrajectory = new AutonomousTrajectory(m_driveTrain);
 
 
     // ---------- Autonomous Commands ----------\\
@@ -133,7 +134,7 @@ public class RobotContainer {
     return print("Starting auto")
         .andThen(runOnce(
             () -> m_driveTrain.getPose(), m_driveTrain))
-        .andThen(m_driveTrain.createCommandForTrajectory(AutonomousTrajectory.goForwardThreeMetersAndComeBack(), m_driveTrain::getPose))
+        .andThen(m_driveTrain.createCommandForTrajectory(AutonomousTrajectory.goForwardThreeMetersAndComeBack(m_driveTrain), m_driveTrain::getPose))
         //.andThen(m_driveTrain.createCommandForTrajectory(turn90Tracjectory, m_driveTrain::getPose))
         .andThen(runOnce(m_driveTrain::stop, m_driveTrain))
         .andThen(print("Done with auto"));
