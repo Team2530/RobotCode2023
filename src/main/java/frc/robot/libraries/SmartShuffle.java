@@ -7,11 +7,11 @@ import java.util.Map;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.SimpleWidget;
 
 public class SmartShuffle {
-
     private GenericEntry entry;
-    
+    private SimpleWidget simpleWidget;
     // position of the placement of a SmartShuffle object
     private static int posx = 0;
     private static int posy = 0;
@@ -19,25 +19,38 @@ public class SmartShuffle {
     private static int width = 1;
     private static int height = 1;
 
+    private int ticks;
+
+    /**Use to change between different Shuffleboard tables*/
+    public static String tableName = "Test Values";
+
     private static BuiltInWidgets widget = BuiltInWidgets.kNumberBar;
 
     private static HashMap<String, SmartShuffle> shuffleObjects = new HashMap<String, SmartShuffle>();
 
     private SmartShuffle(String title, Object defaultValue) {
-        entry = Shuffleboard.getTab("Test Values")
+        simpleWidget = Shuffleboard.getTab(tableName)
         .add(title, defaultValue)
-        .withWidget(widget)
-        .withProperties(Map.of("min", -100, "max", 100))
+        .withWidget(widget) // with specified widget
+        .withProperties(Map.of("min", -100, "max", 100)) // can be updated with different types
         .withPosition(posx, posy) // specify the widget here
-        .withSize(width, height)
-        .getEntry();
+        .withSize(width, height);
 
-        posx++;
+        entry = simpleWidget.getEntry();
+
+        posx+= width;
         // if we go off the screen
-        if(posx == 9) {
+        if(posx >= 9) {
             posy++;
             posx = 0;
         }
+    }
+    /**
+     * Switches between tables
+     * @param name Name of table to switch to
+     */
+    public static void changeTable(String name) {
+        tableName = name;
     }
     /**
      * Adds a SmartShuffle object to the list
@@ -82,5 +95,27 @@ public class SmartShuffle {
 
     public static void setWidget(BuiltInWidgets widget) {
         SmartShuffle.widget = widget;
+    }
+
+    /**
+     * 
+     * @param color Color you would like to display on boolean box
+     */
+    public void changeColor(String color) {
+        simpleWidget.withProperties(Map.of("colorWhenTrue", color));
+    }
+
+    public void flashColor(String color1, String color2, double ticks) {
+        if(this.ticks < ticks) {
+            changeColor(color1);
+        } else {
+            changeColor(color2);
+        }
+
+        this.ticks++;
+
+        if(this.ticks > ticks * 2) {
+            this.ticks = 0;
+        }
     }
 }
