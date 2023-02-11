@@ -8,22 +8,28 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.sensors.WPI_Pigeon2;
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
@@ -39,10 +45,14 @@ import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.libraries.Deadzone;
 import frc.robot.libraries.SmartShuffle;
 import frc.robot.logging.*;
@@ -50,6 +60,7 @@ import frc.robot.logging.*;
 public class DriveTrain extends SubsystemBase {
   private Joystick stick;
   private XboxController xbox;
+  private final WPI_Pigeon2 pigeon = new WPI_Pigeon2(Constants.DriveConstants.PIGEON_ID, Constants.DriveConstants.CANIVORE_BUS_NAME);
 
   RobotDriveBase driveBase;
 
@@ -364,5 +375,48 @@ public class DriveTrain extends SubsystemBase {
   public void updatePeriodic() {
     updateOdometry();
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
+  }
+
+  /**
+   * Creates a command to follow a Trajectory on the drivetrain.
+   * @param trajectory trajectory to follow
+   * @return command that will run the trajectory
+   */
+  public Command createCommandForTrajectory(Trajectory trajectory, Supplier<Pose2d> poseSupplier) {
+    // var thetaController = new ProfiledPIDController(
+    //     AutoConstants.THETA_kP, AutoConstants.THETA_kI, AutoConstants.THETA_kD, THETA_CONSTRAINTS);
+    // thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    RamseteCommand ramseteCommand =
+        new RamseteCommand(
+          trajectory,
+          this::getPose,
+          new RamseteController(AutoConstants.K_RAMSETE_B, AutoConstants.K_RAMSETE_ZETA),
+          new SimpleMotorFeedforward(
+              DriveConstants.KS_VOLTS,
+              DriveConstants.KV_VOLT_SECONDS_PER_METER,
+              DriveConstants.KA_VOLT_SECONDS_SQURED_PER_METER),
+          DriveConstants.kDriveKinematics,
+          this::getWheelSpeeds,
+          new PIDController(DriveConstants.KP_DRIVE_VEL, 0, 0),
+          new PIDController(DriveConstants.KP_DRIVE_VEL, 0, 0),
+          // RamseteCommand passes volts to the callback
+          this::tankDriveVolts,
+          this);
+            
+      return ramseteCommand;
+  }
+
+  public Rotation2d getGyroscopeRotation() {
+    return pigeon.getRotation2d();
+
+    // We have to invert the angle of the NavX so that rotating the robot counter-clockwise makes the angle increase.
+    // return Rotation2d.fromDegrees(360.0 - navx.getYaw());
+  }
+  /**
+   * Sets the desired speeds to zero
+   */
+  public void stop() {
+    setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds()));
   }
 }

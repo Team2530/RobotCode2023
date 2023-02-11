@@ -34,12 +34,15 @@ import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstrai
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
@@ -90,10 +93,29 @@ public class LimeLight<LimelightRetroTarget> extends SubsystemBase {
   private final static SlewRateLimiter m_speedLimiter = new SlewRateLimiter(3);// TODO: change
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);// TODO: change
 
-  /** Creates a new LimeLight. */
-  public LimeLight(DriveTrain driveTrain) {
-    this.driveTrain = driveTrain;
+  
+  private final NetworkTable limelightNetworkTable;
+  private String networkTableName;
+  private boolean takeSnapshot = false;
 
+  private boolean enabled;
+  private boolean driverMode;
+  private double activePipelineId;
+
+  /** Creates a new LimeLight. */
+  public LimeLight(DriveTrain driveTrain, String networkTableName) {
+    this.driveTrain = driveTrain;
+    
+    
+    
+    limelightNetworkTable = NetworkTableInstance.getDefault().getTable(networkTableName);
+    this.networkTableName = networkTableName;
+
+    limelightNetworkTable.getEntry("snapshot").setDouble(0.0);
+
+    new Trigger(RobotState::isEnabled)
+        .onTrue(Commands.runOnce(this::enable))
+        .onFalse(Commands.runOnce(this::disable, this).ignoringDisable(true));
   }
 
   @Override
@@ -105,6 +127,26 @@ public class LimeLight<LimelightRetroTarget> extends SubsystemBase {
     // System.out.println(distanceFromTarget);
     // Shuffleboard.getTab("limelight").addNumber("Distance", distanceFromTarget);
     SmartDashboard.putNumber("Lime Distance", distanceFromTarget);
+
+    latestLimelightResults = null;
+    // Flush NetworkTable to send LED mode and pipeline updates immediately
+    var shouldFlush = (limelightNetworkTable.getEntry("ledMode").getDouble(0.0) != (enabled ? 0.0 : 1.0) || 
+        limelightNetworkTable.getEntry("pipeline").getDouble(0.0) != activePipelineId);
+    
+    limelightNetworkTable.getEntry("ledMode").setDouble(enabled ? 0.0 : 1.0);
+    limelightNetworkTable.getEntry("camMode").setDouble(driverMode ? 1.0 : 0.0);
+    limelightNetworkTable.getEntry("pipeline").setDouble(activePipelineId);
+  
+    if (shouldFlush)  {
+      NetworkTableInstance.getDefault().flush();
+    }
+
+    if(takeSnapshot) {
+      limelightNetworkTable.getEntry("snapshot").setDouble(1.0);
+      takeSnapshot = false;
+    } else {
+      limelightNetworkTable.getEntry("snapshot").setDouble(0.0);
+    }
   }
 
   /**
@@ -248,7 +290,7 @@ public class LimeLight<LimelightRetroTarget> extends SubsystemBase {
     Pose2d initialPose2d = null;
     Boolean isValidTarget = false; 
     //if(mode == "Autonomous"){
-      initialPose2d = m_driveTrain.getPose();
+      initialPose2d = new Pose2d(0, 0, new Rotation2d(0));
       endPose2d = new Pose2d(1, 0, new Rotation2d(0));
       isValidTarget = true;
     //}
@@ -345,5 +387,40 @@ public class LimeLight<LimelightRetroTarget> extends SubsystemBase {
     return latestLimelightResults;
   }
   
+/**
+   * Turns the LEDS off and switches the camera mode to vision processor.
+   */
+  public void disable() {
+    enabled = false;
+    driverMode = false;
+  }
+
+  /**
+   * Sets the LEDS to be controlled by the pipeline and switches the camera mode
+   * to vision processor.
+   */
+  public void enable() {
+    enabled = true;
+    driverMode = false;
+  }
+/**
+   * Sets the LEDs to off and switches the camera to driver mode.
+   */
+  public void driverMode() {
+    enabled = false;
+    driverMode = true;
+  }
+
+  public String getNetworkTableName() {
+    return networkTableName;
+  }
+
+  public void takeSnapshot() {
+    takeSnapshot = true;
+  }
+
+  public void setPipelineId(int pipelineId) {
+    activePipelineId = pipelineId;
+  }
 
 }

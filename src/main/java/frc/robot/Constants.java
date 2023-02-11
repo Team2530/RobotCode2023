@@ -2,14 +2,18 @@ package frc.robot;
 
 import java.sql.Driver;
 import java.util.function.Supplier;
-
+import static edu.wpi.first.math.util.Units.degreesToRadians;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 
 import frc.robot.subsystems.Controller;
+import frc.robot.subsystems.LimelightConfig;
 
 /**
  * Constans provides a place for all robot
@@ -122,6 +126,8 @@ public class Constants {
         public static final double K_TRACK_WIDTH_METERS = 0.31 * 2;;
         public static final DifferentialDriveKinematics kDriveKinematics =
             new DifferentialDriveKinematics(K_TRACK_WIDTH_METERS);
+        public static final int PIGEON_ID = 30;
+        public static final String CANIVORE_BUS_NAME = "tank";
     }
 
     public static class AutoConstants {
@@ -130,4 +136,24 @@ public class Constants {
         public static final double K_RAMSETE_B = 2;
         public static final double K_RAMSETE_ZETA = 0.7;
     }
+
+    public static class VisionConstants {
+
+        /**
+         * Physical location of the apriltag camera on the robot, relative to the center of the robot.
+         */
+        public static final Transform3d APRILTAG_CAMERA_TO_ROBOT =
+            new Transform3d(new Translation3d(-0.3425, 0.0, -0.233), new Rotation3d());
+        public static final Transform3d APRILTAG_ROBOT_TO_CAMERA = APRILTAG_CAMERA_TO_ROBOT.inverse();
+    
+        /**
+         * Physical location of the shooter camera on the robot, relative to the center of the robot.
+         */
+        public static final Transform3d SHOOTER_CAMERA_TO_ROBOT =
+            new Transform3d(new Translation3d(-0.128, 0.0075, -1.002), new Rotation3d(0.0, degreesToRadians(7.06), 0.0));
+        public static final Transform3d SHOOTER_ROBOT_TO_CAMERA = SHOOTER_CAMERA_TO_ROBOT.inverse();
+    
+        public static final LimelightConfig SHOOTER_LIMELIGHT_CONFIG = 
+            new LimelightConfig("limelight", SHOOTER_CAMERA_TO_ROBOT);
+      }
 }

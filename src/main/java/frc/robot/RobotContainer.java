@@ -1,18 +1,31 @@
 package frc.robot;
 
+import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.*;
 import frc.robot.libraries.*;
 import frc.robot.subsystems.*;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.TrajectoryGenerator;
+import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import static edu.wpi.first.wpilibj2.command.Commands.run;
+import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
 
 import java.util.HashMap;
+import java.util.List;
 
 import com.kauailabs.navx.frc.AHRS;
 import com.pathplanner.lib.PathConstraints;
@@ -22,6 +35,7 @@ import com.pathplanner.lib.auto.PIDConstants;
 import com.pathplanner.lib.auto.RamseteAutoBuilder;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
 import com.pathplanner.lib.commands.PPRamseteCommand;
+import static edu.wpi.first.wpilibj2.command.Commands.print;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -53,6 +67,7 @@ public class RobotContainer {
 
     // ---------- Global Toggles ----------\\
 
+    private final PhotonCamera photonCamera = new PhotonCamera();
     public RobotContainer() {
         configureButtonBindings();
     }
@@ -93,8 +108,36 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return LimeLight.getRamseteCommand(m_driveTrain);
-        // return new PPRamseteCommand(m_auto,
+    
+        // Create config for trajectory
+    TrajectoryConfig config =
+    new TrajectoryConfig(
+            1,
+            1)
+        // Add kinematics to ensure max speed is actually obeyed
+        .setKinematics(DriveConstants.kDriveKinematics);
+
+    // An example trajectory to follow.  All units in meters.
+    Trajectory exampleTrajectory =
+        TrajectoryGenerator.generateTrajectory(
+            // Start at the origin facing the +X direction
+            new Pose2d(0, 0, new Rotation2d(0)),
+            // Pass through these no interior waypoints
+            List.of(),
+            // End 3 meters straight ahead of where we started, facing forward
+            new Pose2d(3, 0, Rotation2d.fromDegrees(90)),
+            config);
+
+            
+
+    return print("Starting auto")
+        .andThen(runOnce(
+            () -> m_driveTrain.getPose(), m_driveTrain))
+        .andThen(m_driveTrain.createCommandForTrajectory(AutonomousTrajectory.goForwardThreeMetersAndComeBack(), m_driveTrain::getPose))
+        //.andThen(m_driveTrain.createCommandForTrajectory(turn90Tracjectory, m_driveTrain::getPose))
+        .andThen(runOnce(m_driveTrain::stop, m_driveTrain))
+        .andThen(print("Done with auto"));
+                // return new PPRamseteCommand(m_auto,
                 // m_driveTrain::getPose,
                 // new RamseteController(),
                 // m_driveTrain.m_kinematics,
@@ -109,7 +152,6 @@ public class RobotContainer {
      * @return the command to run in Telop
      */
     public Command getTelopCommand() {
-        //return LimeLight.getRamseteCommand(m_driveTrain, "LimeLight");
         return new SingleJoystickDrive(m_driveTrain, stick, xbox);
     }
 
