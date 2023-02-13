@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -20,48 +21,51 @@ import frc.robot.libraries.*;
 
 public class Arm extends SubsystemBase {
 
-    //---------- Motors ----------\\
+    // ---------- Motors ----------\\
     private WPI_TalonSRX positionMotor = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(Constants.PortsConstants.EXTENTION_PORT);
     private SpecialServo grabberServo = new SpecialServo(Constants.PortsConstants.GRABBER_PORT);
 
-    private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT, Constants.PortsConstants.ARM_ENCODER_PORT + 1);
+    private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT,
+            Constants.PortsConstants.ARM_ENCODER_PORT + 1);
     private CANCoder extensionEncoder = new CANCoder(Constants.PortsConstants.EXTENTION_PORT);
     // For simulation purposes
     private EncoderSim simPositionEncoder = new EncoderSim(positionEncoder);
 
-    private SingleJointedArmSim armSim = new SingleJointedArmSim(DCMotor.getFalcon500(1), 1, 2, 1, Math.PI / 6, Math.PI / 3, 2, false);
+    private SingleJointedArmSim armSim = new SingleJointedArmSim(DCMotor.getFalcon500(1), 1, 2, 1, Math.PI / 6,
+            Math.PI / 3, 2, false);
 
-    //---------- Subsystems ----------\\
+    // ---------- Subsystems ----------\\
     private DriveTrain driveTrain;
 
-    //---------- Controllers ----------\\
+    // ---------- Controllers ----------\\
     private XboxController xbox;
     private Joystick stick;
 
-    //--------- Values ----------\\
-    //lots of constants in constants folder
+    // --------- Values ----------\\
+    // lots of constants in constants folder
 
-    /**Our wanted position (double) */
+    /** Our wanted position (double) */
     private double positionValue;
-    /**An Enum representation of our wanted position*/
+    /** An Enum representation of our wanted position */
     private Position position;
-    /**Our wanted extension (double) */
+    /** Our wanted extension (double) */
     private double extensionValue;
-    /**An Enum representation of our wanted extetnion*/
+    /** An Enum representation of our wanted extetnion */
     private Extension extension;
 
-    /**Current encoder reading of extension (how much out/in the arm is)*/
+    /** Current encoder reading of extension (how much out/in the arm is) */
     private double currentExtension;
 
-    /**Current encoder reading of position (how much angle the arm has)
-    * <p><em>Zero should be the equilvalent to zero degrees relative to the ground</em>
-    */
+    /**
+     * Current encoder reading of position (how much angle the arm has)
+     * <p>
+     * <em>Zero should be the equilvalent to zero degrees relative to the
+     * ground</em>
+     */
     private double currentPosition;
 
-
-
-    //---------- Preset Positions ----------\\
+    // ---------- Preset Positions ----------\\
     public enum Extension {
         FULL(1),
         TWOTHIRDS(.66),
@@ -70,30 +74,29 @@ public class Arm extends SubsystemBase {
         RETRACTED(0),
         CUSTOM(-1);
 
-        /**The double value represented by the extension enum */
+        /** The double value represented by the extension enum */
         private double length;
-
 
         private static final Extension[] vals = values();
 
-        private Extension(double length){
+        private Extension(double length) {
             this.length = length;
         }
 
         public Extension extend() {
-            if(this != FULL) {
+            if (this != FULL) {
                 return vals[(this.ordinal() - 1)];
             } else {
                 return FULL;
-            }   
+            }
         }
 
         public Extension retract() {
-            if(this != RETRACTED) {
+            if (this != RETRACTED) {
                 return vals[(this.ordinal() + 1)];
             } else {
                 return RETRACTED;
-            }   
+            }
         }
     }
 
@@ -105,34 +108,35 @@ public class Arm extends SubsystemBase {
         FLOOR(0),
         Custom(-1);
 
-        /**The double value represented by the position enum */
+        /** The double value represented by the position enum */
         private double angle;
 
         private static final Position[] vals = values();
 
-        private Position(double position){
+        private Position(double position) {
             this.angle = position;
         }
 
         public Position raise() {
-            if(this != HIGH) {
+            if (this != HIGH) {
                 return vals[(this.ordinal() - 1)];
             } else {
                 return HIGH;
-            }   
+            }
         }
 
         public Position lower() {
-            if(this != FLOOR) {
+            if (this != FLOOR) {
                 return vals[(this.ordinal() + 1)];
             } else {
                 return FLOOR;
-            }   
+            }
         }
     }
 
     /**
      * Constructs a new Arm
+     * 
      * @param driveTrain our DriveTrain
      */
     public Arm(DriveTrain driveTrain, Joystick stick, XboxController xbox) {
@@ -147,19 +151,18 @@ public class Arm extends SubsystemBase {
         this.positionValue = 1.0;
         this.extensionValue = 0.0;
 
-        //---------- Shuffle Things ----------\\
-        SmartShuffle.add("Arm Position", "");
-        SmartShuffle.add("Arm Extension", "");
+        // ---------- Shuffle Things ----------\\
+        initialiseShuffleBoardValues();
         positionEncoder.setDistancePerPulse(Constants.ArmConstants.DELTA_ANGLE_PER_PULSE);
 
-        //TODO: Reverse Motors if needed!
+        // TODO: Reverse Motors if needed!
     }
 
     @Override
     public void periodic() {
         currentPosition = positionEncoder.getDistance();
 
-        if(Math.abs(currentPosition - positionValue) > Constants.ArmConstants.POSITION_TOLERANCE) {
+        if (Math.abs(currentPosition - positionValue) > Constants.ArmConstants.POSITION_TOLERANCE) {
             positionMotor.set(Math.signum(positionValue - currentPosition));
         } else {
             positionMotor.set(0);
@@ -167,7 +170,7 @@ public class Arm extends SubsystemBase {
 
         currentExtension = extensionEncoder.getPosition();
 
-        if(Math.abs(currentExtension - extensionValue) > Constants.ArmConstants.POSITION_TOLERANCE) {
+        if (Math.abs(currentExtension - extensionValue) > Constants.ArmConstants.POSITION_TOLERANCE) {
             // This motor will be a lot more zoomy
             extensionMotor.set(Math.signum(extensionValue - currentExtension) * 0.2);
         } else {
@@ -183,6 +186,7 @@ public class Arm extends SubsystemBase {
 
     /**
      * Sets the Arm Position to a preset position
+     * 
      * @param position the Position value in {@code Position}
      */
     public void setArmPosition(Position position) {
@@ -191,8 +195,9 @@ public class Arm extends SubsystemBase {
     }
 
     /**
-     * Sets the arm to the passed in position. This will set the position enum to 
+     * Sets the arm to the passed in position. This will set the position enum to
      * custom so we may move more freely as we choose a position
+     * 
      * @param position the double value of position to move the arm to
      */
     public void setArmPosition(double position) {
@@ -202,6 +207,7 @@ public class Arm extends SubsystemBase {
 
     /**
      * Sets the arm to the preset extension
+     * 
      * @param extension the extension value in {@code extension}
      */
     public void setArmExtension(Extension extension) {
@@ -211,6 +217,7 @@ public class Arm extends SubsystemBase {
 
     /**
      * Sets the arm extension to the double extension
+     * 
      * @param extension the double value of extension to move the arm to
      */
     public void setArmExtension(double extension) {
@@ -251,56 +258,53 @@ public class Arm extends SubsystemBase {
         extensionValue = extension.length;
     }
 
-    public void grab(){
-        grabberServo.setRelativeAngle(1);
+    public void grab() {
+        grabberServo.setRelativeAngle(.6);
     }
 
-    public void release(){
+    public void release() {
         grabberServo.setRelativeAngle(0);
     }
 
-    /**Makes sure the Arm doesn't become <em>illegal</em>*/
+    /** Makes sure the Arm doesn't become <em>illegal</em> */
     private void ensureLength() {
         // Normalized Values
         double cExtension = currentExtension * Constants.ArmConstants.EXTENSION_PER_TICK;
         double cPosition = currentPosition * Constants.ArmConstants.DELTA_ANGLE_PER_PULSE;
         double heightToEncoder = 13.22;
 
-        //get height and base of extention
+        // get height and base of extention
         double extensionFromRobot = cExtension * Math.cos(cPosition) + Constants.ArmConstants.ENDPOINT_TO_ROBOT;
         double height = cExtension * Math.sin(cPosition) + Constants.ArmConstants.ENCODER_HEIGHT;
         // If we are greater than our maximum base extension
-        if(extensionFromRobot >= 47) {
+        if (extensionFromRobot >= 47) {
             extensionValue = 47;
             extension = Extension.FULL;
             extensionMotor.set(0.0);
-            
-             // vibrate xbox controler
+
+            // vibrate xbox controler
             xbox.setRumble(RumbleType.kLeftRumble, 1);
             xbox.setRumble(RumbleType.kRightRumble, 1);
-             } 
-             else {
-                xbox.setRumble(RumbleType.kLeftRumble, 0);
-                xbox.setRumble(RumbleType.kRightRumble, 0);
+        } else {
+            xbox.setRumble(RumbleType.kLeftRumble, 0);
+            xbox.setRumble(RumbleType.kRightRumble, 0);
         }
 
         // If we are greater than our maximum height extension
-        if (height >= 77){
+        if (height >= 77) {
             extensionValue = 77;
             extension = Extension.FULL;
             extensionMotor.set(0.0);
 
-            //vibrate xbox controlers
+            // vibrate xbox controlers
             xbox.setRumble(RumbleType.kLeftRumble, 1);
             xbox.setRumble(RumbleType.kRightRumble, 1);
-        }
-        else {
+        } else {
             xbox.setRumble(RumbleType.kLeftRumble, 0);
             xbox.setRumble(RumbleType.kRightRumble, 0);
         }
 
     }
-
 
     /**
      * Use to update the values on Shuffleboard
@@ -309,5 +313,31 @@ public class Arm extends SubsystemBase {
     public void updateShuffleBoardValues() {
         SmartShuffle.get("Arm Position").update(position + " " + positionValue);
         SmartShuffle.get("Arm Extension").update(extension + " " + extensionValue);
+
+        if(positionValue < currentPosition) {
+            SmartShuffle.get("Pos").flashColor("yellow", "white", 20);
+        } else if(positionValue > currentPosition) {
+            SmartShuffle.get("Pos").flashColor("red", "white", 20);
+        } else {
+            SmartShuffle.get("Pos").changeColor("green");
+        }
+
+        if(extensionValue < currentExtension) {
+            SmartShuffle.get("Ext").flashColor("yellow", "white", 20);
+        } else if(extensionValue > currentExtension) {
+            SmartShuffle.get("Ext").flashColor("red", "white", 20);
+        } else {
+            SmartShuffle.get("Ext").changeColor("green");
+        }
+    }
+
+    private void initialiseShuffleBoardValues() {
+        SmartShuffle.add("Arm Position", "");
+        SmartShuffle.add("Arm Extension", "");
+
+        // Flashers for Extension and Position
+        SmartShuffle.setWidget(BuiltInWidgets.kBooleanBox);
+        SmartShuffle.add("Ext", true);
+        SmartShuffle.add("Pos", true);
     }
 }
