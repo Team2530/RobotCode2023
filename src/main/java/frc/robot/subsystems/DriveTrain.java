@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
@@ -95,6 +96,9 @@ public class DriveTrain extends SubsystemBase {
 
   // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
   private double driveModeSpeed = 1.0;
+
+  private double deltaTime = 0.0;
+  private double startTime = 0.0;
 
   // What is driveModeSpeed set to in Turtle Mode
   private final double TURTLE_MODE_MULTIPLYER = 0.5;

@@ -160,28 +160,28 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
-        currentPosition = positionEncoder.getDistance();
-
-        if (Math.abs(currentPosition - positionValue) > Constants.ArmConstants.POSITION_TOLERANCE) {
-            positionMotor.set(Math.signum(positionValue - currentPosition));
-        } else {
-            positionMotor.set(0);
+        if (stick.getRawButton(7)) {
+            grabberServo.setRelativeAngle(0.6);
+        } else if (stick.getRawButton(8)) {
+            grabberServo.setRelativeAngle(0.0);
         }
 
-        currentExtension = extensionEncoder.getPosition();
-
-        if (Math.abs(currentExtension - extensionValue) > Constants.ArmConstants.POSITION_TOLERANCE) {
-            // This motor will be a lot more zoomy
-            extensionMotor.set(Math.signum(extensionValue - currentExtension) * 0.2);
+        if (stick.getRawButton(10)) {
+            extensionMotor.set(0.2);
+        } else if (stick.getRawButton(9)) {
+            extensionMotor.set(-0.2);
         } else {
-            extensionMotor.set(0);
+            extensionMotor.set(0.0);
         }
 
-        updateShuffleBoardValues();
+        if (stick.getRawButton(11)) {
+            positionMotor.set(1);
+        } else if (stick.getRawButton(12)) {
+            positionMotor.set(-1);
+        } else {
+            positionMotor.set(0.0);
+        }
 
-        // System.out.println(stick.getRawAxis(3));
-        // For testing grabber servo
-        // grabberServo.setRelativeAngle(stick.getRawAxis(3));
     }
 
     /**
@@ -314,17 +314,17 @@ public class Arm extends SubsystemBase {
         SmartShuffle.get("Arm Position").update(position + " " + positionValue);
         SmartShuffle.get("Arm Extension").update(extension + " " + extensionValue);
 
-        if(positionValue < currentPosition) {
+        if (positionValue < currentPosition) {
             SmartShuffle.get("Pos").flashColor("yellow", "white", 20);
-        } else if(positionValue > currentPosition) {
+        } else if (positionValue > currentPosition) {
             SmartShuffle.get("Pos").flashColor("red", "white", 20);
         } else {
             SmartShuffle.get("Pos").changeColor("green");
         }
 
-        if(extensionValue < currentExtension) {
+        if (extensionValue < currentExtension) {
             SmartShuffle.get("Ext").flashColor("yellow", "white", 20);
-        } else if(extensionValue > currentExtension) {
+        } else if (extensionValue > currentExtension) {
             SmartShuffle.get("Ext").flashColor("red", "white", 20);
         } else {
             SmartShuffle.get("Ext").changeColor("green");
