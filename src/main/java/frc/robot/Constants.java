@@ -27,6 +27,16 @@ public class Constants {
         public static final int MOTOR_FR_PORT = 20;
         public static final int MOTOR_BL_PORT = 30;
         public static final int MOTOR_BR_PORT = 40;
+
+        /** Arm Encoder port (UP down tilt axis) */
+        public static final int ARM_ENCODER_PORT = 5;
+
+        /* Servo Port */
+        public static final int GRABBER_PORT = 0;
+        
+        // Arm motor ports
+        public static final int LINEAR_ACTUATOR_PORT = 1;
+        public static final int EXTENTION_PORT = 2;
     }
 
     /**
@@ -42,7 +52,7 @@ public class Constants {
      */
     public static class PIDConstants {
         // ! Values for FredBOt were: 0.05, 0.0, 0.005
-        /** PID for Robot Rotation */
+        /** PID for Robot Rotation (when we tuned) */
         // P: 0.025, I: 0.0 D: 0.006
         public static final PIDController rotPID = new PIDController(0.0, 0.0, 0.0);
     }
@@ -93,5 +103,17 @@ public class Constants {
         // Xbox Buttons (Use X_ before the button name to indicate use with Xbox
         // controller)
         public static final int X_AIM_TOWARDS_TARGET = 1;
+    }
+
+    public static class ArmConstants{ 
+        //height from ground to encoder
+        public static final double ENCODER_HEIGHT = 13.22;
+        public static final double POSITION_TOLERANCE = 0.05;
+        /**How far the arm moves relative to an encoder tick */
+        public static final double EXTENSION_PER_TICK = 0.001;
+        /**How much the arm rotates in degrees per encoder tick */
+        public static final double DELTA_ANGLE_PER_PULSE = 0.1;
+        /**How far the endmost point of the arm is relative to the end of the robot */
+        public static final double ENDPOINT_TO_ROBOT = 4.826;
     }
 }

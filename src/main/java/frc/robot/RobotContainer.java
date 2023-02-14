@@ -33,6 +33,7 @@ public class RobotContainer {
             final USBCamera driveCamera = new USBCamera();
         }
     }
+    private final Arm m_arm = new Arm(m_driveTrain, stick, xbox);
 
     // ---------- Autonomous Commands ----------\\
 
