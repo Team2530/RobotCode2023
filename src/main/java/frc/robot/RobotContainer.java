@@ -59,7 +59,10 @@ public class RobotContainer {
                 }));
 
         new JoystickButton(stick, 12).toggleOnTrue(
-                new WaitUntilCommand(m_driveTrain::level));
+                new WaitUntilCommand(m_driveTrain::level)).onFalse(
+                        new InstantCommand(() -> {
+                            m_driveTrain.setHasSeen20(false);
+                        }));
 
         // if(RobotBase.isSimulation()) {
         // new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(

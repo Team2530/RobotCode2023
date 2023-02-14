@@ -75,6 +75,9 @@ public class DriveTrain extends SubsystemBase {
   private static double deltaTime = 0.0;
   private static double startTime = 0.0;
 
+  // Auto Levening Stuff
+  private boolean hasSeen20 = false;
+
   // ---------- Motors ----------\\
   private final WPI_VictorSPX m_leftLeader = new WPI_VictorSPX(30);
   private final WPI_VictorSPX m_leftFollower = new WPI_VictorSPX(40);
@@ -92,7 +95,7 @@ public class DriveTrain extends SubsystemBase {
   private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
   private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
 
-  private final PIDController levelPID = new PIDController(0.1, 0.01, 0.2);
+  private final PIDController levelPID = new PIDController(0.15, 0.0, 0.00);
   private AHRS ahrs = RobotContainer.getAhrs();
   // Double for Rot PID
   private double yawCtl = 0.0;
@@ -360,8 +363,13 @@ public class DriveTrain extends SubsystemBase {
       double speed = levelPID.calculate(currentPitch, 0.0);
       // Keep speed maxed at 100%
 
-      speed = Math.abs(speed) > 1 ? 1 * Math.signum(speed) * .75 : speed * .75;
+      speed = Math.abs(speed) > 1 ? 1 * Math.signum(speed) * .6 : speed * .6;
+
       setSides(-speed);
+
+      if (Math.abs(ahrs.getRoll()) > 20.0d) {
+        hasSeen20 = true;
+      }
 
       // ! for simulation purposes only
       // currentPitch += speed;
@@ -369,11 +377,18 @@ public class DriveTrain extends SubsystemBase {
       // See values
       System.out.println(speed + " " + currentPitch);
 
-      // If the charge station is level, we can stop moving
-      return Math.abs(currentPitch) < 0.2;
+      SmartDashboard.putNumber("Speed", speed);
+      SmartDashboard.putNumber("Angle", currentPitch);
+
+      // If the charge station is level and we are on, we can stop moving
+      return Math.abs(currentPitch) < 18.5 && hasSeen20;
     }
 
     return true;
 
+  }
+
+  public void setHasSeen20(boolean b) {
+    this.hasSeen20 = b;
   }
 }
