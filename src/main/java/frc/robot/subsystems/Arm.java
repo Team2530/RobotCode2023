@@ -160,23 +160,11 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (stick.getRawButton(7)) {
-            grabberServo.setRelativeAngle(0.6);
-        } else if (stick.getRawButton(8)) {
-            grabberServo.setRelativeAngle(0.0);
-        }
+        grabberServo.setRelativeAngle(xbox.getRawAxis(2));
 
-        if (stick.getRawButton(10)) {
-            extensionMotor.set(0.2);
-        } else if (stick.getRawButton(9)) {
-            extensionMotor.set(-0.2);
-        } else {
-            extensionMotor.set(0.0);
-        }
-
-        if (stick.getRawButton(11)) {
+        if (xbox.getRawButton(4)) {
             positionMotor.set(1);
-        } else if (stick.getRawButton(12)) {
+        } else if (xbox.getRawButton(2)) {
             positionMotor.set(-1);
         } else {
             positionMotor.set(0.0);

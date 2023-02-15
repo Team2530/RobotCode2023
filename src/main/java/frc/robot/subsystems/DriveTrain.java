@@ -291,7 +291,7 @@ public class DriveTrain extends SubsystemBase {
   private void tankDrive() {
     m_leftFollower.follow(m_leftLeader);
     m_rightFollower.follow(m_rightLeader);
-    driveBase = new DifferentialDrive(m_leftLeader, m_rightFollower);
+    driveBase = new DifferentialDrive(m_leftLeader, m_rightLeader);
   }
 
   private void setAll(double speed) {
