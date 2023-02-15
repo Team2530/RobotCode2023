@@ -129,7 +129,7 @@ public class DriveTrain extends SubsystemBase {
 
   // Gains are for example purposes only - must be determined for your own
   // robot!
-  private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(1, 3);
+  private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(DriveConstants.KS_VOLTS, DriveConstants.KV_VOLT_SECONDS_PER_METER);
 
   // ---------- Simulation Classes ----------\\
   private final EncoderSim m_leftEncoderSim = new EncoderSim(m_leftEncoder);
@@ -138,7 +138,7 @@ public class DriveTrain extends SubsystemBase {
   private final LinearSystem<N2, N2, N2> m_drivetrainSystem = LinearSystemId.identifyDrivetrainSystem(1.98, 0.2, 1.5,
       0.3);
   private final DifferentialDrivetrainSim m_drivetrainSimulator = new DifferentialDrivetrainSim(
-      m_drivetrainSystem, DCMotor.getFalcon500(2), 8, kTrackWidth, kWheelRadius, null);
+      m_drivetrainSystem, DCMotor.getFalcon500(2), 9.76, DriveConstants.K_TRACK_WIDTH_METERS, kWheelRadius, null);
 
   /** Subsystem constructor. */
   public DriveTrain(AHRS ahrs, Joystick stick, XboxController xbox) {

@@ -57,7 +57,7 @@ public class RobotContainer {
 
 
     // ---------- Autonomous Commands ----------\\
-    PathPlannerTrajectory m_auto = PathPlanner.loadPath("New Path", new PathConstraints(4, 1));
+    PathPlannerTrajectory m_auto = PathPlanner.loadPath("TestPath", new PathConstraints(4, 1));
 
     // ---------- Commands ----------\\
     InstantCommand example = new InstantCommand(() -> {
@@ -134,7 +134,7 @@ public class RobotContainer {
     return print("Starting auto")
         .andThen(runOnce(
             () -> m_driveTrain.getPose(), m_driveTrain))
-        .andThen(m_driveTrain.createCommandForTrajectory(AutonomousTrajectory.goForwardThreeMetersAndComeBack(m_driveTrain), m_driveTrain::getPose))
+        .andThen(m_driveTrain.createCommandForTrajectory(autonomousTrajectory.goForwardThreeMetersAndComeBack(), m_driveTrain::getPose))
         //.andThen(m_driveTrain.createCommandForTrajectory(turn90Tracjectory, m_driveTrain::getPose))
         .andThen(runOnce(m_driveTrain::stop, m_driveTrain))
         .andThen(print("Done with auto"));

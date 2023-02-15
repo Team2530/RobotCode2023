@@ -19,7 +19,7 @@ public class AutonomousTrajectory extends SubsystemBase {
         this.driveTrain = driveTrain;
     }
 
-    public static Trajectory goForwardThreeMetersAndComeBack(DriveTrain m_driveTrain){
+    public Trajectory goForwardThreeMetersAndComeBack(){
         TrajectoryConfig config = new TrajectoryConfig(Units.feetToMeters(3.0), Units.feetToMeters(1.0));
         var trajectoryOne =
             TrajectoryGenerator.generateTrajectory(
@@ -30,35 +30,35 @@ public class AutonomousTrajectory extends SubsystemBase {
 
             var trajectoryTwo =
             TrajectoryGenerator.generateTrajectory(
-            new Pose2d(.5, 0, Rotation2d.fromDegrees(0)),
+            new Pose2d(1, 0, Rotation2d.fromDegrees(0)),
             List.of(),
             new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
             config.setReversed(true)
            );
            trajectoryOne = trajectoryOne.concatenate(trajectoryTwo);
 
-            m_driveTrain.resetOdometry(trajectoryOne.getInitialPose());
+            this.driveTrain.resetOdometry(trajectoryOne.getInitialPose());
             return trajectoryOne;
     }
 
-    public static Trajectory getAnglTrajectory(DriveTrain m_driveTrain){
+    public Trajectory getAnglTrajectory(){
         var trajectoryOne =
         TrajectoryGenerator.generateTrajectory(
         new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
         List.of(),
-        new Pose2d(1, 0, Rotation2d.fromDegrees(0)),
-        new TrajectoryConfig(Units.feetToMeters(3.0), Units.feetToMeters(3.0)));
+        new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
+        new TrajectoryConfig(Units.feetToMeters(3.0), Units.feetToMeters(1.0)));
 
         var trajectoryTwo =
         TrajectoryGenerator.generateTrajectory(
-        new Pose2d(1, 0, Rotation2d.fromDegrees(0)),
-        List.of(new Translation2d(1, 1)),
-        new Pose2d(0, 1, Rotation2d.fromDegrees(0)),
-        new TrajectoryConfig(Units.feetToMeters(3.0), Units.feetToMeters(3.0)));
+        new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
+        List.of(new Translation2d(3, 3)),
+        new Pose2d(0, 3, Rotation2d.fromDegrees(0)),
+        new TrajectoryConfig(Units.feetToMeters(3.0), Units.feetToMeters(1.0)));
 
         trajectoryOne = trajectoryOne.concatenate(trajectoryTwo);
 
-        m_driveTrain.resetOdometry(trajectoryOne.getInitialPose());
+        this.driveTrain.resetOdometry(trajectoryOne.getInitialPose());
         return trajectoryOne;
     }
 
