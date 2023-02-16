@@ -7,23 +7,37 @@ package frc.robot.subsystems;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
+<<<<<<< HEAD
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+=======
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.VictorSPXControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.sensors.WPI_Pigeon2;
+>>>>>>> LimeLightWithPathPlanner
 import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
@@ -39,10 +53,14 @@ import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.libraries.Deadzone;
 import frc.robot.libraries.SmartShuffle;
 import frc.robot.logging.*;
@@ -50,6 +68,7 @@ import frc.robot.logging.*;
 public class DriveTrain extends SubsystemBase {
   private Joystick stick;
   private XboxController xbox;
+  private final WPI_Pigeon2 pigeon = new WPI_Pigeon2(Constants.DriveConstants.PIGEON_ID, Constants.DriveConstants.CANIVORE_BUS_NAME);
 
   RobotDriveBase driveBase;
 
@@ -73,6 +92,7 @@ public class DriveTrain extends SubsystemBase {
   private static final double kWheelRadius = 0.0762;
   private static final int kEncoderResolution = -4096;
 
+<<<<<<< HEAD
   // ---------- Motors ----------\\
   private final WPI_TalonFX m_leftLeader = new WPI_TalonFX(30);
   private final WPI_TalonFX m_leftFollower = new WPI_TalonFX(40);
@@ -82,6 +102,22 @@ public class DriveTrain extends SubsystemBase {
   private final MotorControllerGroup m_leftGroup = new MotorControllerGroup(m_leftLeader, m_leftFollower);
   private final MotorControllerGroup m_rightGroup = new MotorControllerGroup(m_rightLeader, m_rightFollower);
 
+=======
+  // For PID negation
+  private static double deltaTime = 0.0;
+  private static double startTime = 0.0;
+
+  // ---------- Motors ----------\\
+  private final WPI_VictorSPX m_leftLeader = new WPI_VictorSPX(30);
+  private final WPI_VictorSPX m_leftFollower = new WPI_VictorSPX(40);
+  private final WPI_VictorSPX m_rightLeader = new WPI_VictorSPX(10);
+  private final WPI_VictorSPX m_rightFollower = new WPI_VictorSPX(20);
+
+  private final MotorControllerGroup m_leftGroup = new MotorControllerGroup(m_leftLeader, m_leftFollower);
+  private final MotorControllerGroup m_rightGroup = new MotorControllerGroup(m_rightLeader, m_rightFollower);
+  DifferentialDrive differentialDrive = new DifferentialDrive(m_leftGroup, m_rightGroup);
+  
+>>>>>>> LimeLightWithPathPlanner
   // ---------- Encoders ----------\\
   private final Encoder m_leftEncoder = new Encoder(0, 1);
   private final Encoder m_rightEncoder = new Encoder(2, 3);
@@ -94,6 +130,7 @@ public class DriveTrain extends SubsystemBase {
   private double yawCtl = 0.0;
   private double yawTarget = 0.0;
 
+<<<<<<< HEAD
   // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
   private double driveModeSpeed = 1.0;
 
@@ -103,22 +140,32 @@ public class DriveTrain extends SubsystemBase {
   // What is driveModeSpeed set to in Turtle Mode
   private final double TURTLE_MODE_MULTIPLYER = 0.5;
 
+=======
+>>>>>>> LimeLightWithPathPlanner
   // ---------- Kinematics & Odometry ----------\\
   public Pose2d pose = new Pose2d();
   public final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
   private final DifferentialDriveOdometry m_odometry = new DifferentialDriveOdometry(
       ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
 
+<<<<<<< HEAD
   public static double leftVoltage = 0;
   public static double rightVoltage = 0;
   public static BiConsumer<Double, Double> voltage = (a, b) -> {
     leftVoltage = a;
     rightVoltage = b;
+=======
+  public static double leftOutput = 0;
+  public static double rightOutput = 0;
+  public BiConsumer<Double, Double> wheelspeed_setter = (a, b) -> {
+    leftOutput = a;
+    rightOutput = b;
+>>>>>>> LimeLightWithPathPlanner
   };
 
   // Gains are for example purposes only - must be determined for your own
   // robot!
-  private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(1, 3);
+  private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(DriveConstants.KS_VOLTS, DriveConstants.KV_VOLT_SECONDS_PER_METER);
 
   // ---------- Simulation Classes ----------\\
   private final EncoderSim m_leftEncoderSim = new EncoderSim(m_leftEncoder);
@@ -127,7 +174,11 @@ public class DriveTrain extends SubsystemBase {
   private final LinearSystem<N2, N2, N2> m_drivetrainSystem = LinearSystemId.identifyDrivetrainSystem(1.98, 0.2, 1.5,
       0.3);
   private final DifferentialDrivetrainSim m_drivetrainSimulator = new DifferentialDrivetrainSim(
+<<<<<<< HEAD
       m_drivetrainSystem, DCMotor.getFalcon500(2), 8, kTrackWidth, kWheelRadius, null);
+=======
+      m_drivetrainSystem, DCMotor.getFalcon500(2), 9.76, DriveConstants.K_TRACK_WIDTH_METERS, kWheelRadius, null);
+>>>>>>> LimeLightWithPathPlanner
 
   /** Subsystem constructor. */
   public DriveTrain(AHRS ahrs, Joystick stick, XboxController xbox) {
@@ -141,6 +192,17 @@ public class DriveTrain extends SubsystemBase {
     m_leftLeader.setInverted(true);
     m_leftFollower.setInverted(true);
 
+<<<<<<< HEAD
+=======
+    m_leftFollower.setNeutralMode(NeutralMode.Brake);
+    m_leftLeader.setNeutralMode(NeutralMode.Brake);
+    m_rightLeader.setNeutralMode(NeutralMode.Brake);
+    m_rightFollower.setNeutralMode(NeutralMode.Brake);
+
+
+
+
+>>>>>>> LimeLightWithPathPlanner
     // Todo: Declare using provided method based on DriveTrain type Ex:
     // tankDrive();s
     // motorFL.setInverted(true);
@@ -180,13 +242,29 @@ public class DriveTrain extends SubsystemBase {
     updatePeriodic();
     updateShuffleBoardValues();
     pose = getPose();
+<<<<<<< HEAD
     voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
+=======
+    setSpeeds(new DifferentialDriveWheelSpeeds(leftOutput, rightOutput));
+    // motorOutputs.accept(m_leftLeader.get(), m_rightLeader.get());
+>>>>>>> LimeLightWithPathPlanner
   }
 
   public void setMode(Modes m) {
     currentDriveMode = m;
   }
 
+  /**
+   * Single Joystick Drive
+   * <p>
+   * <h1>
+   * PID will activate after 0.5 seconds
+   * of "rest" from the Joystick Z (twist) axis.
+   * 
+   * @param x
+   * @param y
+   * @param z
+   */
   public void singleJoystickDrive(double x, double y, double z) {
     // if(currentDriveMode != Modes.Stop) {
     // // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive)
@@ -197,14 +275,20 @@ public class DriveTrain extends SubsystemBase {
     // // System.out.println(motor10.get());
     // }
 
+<<<<<<< HEAD
     // if we aren't turning the stick we disable PID for 0.5 seconds
     if (!(Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE) > 0.05)) {
+=======
+    // if we aren't turning the stick
+    if (!(Deadzone.deadZone(stick.getZ(), Constants.Controller.DEADZONE) > 0.05)) {
+>>>>>>> LimeLightWithPathPlanner
       deltaTime = Timer.getFPGATimestamp() - startTime;
     } else {
       startTime = Timer.getFPGATimestamp();
     }
 
     // If we are actualy turning the stick
+<<<<<<< HEAD
     if (Math.abs(stick.getZ()) <= 0.1) {
       yawCtl = Constants.PIDConstants.rotPID.calculate(ahrs.getAngle(), yawTarget);
     } else {
@@ -212,11 +296,21 @@ public class DriveTrain extends SubsystemBase {
       yawTarget = ahrs.getAngle();
       yawCtl = Math.signum(stick.getZ()) * Math.pow(stick.getZ(), 2)
           + Constants.ControllerConstants.DEADZONE * stick.getZ() + Constants.ControllerConstants.DEADZONE;
+=======
+    if (Math.abs(stick.getZ()) <= 0.1 || stick.getRawButton(Constants.Controller.J_DRIVE_STRAIGHT)) {
+      yawCtl = Constants.PID.rotPID.calculate(ahrs.getAngle(), yawTarget);
+
+    } else {
+      // we are currently turning
+      yawTarget = ahrs.getAngle();
+      yawCtl = stick.getZ();
+>>>>>>> LimeLightWithPathPlanner
 
     }
 
     // System.out.println(yawTarget);
 
+<<<<<<< HEAD
     // Enforce Limitss
 
     double driveZ;
@@ -233,6 +327,23 @@ public class DriveTrain extends SubsystemBase {
     ((DifferentialDrive) driveBase).arcadeDrive(
         Deadzone.deadZone(stick.getY() * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
         -Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
+=======
+    // Enforce Limits
+
+    double driveZ;
+
+    if (deltaTime < .5) {
+      driveZ = stick.getZ();
+      yawTarget = ahrs.getAngle();
+      yawCtl = stick.getZ();
+    } else {
+      driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrain.CUT_OFF_MOTOR_SPEED)
+          * Constants.DriveTrain.MAX_DRIVE_SPEED;
+    }
+
+    ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(), Constants.Controller.DEADZONE),
+        Deadzone.deadZone(driveZ, Constants.Controller.DEADZONE));
+>>>>>>> LimeLightWithPathPlanner
   }
 
   /** Sets speeds to the drivetrain motors. */
@@ -253,12 +364,17 @@ public class DriveTrain extends SubsystemBase {
    * @param rot    the rotation
    */
   public void drive(double xSpeed, double rot) {
+    // ! ONLY FOR SIMULATION DRIVING
     setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
   }
 
   public void reset(Pose2d pose) {
     ahrs.reset();
+<<<<<<< HEAD
     m_odometry.resetPosition(ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance(), pose);
+=======
+    m_odometry.resetPosition(ahrs.getRotation2d(), m_leftEncoder.get(), m_rightEncoder.get(), pose);
+>>>>>>> LimeLightWithPathPlanner
   }
 
   // Todo: implement a reset method
@@ -278,6 +394,7 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /**
+<<<<<<< HEAD
    * Use to create a MecanumDrive
    */
   private void mecanumDrive() {
@@ -286,6 +403,8 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /**
+=======
+>>>>>>> LimeLightWithPathPlanner
    * Use to create a Tank Drive (Differential Drive)
    */
   private void tankDrive() {
@@ -303,7 +422,10 @@ public class DriveTrain extends SubsystemBase {
   private void updateShuffleBoardValues() {
     SmartShuffle.get("Stick Y").update(stick.getY() * -100);
     SmartShuffle.get("Stick Z").update(stick.getZ() * 100);
+<<<<<<< HEAD
     SmartShuffle.get("Test Color").flashColor("blue", "red", 30);
+=======
+>>>>>>> LimeLightWithPathPlanner
   }
 
   private void createValues() {
@@ -320,6 +442,27 @@ public class DriveTrain extends SubsystemBase {
   /** Check the current robot pose. */
   public Pose2d getPose() {
     return m_odometry.getPoseMeters();
+  }
+
+  /**
+   * Controls the left and right sides of the drive directly with voltages.
+   *
+   * @param leftVolts the commanded left output
+   * @param rightVolts the commanded right output
+   */
+  public void tankDriveVolts(double leftVolts, double rightVolts) {
+    m_leftGroup.setVoltage(leftVolts);
+    m_rightGroup.setVoltage(rightVolts);
+    differentialDrive.feed();
+  }
+
+  /**
+   * Returns the current wheel speeds of the robot.
+   *
+   * @return The current wheel speeds.
+   */
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(m_leftEncoder.getRate(), m_rightEncoder.getRate());
   }
 
   /** Update our simulation. This should be run every robot loop in simulation. */
@@ -349,7 +492,51 @@ public class DriveTrain extends SubsystemBase {
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
 
+<<<<<<< HEAD
   public void toggleTurtleMode(double maxSpeed) {
     driveModeSpeed = maxSpeed;
+=======
+  /**
+   * Creates a command to follow a Trajectory on the drivetrain.
+   * @param trajectory trajectory to follow
+   * @return command that will run the trajectory
+   */
+  public Command createCommandForTrajectory(Trajectory trajectory, Supplier<Pose2d> poseSupplier) {
+    // var thetaController = new ProfiledPIDController(
+    //     AutoConstants.THETA_kP, AutoConstants.THETA_kI, AutoConstants.THETA_kD, THETA_CONSTRAINTS);
+    // thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    RamseteCommand ramseteCommand =
+        new RamseteCommand(
+          trajectory,
+          this::getPose,
+          new RamseteController(AutoConstants.K_RAMSETE_B, AutoConstants.K_RAMSETE_ZETA),
+          new SimpleMotorFeedforward(
+              DriveConstants.KS_VOLTS,
+              DriveConstants.KV_VOLT_SECONDS_PER_METER,
+              DriveConstants.KA_VOLT_SECONDS_SQURED_PER_METER),
+          DriveConstants.kDriveKinematics,
+          this::getWheelSpeeds,
+          new PIDController(DriveConstants.KP_DRIVE_VEL, 0, 0),
+          new PIDController(DriveConstants.KP_DRIVE_VEL, 0, 0),
+          // RamseteCommand passes volts to the callback
+          this::tankDriveVolts,
+          this);
+            
+      return ramseteCommand;
+  }
+
+  public Rotation2d getGyroscopeRotation() {
+    return pigeon.getRotation2d();
+
+    // We have to invert the angle of the NavX so that rotating the robot counter-clockwise makes the angle increase.
+    // return Rotation2d.fromDegrees(360.0 - navx.getYaw());
+  }
+  /**
+   * Sets the desired speeds to zero
+   */
+  public void stop() {
+    setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds()));
+>>>>>>> LimeLightWithPathPlanner
   }
 }
