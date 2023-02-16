@@ -29,14 +29,14 @@ public class Constants {
         public static final int MOTOR_BR_PORT = 40;
 
         /** Arm Encoder port (UP down tilt axis) */
-        public static final int ARM_ENCODER_PORT = 5;
+        public static final int ARM_ENCODER_PORT = 0;
 
         /* Servo Port */
         public static final int GRABBER_PORT = 0;
 
         // Arm motor ports
         public static final int LINEAR_ACTUATOR_PORT = 14;
-        public static final int EXTENTION_PORT = 2;
+        public static final int EXTENTION_PORT = 15;
     }
 
     /**

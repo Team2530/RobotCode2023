@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.libraries.*;
@@ -28,12 +29,7 @@ public class Arm extends SubsystemBase {
 
     private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT,
             Constants.PortsConstants.ARM_ENCODER_PORT + 1);
-    private CANCoder extensionEncoder = new CANCoder(Constants.PortsConstants.EXTENTION_PORT);
     // For simulation purposes
-    private EncoderSim simPositionEncoder = new EncoderSim(positionEncoder);
-
-    private SingleJointedArmSim armSim = new SingleJointedArmSim(DCMotor.getFalcon500(1), 1, 2, 1, Math.PI / 6,
-            Math.PI / 3, 2, false);
 
     // ---------- Subsystems ----------\\
     private DriveTrain driveTrain;
@@ -154,17 +150,32 @@ public class Arm extends SubsystemBase {
         // ---------- Shuffle Things ----------\\
         initialiseShuffleBoardValues();
         positionEncoder.setDistancePerPulse(Constants.ArmConstants.DELTA_ANGLE_PER_PULSE);
+        extensionMotor.overrideLimitSwitchesEnable(true);
 
         // TODO: Reverse Motors if needed!
     }
 
     @Override
     public void periodic() {
+        SmartDashboard.putBoolean("Limit 1", 0 != extensionMotor.isFwdLimitSwitchClosed());
+        SmartDashboard.putBoolean("Limit 2", 0 != extensionMotor.isRevLimitSwitchClosed());
         grabberServo.setRelativeAngle(xbox.getRawAxis(2));
+
+        switch (xbox.getPOV()) {
+            case 0:
+                extensionMotor.set(0.2);
+                break;
+            case 180:
+                extensionMotor.set(-0.2);
+                break;
+            case -1:
+                extensionMotor.set(0.0);
+                break;
+        }
 
         if (xbox.getRawButton(4)) {
             positionMotor.set(1);
-        } else if (xbox.getRawButton(2)) {
+        } else if (xbox.getRawButton(1)) {
             positionMotor.set(-1);
         } else {
             positionMotor.set(0.0);

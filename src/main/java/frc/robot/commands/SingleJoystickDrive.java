@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.commands;
+
 import frc.robot.subsystems.*;
 import frc.robot.subsystems.DriveTrain.Modes;
 import frc.robot.libraries.*;
@@ -37,21 +38,9 @@ public class SingleJoystickDrive extends CommandBase {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-
-    if(RobotBase.isReal()){
-      driveTrain.singleJoystickDrive(Deadzone.deadZone(stick.getRawAxis(1), Constants.ControllerConstants.DEADZONE), 
-          Deadzone.deadZone(stick.getRawAxis(0), Constants.ControllerConstants.DEADZONE), 
-          Deadzone.deadZone(stick.getRawAxis(2), Constants.ControllerConstants.DEADZONE));
-    } else {
-      double xSpeed = -m_speedLimiter.calculate(Deadzone.deadZone(stick.getY(), 0.05) * DriveTrain.kMaxSpeed);
-    // Get the rate of angular rotation. We are inverting this because we want a
-    // positive value when we pull to the left (remember, CCW is positive in
-    // mathematics). Xbox controllers return positive values when you pull to
-    // the right by default.
-    double rot = Deadzone.deadZone(stick.getZ(), 0.05);
-    driveTrain.drive(xSpeed, -rot);
-    }
-    
+    driveTrain.singleJoystickDrive(
+        Deadzone.deadZone(stick.getY(), Constants.ControllerConstants.DEADZONE),
+        Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE));
   }
 
   // Called once the command ends or is interrupted.

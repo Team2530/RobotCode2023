@@ -6,7 +6,7 @@ public class SpecialServo {
 
     Servo servo;
 
-    double kMinValue = 0.1;
+    double kMinValue = 0.0;
     double kMaxValue = 0.6;
 
     public SpecialServo(int channel) {

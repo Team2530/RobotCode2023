@@ -25,8 +25,10 @@ import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.AnalogGyro;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
@@ -83,8 +85,8 @@ public class DriveTrain extends SubsystemBase {
   private final MotorControllerGroup m_rightGroup = new MotorControllerGroup(m_rightLeader, m_rightFollower);
 
   // ---------- Encoders ----------\\
-  private final Encoder m_leftEncoder = new Encoder(0, 1);
-  private final Encoder m_rightEncoder = new Encoder(2, 3);
+  private final Encoder m_leftEncoder = new Encoder(2, 3);
+  private final Encoder m_rightEncoder = new Encoder(4, 5);
 
   // ---------- PID Controllers ----------\\
   private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
@@ -141,20 +143,11 @@ public class DriveTrain extends SubsystemBase {
     m_leftLeader.setInverted(true);
     m_leftFollower.setInverted(true);
 
-    // Todo: Declare using provided method based on DriveTrain type Ex:
-    // tankDrive();s
-    // motorFL.setInverted(true);
-    // motorBL.setInverted(true);
-    // motorBR.setInverted(true);
+    // ? Construct a Tank Drive
     this.tankDrive();
     createValues();
 
     ahrs.reset();
-
-    // We need to invert one side of the drivetrain so that positive voltages
-    // result in both sides moving forward. Depending on how your robot's
-    // gearbox is constructed, you might have to invert the left side instead.
-    m_rightGroup.setInverted(true);
 
     // Set the distance per pulse for the drive encoders. We can simply use the
     // distance traveled for one rotation of the wheel divided by the encoder
@@ -187,52 +180,18 @@ public class DriveTrain extends SubsystemBase {
     currentDriveMode = m;
   }
 
-  public void singleJoystickDrive(double x, double y, double z) {
-    // if(currentDriveMode != Modes.Stop) {
-    // // TODO: Implement DriveTrain driving method Ex: ((DifferentialDrive)
-    // driveBase).arcadeDrive(x, z);
-    // ((DifferentialDrive) driveBase).arcadeDrive(Deadzone.deadZone(stick.getY(),
-    // Constants.DEADZONE),
-    // Deadzone.deadZone(stick.getZ(), Constants.DEADZONE));
-    // // System.out.println(motor10.get());
-    // }
+  public void singleJoystickDrive(double StickY, double StickZ) {
 
-    // if we aren't turning the stick we disable PID for 0.5 seconds
-    if (!(Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE) > 0.05)) {
-      deltaTime = Timer.getFPGATimestamp() - startTime;
+    if (RobotBase.isReal()) {
+      ((DifferentialDrive) driveBase).arcadeDrive(
+          Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
+          -Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
     } else {
-      startTime = Timer.getFPGATimestamp();
+      ((DifferentialDrive) driveBase).arcadeDrive(
+          Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
+          Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
     }
 
-    // If we are actualy turning the stick
-    if (Math.abs(stick.getZ()) <= 0.1) {
-      yawCtl = Constants.PIDConstants.rotPID.calculate(ahrs.getAngle(), yawTarget);
-    } else {
-      // we are currently turning
-      yawTarget = ahrs.getAngle();
-      yawCtl = Math.signum(stick.getZ()) * Math.pow(stick.getZ(), 2)
-          + Constants.ControllerConstants.DEADZONE * stick.getZ() + Constants.ControllerConstants.DEADZONE;
-
-    }
-
-    // System.out.println(yawTarget);
-
-    // Enforce Limitss
-
-    double driveZ;
-
-    if (deltaTime < .5) {
-      driveZ = stick.getZ() * driveModeSpeed;
-      yawTarget = ahrs.getAngle();
-      yawCtl = stick.getZ() * driveModeSpeed;
-    } else {
-      driveZ = Deadzone.cutOff(yawCtl, Constants.DriveTrainConstants.CUT_OFF_MOTOR_SPEED)
-          * Constants.DriveTrainConstants.MAX_DRIVE_SPEED * driveModeSpeed;
-    }
-
-    ((DifferentialDrive) driveBase).arcadeDrive(
-        Deadzone.deadZone(stick.getY() * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-        -Deadzone.deadZone(driveZ, Constants.ControllerConstants.DEADZONE));
   }
 
   /** Sets speeds to the drivetrain motors. */
@@ -244,16 +203,6 @@ public class DriveTrain extends SubsystemBase {
 
     m_leftGroup.setVoltage(leftOutput + leftFeedforward);
     m_rightGroup.setVoltage(rightOutput + rightFeedforward);
-  }
-
-  /**
-   * Controls the robot using arcade drive.
-   *
-   * @param xSpeed the speed for the x axis
-   * @param rot    the rotation
-   */
-  public void drive(double xSpeed, double rot) {
-    setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds(xSpeed, 0, rot)));
   }
 
   public void reset(Pose2d pose) {
@@ -328,19 +277,23 @@ public class DriveTrain extends SubsystemBase {
     // simulation, and write the simulated positions and velocities to our
     // simulated encoder and gyro. We negate the right side so that positive
     // voltages make the right side move forward.
-    m_drivetrainSimulator.setInputs(
-        m_leftGroup.get() * RobotController.getInputVoltage(),
-        m_rightGroup.get() * RobotController.getInputVoltage());
-    m_drivetrainSimulator.update(0.02);
 
-    m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
-    m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
-    m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
-    m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
+    if (DriverStation.isTeleop()) {
+      m_drivetrainSimulator.setInputs(
+          -m_leftGroup.get() * RobotController.getInputVoltage(),
+          m_rightGroup.get() * RobotController.getInputVoltage());
+      m_drivetrainSimulator.update(0.02);
 
-    int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
-    SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev, "Yaw"));
-    angle.set(-m_drivetrainSimulator.getHeading().getDegrees());
+      m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
+      m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
+      m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
+      m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
+
+      int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
+      SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev,
+          "Yaw"));
+      angle.set(-m_drivetrainSimulator.getHeading().getDegrees());
+    }
   }
 
   /** Update odometry - this should be run every robot loop. */
