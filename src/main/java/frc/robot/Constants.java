@@ -68,8 +68,9 @@ public class Constants {
         public static final double LIMELIGHT_LENS_HEIGHT_INCHES = 20.0;
 
         // distance from the target to the floor
-        public static final double GOAL_HEIGHT_INCHES= 60.0;
+        public static final double GOAL_HEIGHT_INCHES = 60.0;
     }
+
     /**
      * PID Constants
      */
@@ -132,15 +133,13 @@ public class Constants {
      * Controller Constants
      */
     public static class DriveConstants {
-        public static final double KS_VOLTS = 0.01;
-        public static final double KV_VOLT_SECONDS_PER_METER = .25;
+        public static final double KS_VOLTS = 0.22;
+        public static final double KV_VOLT_SECONDS_PER_METER = 1.98;
         public static final double KA_VOLT_SECONDS_SQURED_PER_METER = 0.2;
-        public static final double KP_DRIVE_VEL = 5;
-        public static final double K_TRACK_WIDTH_METERS = 0.31 * 2;;
-        public static final DifferentialDriveKinematics kDriveKinematics =
-            new DifferentialDriveKinematics(K_TRACK_WIDTH_METERS);
-        public static final int PIGEON_ID = 30;
-        public static final String CANIVORE_BUS_NAME = "tank";
+        public static final double KP_DRIVE_VEL = 8.5;
+        public static final double K_TRACK_WIDTH_METERS = 0.69;
+        public static final DifferentialDriveKinematics kDriveKinematics = new DifferentialDriveKinematics(
+                K_TRACK_WIDTH_METERS);
     }
 
     public static class AutoConstants {
@@ -153,22 +152,24 @@ public class Constants {
     public static class VisionConstants {
 
         /**
-         * Physical location of the apriltag camera on the robot, relative to the center of the robot.
+         * Physical location of the apriltag camera on the robot, relative to the center
+         * of the robot.
          */
-        public static final Transform3d APRILTAG_CAMERA_TO_ROBOT =
-            new Transform3d(new Translation3d(-0.3425, 0.0, -0.233), new Rotation3d());
+        public static final Transform3d APRILTAG_CAMERA_TO_ROBOT = new Transform3d(
+                new Translation3d(-0.3425, 0.0, -0.233), new Rotation3d());
         public static final Transform3d APRILTAG_ROBOT_TO_CAMERA = APRILTAG_CAMERA_TO_ROBOT.inverse();
-    
+
         /**
-         * Physical location of the shooter camera on the robot, relative to the center of the robot.
+         * Physical location of the shooter camera on the robot, relative to the center
+         * of the robot.
          */
-        public static final Transform3d SHOOTER_CAMERA_TO_ROBOT =
-            new Transform3d(new Translation3d(-0.128, 0.0075, -1.002), new Rotation3d(0.0, degreesToRadians(7.06), 0.0));
+        public static final Transform3d SHOOTER_CAMERA_TO_ROBOT = new Transform3d(
+                new Translation3d(-0.128, 0.0075, -1.002), new Rotation3d(0.0, degreesToRadians(7.06), 0.0));
         public static final Transform3d SHOOTER_ROBOT_TO_CAMERA = SHOOTER_CAMERA_TO_ROBOT.inverse();
-    
-        public static final LimelightConfig SHOOTER_LIMELIGHT_CONFIG = 
-            new LimelightConfig("limelight", SHOOTER_CAMERA_TO_ROBOT);
-      }
+
+        public static final LimelightConfig SHOOTER_LIMELIGHT_CONFIG = new LimelightConfig("limelight",
+                SHOOTER_CAMERA_TO_ROBOT);
+    }
 
     public static class ArmConstants {
         // height from ground to encoder

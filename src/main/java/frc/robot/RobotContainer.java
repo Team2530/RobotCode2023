@@ -46,23 +46,21 @@ import static edu.wpi.first.wpilibj2.command.Commands.print;
  */
 public class RobotContainer {
 
-    final Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
-    final XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
+    static final Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
+    static final XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
 
     private static final AHRS m_ahrs = new AHRS();
 
     // ---------- Subsystems ----------\\
     private final static DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
     private final AutonomousTrajectory autonomousTrajectory = new AutonomousTrajectory(m_driveTrain);
-    private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
-    
+
     static {
-        if(RobotBase.isReal()) {
+        if (RobotBase.isReal()) {
             final USBCamera driveCamera = new USBCamera();
         }
     }
     private final Arm m_arm = new Arm(m_driveTrain, stick, xbox);
-
 
     // ---------- Autonomous Commands ----------\\
     PathPlannerTrajectory m_auto = PathPlanner.loadPath("TestPath", new PathConstraints(4, 1));
@@ -77,6 +75,7 @@ public class RobotContainer {
     // ---------- Global Toggles ----------\\
 
     private final PhotonCamera photonCamera = new PhotonCamera();
+
     public RobotContainer() {
         configureButtonBindings();
     }
@@ -86,7 +85,7 @@ public class RobotContainer {
         // new InstantCommand(() -> {
         // m_driveTrain.toggleDriveMode();
 
-        //? Button 2 is used for Turtle Mode
+        // ? Button 2 is used for Turtle Mode
         new JoystickButton(stick, Constants.ControllerConstants.J_TURTLE_TOGGLE).onTrue(
                 new InstantCommand(() -> {
                     m_driveTrain.toggleTurtleMode(0.5);
@@ -94,10 +93,10 @@ public class RobotContainer {
                     m_driveTrain.toggleTurtleMode(0.75);
                 }));
 
-        //? Button 1 (trigger is used for fullspeed)
+        // ? Button 1 (trigger is used for fullspeed)
         new JoystickButton(stick, Constants.ControllerConstants.J_FULL_SPEED).onTrue(
                 new InstantCommand(() -> {
-                     m_driveTrain.toggleTurtleMode(1.0);
+                    m_driveTrain.toggleTurtleMode(1.0);
                 })).onFalse(new InstantCommand(() -> {
                     m_driveTrain.toggleTurtleMode(0.75);
                 }));
@@ -116,7 +115,7 @@ public class RobotContainer {
 
     }
 
-    public static DriveTrain getDriveTrain() {
+    public DriveTrain getDriveTrain() {
         return m_driveTrain;
     }
 
@@ -138,42 +137,40 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-    
+
         // Create config for trajectory
-    TrajectoryConfig config =
-    new TrajectoryConfig(
-            1,
-            1)
-        // Add kinematics to ensure max speed is actually obeyed
-        .setKinematics(DriveConstants.kDriveKinematics);
+        TrajectoryConfig config = new TrajectoryConfig(
+                1,
+                1)
+                // Add kinematics to ensure max speed is actually obeyed
+                .setKinematics(DriveConstants.kDriveKinematics);
 
-    // An example trajectory to follow.  All units in meters.
-    Trajectory exampleTrajectory =
-        TrajectoryGenerator.generateTrajectory(
-            // Start at the origin facing the +X direction
-            new Pose2d(0, 0, new Rotation2d(0)),
-            // Pass through these no interior waypoints
-            List.of(),
-            // End 3 meters straight ahead of where we started, facing forward
-            new Pose2d(3, 0, Rotation2d.fromDegrees(90)),
-            config);
+        // An example trajectory to follow. All units in meters.
+        Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
+                // Start at the origin facing the +X direction
+                new Pose2d(0, 0, new Rotation2d(0)),
+                // Pass through these no interior waypoints
+                List.of(),
+                // End 3 meters straight ahead of where we started, facing forward
+                new Pose2d(3, 0, Rotation2d.fromDegrees(90)),
+                config);
 
-            
-
-    return print("Starting auto")
-        .andThen(runOnce(
-            () -> m_driveTrain.getPose(), m_driveTrain))
-        .andThen(m_driveTrain.createCommandForTrajectory(autonomousTrajectory.goForwardThreeMetersAndComeBack(), m_driveTrain::getPose))
-        //.andThen(m_driveTrain.createCommandForTrajectory(turn90Tracjectory, m_driveTrain::getPose))
-        .andThen(runOnce(m_driveTrain::stop, m_driveTrain))
-        .andThen(print("Done with auto"));
-                // return new PPRamseteCommand(m_auto,
-                // m_driveTrain::getPose,
-                // new RamseteController(),
-                // m_driveTrain.m_kinematics,
-                // m_driveTrain.wheelspeed_setter,
-                // true,
-                // m_driveTrain);
+        return print("Starting auto")
+                .andThen(runOnce(
+                        () -> m_driveTrain.getPose(), m_driveTrain))
+                .andThen(m_driveTrain.createCommandForTrajectory(autonomousTrajectory.goForwardThreeMetersAndComeBack(),
+                        m_driveTrain::getPose))
+                // .andThen(m_driveTrain.createCommandForTrajectory(turn90Tracjectory,
+                // m_driveTrain::getPose))
+                .andThen(runOnce(m_driveTrain::stop, m_driveTrain))
+                .andThen(print("Done with auto"));
+        // return new PPRamseteCommand(m_auto,
+        // m_driveTrain::getPose,
+        // new RamseteController(),
+        // m_driveTrain.m_kinematics,
+        // m_driveTrain.wheelspeed_setter,
+        // true,
+        // m_driveTrain);
     }
 
     /**

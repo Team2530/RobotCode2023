@@ -32,8 +32,9 @@ public class Arm extends SubsystemBase {
     // For simulation purposes
     private EncoderSim simPositionEncoder = new EncoderSim(positionEncoder);
 
-    private SingleJointedArmSim armSim = new SingleJointedArmSim(DCMotor.getFalcon500(1), 1, 2, 1, Math.PI / 6,
-            Math.PI / 3, 2, false);
+    // private SingleJointedArmSim armSim = new
+    // SingleJointedArmSim(DCMotor.getFalcon500(1), 1, 2, 1, Math.PI / 6, Math.PI /
+    // 3, 2, false);
 
     // ---------- Subsystems ----------\\
     private DriveTrain driveTrain;
