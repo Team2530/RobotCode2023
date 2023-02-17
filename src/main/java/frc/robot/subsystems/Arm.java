@@ -150,7 +150,7 @@ public class Arm extends SubsystemBase {
 
         // ---------- Shuffle Things ----------\\
         initialiseShuffleBoardValues();
-        positionEncoder.setDistancePerPulse(Constants.ArmConstants.DELTA_ANGLE_PER_PULSE);
+        positionEncoder.setDistancePerPulse(1f / 4096f);
         extensionMotor.overrideLimitSwitchesEnable(true);
 
         // TODO: Reverse Motors if needed!
@@ -160,14 +160,15 @@ public class Arm extends SubsystemBase {
     public void periodic() {
         SmartDashboard.putBoolean("Limit 1", 0 != extensionMotor.isFwdLimitSwitchClosed());
         SmartDashboard.putBoolean("Limit 2", 0 != extensionMotor.isRevLimitSwitchClosed());
-        grabberServo.setRelativeAngle(xbox.getRawAxis(2));
+        grabberServo.setRelativeAngle(1 - xbox.getRawAxis(2));
 
+        SmartDashboard.putNumber("Position Encoder", positionEncoder.getDistance());
         switch (xbox.getPOV()) {
             case 0:
-                extensionMotor.set(0.2);
+                extensionMotor.set(0.75);
                 break;
             case 180:
-                extensionMotor.set(-0.2);
+                extensionMotor.set(-0.75);
                 break;
             case -1:
                 extensionMotor.set(0.0);
