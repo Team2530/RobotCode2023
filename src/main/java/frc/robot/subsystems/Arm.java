@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -181,6 +182,8 @@ public class Arm extends SubsystemBase {
             positionMotor.set(0.0);
         }
 
+        updateShuffleBoardValues();
+
     }
 
     /**
@@ -310,8 +313,8 @@ public class Arm extends SubsystemBase {
      * ! Make sure method is called in periodic or values won't update
      */
     public void updateShuffleBoardValues() {
-        SmartShuffle.get("Arm Position").update(position + " " + positionValue);
-        SmartShuffle.get("Arm Extension").update(extension + " " + extensionValue);
+        // SmartShuffle.get("Arm Position").update(position + " " + positionValue);
+        // SmartShuffle.get("Arm Extension").update(extension + " " + extensionValue);
 
         if (positionValue < currentPosition) {
             SmartShuffle.get("Pos").flashColor("yellow", "white", 20);
@@ -331,8 +334,8 @@ public class Arm extends SubsystemBase {
     }
 
     private void initialiseShuffleBoardValues() {
-        SmartShuffle.add("Arm Position", "");
-        SmartShuffle.add("Arm Extension", "");
+        SmartShuffle.setHeight(1);
+        SmartShuffle.setWidth(1);
 
         // Flashers for Extension and Position
         SmartShuffle.setWidget(BuiltInWidgets.kBooleanBox);

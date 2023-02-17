@@ -16,7 +16,7 @@ public class USBCamera extends CommandBase {
 
   /** Creates a new USBCamera. */
   public USBCamera() {
-    CameraServer.startAutomaticCapture().setResolution(320, 240);
+    Shuffleboard.getTab("Driver Dashboard").add(CameraServer.startAutomaticCapture()).withPosition(0, 0).withSize(6, 4);
   }
 
   // Called when the command is initially scheduled.

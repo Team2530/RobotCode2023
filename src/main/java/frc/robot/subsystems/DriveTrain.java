@@ -250,20 +250,11 @@ public class DriveTrain extends SubsystemBase {
 
   /** Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
-    SmartShuffle.get("Stick Y").update(stick.getY() * -100);
-    SmartShuffle.get("Stick Z").update(stick.getZ() * 100);
-    SmartShuffle.get("Test Color").flashColor("blue", "red", 30);
+
   }
 
   private void createValues() {
-    SmartShuffle.setPosx(0);
-    SmartShuffle.setPosy(0);
-    SmartShuffle.setWidth(5);
-    SmartShuffle.add("Stick Y", 0);
-    SmartShuffle.setWidget(BuiltInWidgets.kDial);
-    SmartShuffle.add("Stick Z", 0);
-    SmartShuffle.setWidget(BuiltInWidgets.kBooleanBox);
-    SmartShuffle.add("Test Color", true);
+
   }
 
   /** Check the current robot pose. */

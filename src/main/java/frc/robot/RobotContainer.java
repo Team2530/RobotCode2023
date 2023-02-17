@@ -27,12 +27,12 @@ public class RobotContainer {
 
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
-    
+
     static {
-        if(RobotBase.isReal()) {
-            final USBCamera driveCamera = new USBCamera();
-        }
+        // if(RobotBase.isReal()) {
+        final USBCamera driveCamera = new USBCamera();
     }
+    // }
     private final Arm m_arm = new Arm(m_driveTrain, stick, xbox);
 
     // ---------- Autonomous Commands ----------\\
@@ -50,7 +50,7 @@ public class RobotContainer {
 
     public void configureButtonBindings() {
 
-        //? Button 2 is used for Turtle Mode
+        // ? Button 2 is used for Turtle Mode
         new JoystickButton(stick, Constants.ControllerConstants.J_TURTLE_TOGGLE).onTrue(
                 new InstantCommand(() -> {
                     m_driveTrain.toggleTurtleMode(0.5);
@@ -58,10 +58,10 @@ public class RobotContainer {
                     m_driveTrain.toggleTurtleMode(0.75);
                 }));
 
-        //? Button 1 (trigger is used for fullspeed)
+        // ? Button 1 (trigger is used for fullspeed)
         new JoystickButton(stick, Constants.ControllerConstants.J_FULL_SPEED).onTrue(
                 new InstantCommand(() -> {
-                     m_driveTrain.toggleTurtleMode(1.0);
+                    m_driveTrain.toggleTurtleMode(1.0);
                 })).onFalse(new InstantCommand(() -> {
                     m_driveTrain.toggleTurtleMode(0.75);
                 }));

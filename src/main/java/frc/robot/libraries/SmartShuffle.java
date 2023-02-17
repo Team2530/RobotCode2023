@@ -21,8 +21,8 @@ public class SmartShuffle {
 
     private int ticks;
 
-    /**Use to change between different Shuffleboard tables*/
-    public static String tableName = "Test Values";
+    /** Use to change between different Shuffleboard tables */
+    public static String tableName = "Driver Dashboard";
 
     private static BuiltInWidgets widget = BuiltInWidgets.kNumberBar;
 
@@ -30,53 +30,61 @@ public class SmartShuffle {
 
     private SmartShuffle(String title, Object defaultValue) {
         simpleWidget = Shuffleboard.getTab(tableName)
-        .add(title, defaultValue)
-        .withWidget(widget) // with specified widget
-        .withProperties(Map.of("min", -100, "max", 100)) // can be updated with different types
-        .withPosition(posx, posy) // specify the widget here
-        .withSize(width, height);
+                .add(title, defaultValue)
+                .withWidget(widget) // with specified widget
+                .withProperties(Map.of("min", -100, "max", 100)) // can be updated with different types
+                .withPosition(posx, posy) // specify the widget here
+                .withSize(width, height);
 
         entry = simpleWidget.getEntry();
 
-        posx+= width;
+        posx += width;
         // if we go off the screen
-        if(posx >= 9) {
+        if (posx >= 9) {
             posy++;
-            posx = 0;
+            posx = 6;
         }
     }
+
     /**
      * Switches between tables
+     * 
      * @param name Name of table to switch to
      */
     public static void changeTable(String name) {
         tableName = name;
     }
+
     /**
      * Adds a SmartShuffle object to the list
-     * @param title name of shuffle object
+     * 
+     * @param title        name of shuffle object
      * @param defaultValue default value of the object
-     * (0, "Hello", 1.5, etc.)
+     *                     (0, "Hello", 1.5, etc.)
      */
     public static void add(String title, Object defaultValue) {
         shuffleObjects.put(title, new SmartShuffle(title, defaultValue));
     }
+
     /**
      * Updates the Entry on ShuffleBoard
+     * 
      * @param o the value you want updated
      */
     public void update(Object o) {
         entry.setValue(o);
     }
+
     /**
      * Gets the SmartShuffle with the given name
+     * 
      * @param name Name of SmartShuffle object
      * @return The SmartShuffle object with the given name
      */
     public static SmartShuffle get(String name) {
         return shuffleObjects.get(name);
     }
-    
+
     public static void setHeight(int height) {
         SmartShuffle.height = height;
     }
@@ -106,7 +114,7 @@ public class SmartShuffle {
     }
 
     public void flashColor(String color1, String color2, double ticks) {
-        if(this.ticks < ticks) {
+        if (this.ticks < ticks) {
             changeColor(color1);
         } else {
             changeColor(color2);
@@ -114,7 +122,7 @@ public class SmartShuffle {
 
         this.ticks++;
 
-        if(this.ticks > ticks * 2) {
+        if (this.ticks > ticks * 2) {
             this.ticks = 0;
         }
     }
