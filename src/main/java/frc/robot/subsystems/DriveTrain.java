@@ -174,6 +174,8 @@ public class DriveTrain extends SubsystemBase {
     updateShuffleBoardValues();
     pose = getPose();
     voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
+
+    SmartDashboard.putNumber("Roll", ahrs.getRoll());
   }
 
   public void setMode(Modes m) {

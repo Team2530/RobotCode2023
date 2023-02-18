@@ -163,6 +163,9 @@ public class Arm extends SubsystemBase {
         grabberServo.setRelativeAngle(1 - xbox.getRawAxis(2));
 
         SmartDashboard.putNumber("Position Encoder", positionEncoder.getDistance());
+
+        // ? Code for arm, change the number in
+        // ? set() to change speed
         switch (xbox.getPOV()) {
             case 0:
                 extensionMotor.set(0.75);
