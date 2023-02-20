@@ -114,7 +114,7 @@ public class RobotContainer {
      * @return the command to run in Test
      */
     public Command getTestCommand() {
-        return null;
+        return new WaitUntilCommand(m_arm::zeroArm);
     }
 
     public static AHRS getAhrs() {
