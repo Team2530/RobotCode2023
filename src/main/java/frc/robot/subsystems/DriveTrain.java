@@ -98,6 +98,7 @@ public class DriveTrain extends SubsystemBase {
 
   // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
   private double driveModeSpeed = 1.0;
+  private double zTurningSpeed = 1.0;
 
   private double deltaTime = 0.0;
   private double startTime = 0.0;
@@ -185,11 +186,11 @@ public class DriveTrain extends SubsystemBase {
     if (RobotBase.isReal()) {
       ((DifferentialDrive) driveBase).arcadeDrive(
           Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-          -Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
+          -Deadzone.deadZone(StickZ * driveModeSpeed * zTurningSpeed, Constants.ControllerConstants.DEADZONE));
     } else {
       ((DifferentialDrive) driveBase).arcadeDrive(
           Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-          Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
+          Deadzone.deadZone(StickZ * driveModeSpeed * zTurningSpeed, Constants.ControllerConstants.DEADZONE));
     }
 
   }
@@ -250,7 +251,7 @@ public class DriveTrain extends SubsystemBase {
 
   /** Update all ShuffleBoard values */
   private void updateShuffleBoardValues() {
-
+    
   }
 
   private void createValues() {
@@ -295,5 +296,8 @@ public class DriveTrain extends SubsystemBase {
 
   public void toggleTurtleMode(double maxSpeed) {
     driveModeSpeed = maxSpeed;
+  }
+  public void toggleSlowTurning(double slowTurning) {
+    zTurningSpeed = slowTurning;
   }
 }
