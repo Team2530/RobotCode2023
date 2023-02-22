@@ -18,11 +18,11 @@ import frc.robot.libraries.*;
 public class Arm extends SubsystemBase {
 
     // ---------- Motors ----------\\
-    private WPI_TalonSRX positionMotor = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
+    private WPI_TalonSRX linearActuator = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(Constants.PortsConstants.EXTENTION_PORT);
     private SpecialServo grabberServo = new SpecialServo(Constants.PortsConstants.GRABBER_PORT);
 
-    private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT,
+    private Encoder angleEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT,
             Constants.PortsConstants.ARM_ENCODER_PORT + 1);
     // For simulation purposes
 
@@ -42,8 +42,6 @@ public class Arm extends SubsystemBase {
     private boolean canGoUp = true;
     private boolean canExtend = true;
 
-
-    // ---------- Arm Constants ---------- \\ (All Values are in inches)
     // Distance from edge of robot to the rotation axis of the arm
     private final double kDistanceInsideRobot = -18.443;
     // Distance above ground for pivot point
@@ -55,24 +53,25 @@ public class Arm extends SubsystemBase {
     private final double kMinAngle = -17.2;
     private final double kMaxAngle = 60.0;
 
-    //Min && Max Extension Values for interpolating
-    private final  double minExtension = 0.0;
+    // Min && Max Extension Values for interpolating
+    private final double minExtension = 0.0;
     private final double maxExtension = 47.5;
 
     // ---------- Sensor Reading Constants ---------- \\
 
-    //Min && Max Encoder Readings so we can interpolate between them
-    private final double minAngleEncoderReading = 0.0;
-    private final double maxAngleEncoderReading = 1.0;
+    // Min && Max Encoder Readings so we can interpolate between them
+    private final double minAngleEncoderReading = 1000;
+    private final int maxAngleEncoderReading = 900000;
 
     // Min && max Encoder Readings for interpolation
     private final double minExtensionEncoderReading = 0.0;
     private final double maxExtensionEncoderReading = 1.0;
 
-    private final double AngleChangePerPulse = .1;
-    private final double ExtensionChangePerPulse = .1;
+    private final double angleChangePerPulse = .1;
+    private final double extensionChangePerPulse = 23225.806;
 
-    private double armLimitSpeed = 1.0;
+    private double armOutLimitSpeed = 0.75;
+    private double armInLimitSpeed = 0.75;
 
     /**
      * Constructs a new Arm
@@ -88,32 +87,32 @@ public class Arm extends SubsystemBase {
 
         // ---------- Shuffle Things ----------\\
         initialiseShuffleBoardValues();
-        positionEncoder.setDistancePerPulse(1f / 4096f);
+        angleEncoder.setDistancePerPulse(1);
         extensionMotor.overrideLimitSwitchesEnable(true);
     }
 
     @Override
     public void periodic() {
-        //Update to our current data
-        currentAngle = positionEncoder.getDistance() * AngleChangePerPulse;
-        currentExtension = extensionMotor.getSelectedSensorPosition() * ExtensionChangePerPulse;
+        // Update to our current data
+        currentAngle = angleEncoder.getDistance() * angleChangePerPulse;
+        currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse;
         // check current data
         ensureBounds();
 
         grabberServo.setRelativeAngle(1 - xbox.getRawAxis(2));
 
-        SmartDashboard.putNumber("Position Encoder", positionEncoder.getDistance());
+        SmartDashboard.putNumber("Position Encoder", angleEncoder.getDistance());
         // Get Xbox POV for Extending
         switch (xbox.getPOV()) {
             case 0:
-                if(canExtend) {
-                    extensionMotor.set(0.75 * armLimitSpeed);
+                if (canExtend) {
+                    extensionMotor.set(armOutLimitSpeed);
                 } else {
                     extensionMotor.set(0.0);
                 }
                 break;
             case 180:
-                extensionMotor.set(-0.75 * armLimitSpeed);
+                extensionMotor.set(-armInLimitSpeed);
                 break;
             case -1:
                 extensionMotor.set(0.0);
@@ -121,15 +120,15 @@ public class Arm extends SubsystemBase {
         }
         // Buttons Y and A for angle adjustment
         if (xbox.getRawButton(4)) {
-            if(canGoUp) {
-                positionMotor.set(1);
+            if (canGoUp) {
+                linearActuator.set(1);
             } else {
-                positionMotor.set(0.0);
+                linearActuator.set(0.0);
             }
         } else if (xbox.getRawButton(1)) {
-            positionMotor.set(-1);
+            linearActuator.set(-1);
         } else {
-            positionMotor.set(0.0);
+            linearActuator.set(0.0);
         }
 
         updateShuffleBoardValues();
@@ -140,20 +139,21 @@ public class Arm extends SubsystemBase {
      * ! Make sure method is called in periodic or values won't update
      */
     public void updateShuffleBoardValues() {
-        SmartDashboard.putBoolean("Limit 1", 0 != extensionMotor.isFwdLimitSwitchClosed());
-        SmartDashboard.putBoolean("Limit 2", 0 != extensionMotor.isRevLimitSwitchClosed());
-        if(canGoUp) {
+        if (canGoUp) {
             SmartShuffle.get("Pos").changeColor("green");
         } else {
             SmartShuffle.get("Pos").flashColor("red", "white", 15);
         }
 
-        if(canExtend) {
+        if (canExtend) {
             SmartShuffle.get("Ext").changeColor("green");
         } else {
             SmartShuffle.get("Ext").flashColor("red", "white", 15);
         }
-        
+
+        SmartShuffle.get("Angle Encoder").update(angleEncoder.getDistance());
+        SmartShuffle.get("Extension Encoder").update(currentExtension);
+
     }
 
     private void initialiseShuffleBoardValues() {
@@ -164,15 +164,20 @@ public class Arm extends SubsystemBase {
         SmartShuffle.setWidget(BuiltInWidgets.kBooleanBox);
         SmartShuffle.add("Ext", true);
         SmartShuffle.add("Pos", true);
+        SmartShuffle.add("Fwd Limit", 0 != extensionMotor.isFwdLimitSwitchClosed());
+        SmartShuffle.add("Rev Limit", 0 != extensionMotor.isRevLimitSwitchClosed());
+        SmartShuffle.setWidget(BuiltInWidgets.kTextView);
+        SmartShuffle.add("Angle Encoder", angleEncoder.getDistance());
+        SmartShuffle.add("Extension Encoder", extensionMotor.getSelectedSensorPosition());
     }
 
     private void ensureBounds() {
         // calcualte based on our current extension value and angle value
-        // double calculatedLength = Math.cos(Math.toRadians(currentAngle)) * (kDistanceInsideRobot + kArmFullRetractedLength + currentExtension);
+        // double calculatedLength = Math.cos(Math.toRadians(currentAngle)) *
+        // (kDistanceInsideRobot + kArmFullRetractedLength + currentExtension);
         double calculatedHeight = Math.sin(Math.toRadians(currentAngle)) * kArmFullRetractedLength + kArmPivotHeight;
-        calculatedLength += stick.getX();
         // If we are close to being our of bounds, we shall rumble
-        if(calculatedHeight > 77) {
+        if (calculatedHeight > 77) {
             xbox.setRumble(RumbleType.kBothRumble, 1);
             canGoUp = false;
         } else {
@@ -180,7 +185,7 @@ public class Arm extends SubsystemBase {
             xbox.setRumble(RumbleType.kBothRumble, 0);
         }
 
-        if(calculatedLength > 47) {
+        if (calculatedLength > 47) {
             xbox.setRumble(RumbleType.kBothRumble, 1);
             canExtend = false;
         } else {
@@ -188,26 +193,34 @@ public class Arm extends SubsystemBase {
             xbox.setRumble(RumbleType.kBothRumble, 0);
         }
 
-        if(currentExtension > 45 || currentExtension < 2) {
-            armLimitSpeed = 0.25;
+        if (currentExtension > 37) {
+            armOutLimitSpeed = 0.25;
         } else {
-            armLimitSpeed = 1.0;
+            armOutLimitSpeed = 0.75;
+        }
+
+        if (currentExtension < 2) {
+            armInLimitSpeed = 0.25;
+        } else {
+            armInLimitSpeed = 0.75;
         }
     }
 
     public boolean zeroArm() {
-        if(currentExtension > 0) {
-            extensionMotor.set(-0.5);
+        if (currentExtension > 0.1) {
+            extensionMotor.set(-armInLimitSpeed);
         } else {
             extensionMotor.set(0.0);
         }
 
-        if(currentAngle < kMaxAngle) {
-            positionMotor.set(0.5);
-        } else {
-            positionMotor.set(0.0);
-        }
+        grabberServo.setRelativeAngle(0.0);
 
-        return Math.abs(currentAngle - kMaxAngle) < 0.1 && Math.abs(currentExtension) < 0.1;
+        // if (currentAngle < kMaxAngle) {
+        // linearActuator.set(0.5);
+        // } else {
+        // linearActuator.set(0.0);
+        // }
+
+        return /* Math.abs(currentAngle - kMaxAngle) < 0.1 && **/ currentExtension < 0.1;
     }
 }

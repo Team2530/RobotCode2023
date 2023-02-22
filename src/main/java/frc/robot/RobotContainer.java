@@ -65,7 +65,7 @@ public class RobotContainer {
                 })).onFalse(new InstantCommand(() -> {
                     m_driveTrain.toggleTurtleMode(0.75);
                 }));
-        
+
         // ? Button 6 (trigger used for slow speed for turning)
         new JoystickButton(stick, Constants.ControllerConstants.J_SLOW_SPEED_TURRNNG).onTrue(
                 new InstantCommand(() -> {
