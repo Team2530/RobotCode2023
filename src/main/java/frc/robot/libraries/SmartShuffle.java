@@ -10,11 +10,12 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.SimpleWidget;
 
 public class SmartShuffle {
+    
     private GenericEntry entry;
     private SimpleWidget simpleWidget;
+
     // position of the placement of a SmartShuffle object
-    private static int posx = 0;
-    private static int posy = 0;
+    private static int posx = 0, posy = 0;
 
     private static int width = 1;
     private static int height = 1;

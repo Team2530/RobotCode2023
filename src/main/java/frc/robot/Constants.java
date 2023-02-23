@@ -10,8 +10,9 @@ import edu.wpi.first.math.util.Units;
  */
 public class Constants {
 
-    // Sets controller ports
+    
     static {
+        // Sets controller ports
         ControllerConstants.JOYSTICK_PORT = 0; // frc.robot.subsystems.Controller.getJoystickPort();
         ControllerConstants.XBOX_PORT = 1; // frc.robot.subsystems.Controller.getXboxPort();
 
@@ -23,9 +24,24 @@ public class Constants {
      * Ports for all sorts of motors and motor controllers
      */
     public static class PortsConstants {
+        /**
+         * Front Left Motor Port
+         */
         public static final int MOTOR_FL_PORT = 10;
+
+        /**
+         * Front Right Motor port
+         */
         public static final int MOTOR_FR_PORT = 20;
+
+        /**
+         * Back left motor port
+         */
         public static final int MOTOR_BL_PORT = 30;
+
+        /**
+         * Back right motor port
+         */
         public static final int MOTOR_BR_PORT = 40;
 
         /** Arm Encoder port (UP down tilt axis) */
@@ -103,6 +119,10 @@ public class Constants {
         // Xbox Buttons (Use X_ before the button name to indicate use with Xbox
         // controller)
         public static final int X_AIM_TOWARDS_TARGET = 1;
+
+        /**
+         * When changing controller constants, make sure out driver knows about it--and put it on the list if there is one.
+         */
     }
 
     public static class ArmConstants {

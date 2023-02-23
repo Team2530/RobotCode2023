@@ -15,9 +15,6 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class SingleJoystickDrive extends CommandBase {
-  /**
-   * Creates a new drive.
-   */
   DriveTrain driveTrain;
   Joystick stick;
   XboxController xbox;
@@ -35,7 +32,9 @@ public class SingleJoystickDrive extends CommandBase {
     // Use addRequirements() here to declare subsystem dependencies.
   }
 
-  // Called every time the scheduler runs while the command is scheduled.
+  /**
+   * Called every time the scheduler runs while the command is scheduled.
+   */
   @Override
   public void execute() {
     driveTrain.singleJoystickDrive(
@@ -43,13 +42,15 @@ public class SingleJoystickDrive extends CommandBase {
         Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE));
   }
 
-  // Called once the command ends or is interrupted.
+  /** 
+   * Called once the command ends or is interrupted.
+   */
   @Override
-  public void end(boolean interrupted) {
-    // driveTrain.stop();
-  }
+  public void end(boolean interrupted) { /* driveTrain.stop(); */ }
 
-  // Returns true when the command should end.
+  /**
+   * Returns true when the command should end.
+   */
   @Override
   public boolean isFinished() {
     return false;

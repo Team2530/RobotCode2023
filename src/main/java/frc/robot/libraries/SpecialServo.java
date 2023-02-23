@@ -4,10 +4,9 @@ import edu.wpi.first.wpilibj.Servo;
 
 public class SpecialServo {
 
-    Servo servo;
+    private final Servo servo;
 
-    double kMinValue = 0.0;
-    double kMaxValue = 0.6;
+    private final double kMinValue = 0.0, kMaxValue = 0.6;
 
     public SpecialServo(int channel) {
         servo = new Servo(channel);

@@ -39,7 +39,9 @@ public class RobotContainer {
 
     // ---------- Commands ----------\\
     InstantCommand example = new InstantCommand(() -> {
-
+        /** 
+         * code goes here
+         */
     });
 
     // ---------- Global Toggles ----------\\

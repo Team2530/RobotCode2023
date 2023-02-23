@@ -11,13 +11,15 @@ public class Deadzone {
         return (v - a) / (b - a);
     }
 
-    // Fixed, previous version didnt work with negative values, stupid me
-    // there is literally nothing wrong with this code, it's a you problem
+    /**
+     * Fixed, previous version didnt work with negative values, stupid me
+     * there is literally nothing wrong with this code, it's a you problem
+     */
     public static double deadZone(double value, double deadzone) {
         if (Math.abs(value) > deadzone)
             return Math.signum(value) * invlerp(deadzone, 1.0, Math.abs(value));
         else
-            return 0.;
+            return 0.0D;
     }
 
     public static double cutOff(double value, double cutoff) {

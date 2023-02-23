@@ -46,7 +46,6 @@ public class LimeLight extends SubsystemBase {
   /** Creates a new LimeLight. */
   public LimeLight(DriveTrain driveTrain) {
     this.driveTrain = driveTrain;
-
   }
 
   @Override
@@ -74,7 +73,6 @@ public class LimeLight extends SubsystemBase {
     SmartDashboard.putNumber("LimelightX", xoff);
     SmartDashboard.putNumber("LimelightY", yoff);
     SmartDashboard.putNumber("LimelightArea", area);
-
   }
 
   public double toRadians(double input) {
@@ -108,7 +106,6 @@ public class LimeLight extends SubsystemBase {
     }
     System.out.println(turnRate);
     // Use this method to turn to robot at the speeds
-
   }
 
   /**
@@ -133,5 +130,4 @@ public class LimeLight extends SubsystemBase {
   public static double getLimeValues(String tvar) {
     return NetworkTableInstance.getDefault().getTable("limelight").getEntry(tvar).getDouble(0.0);
   }
-
 }

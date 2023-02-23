@@ -18,7 +18,6 @@ public class Controller extends SubsystemBase {
    * @throws Error if the joystick isn't connected to the computer
    */
   public static int getJoystickPort() {
-    if (true) {
       for (int i = 0; i < 6; i++) {
         if (DriverStation.getJoystickName(i).contains("Logitech Extreme 3D")) {
           return i;
@@ -26,9 +25,6 @@ public class Controller extends SubsystemBase {
       }
       throw new Error(
           "Joystick seems not to be connected! " + " Make sure the Joystick is connected to the computer");
-    } else {
-      return 0;
-    }
   }
 
   /**
@@ -39,15 +35,11 @@ public class Controller extends SubsystemBase {
    * @throws Error if the Xbox isn't connected to the computer
    */
   public static int getXboxPort() {
-    if (true) {
       for (int i = 0; i < 6; i++) {
         if (DriverStation.getJoystickName(i).contains("Xbox")) {
           return i;
         }
       }
       throw new Error("Xbox seems not to be connected! Make sure the Xbox is connected to the computer");
-    } else {
-      return 1;
-    }
   }
 }
