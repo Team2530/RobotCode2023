@@ -1,15 +1,27 @@
 package frc.robot;
 
+import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.commands.*;
 import frc.robot.libraries.*;
 import frc.robot.subsystems.*;
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
+import java.util.HashMap;
+import java.util.List;
+
 import com.kauailabs.navx.frc.AHRS;
+import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.RamseteAutoBuilder;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -22,6 +34,7 @@ public class RobotContainer {
 
     final Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
     final XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
+    public static SendableChooser<Command> m_chooser = new SendableChooser<>();
 
     private static final AHRS m_ahrs = new AHRS();
 
@@ -48,7 +61,38 @@ public class RobotContainer {
 
     public RobotContainer() {
         configureButtonBindings();
+        // Shuffleboard.getTab("Autonomous").add(m_chooser);
+        // m_chooser.setDefaultOption("Nothing", new InstantCommand());
+        // m_chooser.addOption("Test", ramAutoBuilder("test", Constants.AutoConstants.testEventMap));
+        // m_chooser.addOption("Another Test", ramAutoBuilder("anotherTest", Constants.AutoConstants.anotherTestEventMap));
+        // m_chooser.addOption("Blue Alliance", ramAutoBuilder("BlueAlliance", Constants.AutoConstants.blueAllianceEventMap));
+        // m_chooser.addOption("Charge Station", ramAutoBuilder("ChargeStation", Constants.AutoConstants.chargeStationEventMap));
+        // m_chooser.addOption("Forward Backward", ramAutoBuilder("ForwardBackward", Constants.AutoConstants.forwardBackwardEventmap));
     }
+
+    public Command ramAutoBuilder(String pathName, HashMap<String, Command> eventMap) {
+        // PathPlanner AutoBuilder, builds a full autonomous command
+        RamseteAutoBuilder testRouteBuilder = new RamseteAutoBuilder(
+          m_driveTrain::getPose,
+          m_driveTrain::resetOdometry,
+          new RamseteController(AutoConstants.K_RAMSETE_B, AutoConstants.K_RAMSETE_ZETA),
+          DriveConstants.kDriveKinematics,
+          new SimpleMotorFeedforward(
+            DriveConstants.KS_VOLTS,
+            DriveConstants.KA_VOLT_SECONDS_SQURED_PER_METER,
+            DriveConstants.KV_VOLT_SECONDS_PER_METER
+          ),
+          m_driveTrain::getWheelSpeeds,
+          new com.pathplanner.lib.auto.PIDConstants(DriveConstants.KP_DRIVE_VEL, 0, 0),
+          m_driveTrain::tankDriveVolts,
+          eventMap,
+          false,
+          m_driveTrain
+        );
+        List<PathPlannerTrajectory> pathToFollow = PathPlanner.loadPathGroup(pathName, PathPlanner.getConstraintsFromPath(pathName));
+        final Command auto = testRouteBuilder.fullAuto(pathToFollow);
+        return auto;
+      }
 
     public void configureButtonBindings() {
 
@@ -98,7 +142,13 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return new Autonomous(m_driveTrain, m_ahrs);
+        return new Autonomous(m_driveTrain, m_ahrs).getAutonomousCommand();
+        //return ramAutoBuilder("test", Constants.AutoConstants.testEventMap);
+        //return ramAutoBuilder("anotherTest", Constants.AutoConstants.anotherTestEventMap);
+        //return ramAutoBuilder("BlueAlliance", Constants.AutoConstants.blueAllianceEventMap);
+        //return ramAutoBuilder("ChargeStation", Constants.AutoConstants.chargeStationEventMap);
+        //return ramAutoBuilder("ChargeStation", Constants.AutoConstants.chargeStationEventMap);
+        //return m_chooser.getSelected();
     }
 
     /**

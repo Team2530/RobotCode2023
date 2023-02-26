@@ -14,6 +14,7 @@ import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -22,6 +23,7 @@ import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
@@ -30,10 +32,14 @@ import edu.wpi.first.wpilibj.simulation.*;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.RamseteCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
+import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.libraries.Deadzone;
 import frc.robot.libraries.SmartShuffle;
 import frc.robot.logging.*;
@@ -286,5 +292,62 @@ public class DriveTrain extends SubsystemBase {
 
   public void toggleTurtleMode(double maxSpeed) {
     driveModeSpeed = maxSpeed;
+  }
+
+  /**
+   * Returns the current wheel speeds of the robot.
+   *
+   * @return The current wheel speeds.
+   */
+  public DifferentialDriveWheelSpeeds getWheelSpeeds() {
+    return new DifferentialDriveWheelSpeeds(m_leftEncoder.getRate(), m_rightEncoder.getRate());
+  }
+
+   /**
+   * Controls the left and right sides of the drive directly with voltages.
+   *
+   * @param leftVolts the commanded left output
+   * @param rightVolts the commanded right output
+   */
+  public void tankDriveVolts(double leftVolts, double rightVolts) {
+    m_leftGroup.setVoltage(leftVolts);
+    m_rightGroup.setVoltage(rightVolts);
+    driveBase.feed();
+  }
+  
+  /**
+   * Sets the desired speeds to zero
+   */
+  public void stop() {
+    setSpeeds(m_kinematics.toWheelSpeeds(new ChassisSpeeds()));
+  }
+  /**
+   * Creates a command to follow a Trajectory on the drivetrain.
+   * @param trajectory trajectory to follow
+   * @return command that will run the trajectory
+   */
+  public Command createCommandForTrajectory(Trajectory trajectory, Supplier<Pose2d> poseSupplier) {
+    // var thetaController = new ProfiledPIDController(
+    //     AutoConstants.THETA_kP, AutoConstants.THETA_kI, AutoConstants.THETA_kD, THETA_CONSTRAINTS);
+    // thetaController.enableContinuousInput(-Math.PI, Math.PI);
+
+    RamseteCommand ramseteCommand =
+        new RamseteCommand(
+          trajectory,
+          this::getPose,
+          new RamseteController(AutoConstants.K_RAMSETE_B, AutoConstants.K_RAMSETE_ZETA),
+          new SimpleMotorFeedforward(
+              DriveConstants.KS_VOLTS,
+              DriveConstants.KV_VOLT_SECONDS_PER_METER,
+              DriveConstants.KA_VOLT_SECONDS_SQURED_PER_METER),
+          DriveConstants.kDriveKinematics,
+          this::getWheelSpeeds,
+          new PIDController(DriveConstants.KP_DRIVE_VEL, 0, 0),
+          new PIDController(DriveConstants.KP_DRIVE_VEL, 0, 0),
+          // RamseteCommand passes volts to the callback
+          this::tankDriveVolts,
+          this);
+            
+      return ramseteCommand;
   }
 }

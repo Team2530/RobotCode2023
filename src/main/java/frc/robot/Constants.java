@@ -1,7 +1,14 @@
 package frc.robot;
 
+import java.util.HashMap;
+
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.trajectory.constraint.DifferentialDriveVoltageConstraint;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.Command;
 
 /**
  * Constans provides a place for all robot
@@ -136,4 +143,44 @@ public class Constants {
         /** How far the endmost point of the arm is relative to the end of the robot */
         public static final double ENDPOINT_TO_ROBOT = 4.826;
     }
+    public static class AutoConstants {
+        public static final double K_MAX_SPEED_METERS_PER_SECOND = 2;
+        public static final double K_MAX_ACCELERATION_METERS_PER_SECOND_SQUARED = 1;
+        public static final HashMap<String, Command> testEventMap = new HashMap<>();
+        public static final HashMap<String, Command> anotherTestEventMap = new HashMap<>();
+        public static final HashMap<String, Command> blueAllianceEventMap = new HashMap<>();
+        public static final HashMap<String, Command> chargeStationEventMap = new HashMap<>();
+        public static final HashMap<String, Command> forwardBackwardEventmap = new HashMap<>();
+        public static final double K_RAMSETE_B = 2;
+        public static final double K_RAMSETE_ZETA = 0.7;
+    }
+
+    public static class DriveConstants {
+        public static final double KS_VOLTS = 0.14666;
+        public static final double KV_VOLT_SECONDS_PER_METER = 0.00051567;
+        public static final double KA_VOLT_SECONDS_SQURED_PER_METER = 4.9522E-05;
+        //public static final double KA_VOLT_SECONDS_SQURED_PER_METER = 8.6662;
+        public static final double KP_DRIVE_VEL = 3;
+        public static final double K_TRACK_WIDTH_METERS = .72;
+        public static final DifferentialDriveKinematics kDriveKinematics =
+            new DifferentialDriveKinematics(K_TRACK_WIDTH_METERS);
+        public static final SimpleMotorFeedforward K_FEED_FORWARD = new SimpleMotorFeedforward(
+            DriveConstants.KS_VOLTS,
+            DriveConstants.KV_VOLT_SECONDS_PER_METER,
+            DriveConstants.KA_VOLT_SECONDS_SQURED_PER_METER);
+        // Voltage constraints
+        public static final DifferentialDriveVoltageConstraint kAutoVoltageConstraint =
+        new DifferentialDriveVoltageConstraint(
+            K_FEED_FORWARD,
+            kDriveKinematics,
+            10);
+
+        // Setup trajectory constraints
+        public static final TrajectoryConfig kTrajectoryConfig =
+        new TrajectoryConfig(AutoConstants.K_MAX_SPEED_METERS_PER_SECOND, 
+            AutoConstants.K_MAX_ACCELERATION_METERS_PER_SECOND_SQUARED)
+            .setKinematics(kDriveKinematics)
+            .addConstraint(kAutoVoltageConstraint);
+    }
+
 }
