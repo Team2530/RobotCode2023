@@ -2,16 +2,12 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants;
 import frc.robot.libraries.*;
 
@@ -20,10 +16,10 @@ public class Arm extends SubsystemBase {
     // ---------- Motors ----------\\
     private WPI_TalonSRX linearActuator = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(Constants.PortsConstants.EXTENTION_PORT);
-    private SpecialServo grabberServo = new SpecialServo(Constants.PortsConstants.GRABBER_PORT);
+    private DoubleServo grabberServo = new DoubleServo(Constants.PortsConstants.GRABBER_PORT);
 
-    private Encoder angleEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT,
-            Constants.PortsConstants.ARM_ENCODER_PORT + 1);
+    private PosSensor angleEncoder = new PosSensor(new DigitalInput(0));
+
     // For simulation purposes
 
     // ---------- Subsystems ----------\\
@@ -50,28 +46,23 @@ public class Arm extends SubsystemBase {
     private final double kArmFullRetractedLength = 35.257;
 
     // Min && Max Angles
-    private final double kMinAngle = -17.2;
-    private final double kMaxAngle = 60.0;
+    private final double kMinAngle = -25;
+    private final double kMaxAngle = 45.0;
 
     // Min && Max Extension Values for interpolating
     private final double minExtension = 0.0;
     private final double maxExtension = 47.5;
 
     // ---------- Sensor Reading Constants ---------- \\
-
-    // Min && Max Encoder Readings so we can interpolate between them
-    private final double minAngleEncoderReading = 1000;
-    private final int maxAngleEncoderReading = 900000;
-
     // Min && max Encoder Readings for interpolation
     private final double minExtensionEncoderReading = 0.0;
     private final double maxExtensionEncoderReading = 1.0;
 
-    private final double angleChangePerPulse = .1;
-    private final double extensionChangePerPulse = 23225.806;
+    private final double angleChangePerPulse = 22.83;
+    private final double extensionChangePerPulse = 6406.177;
 
-    private double armOutLimitSpeed = 0.75;
-    private double armInLimitSpeed = 0.75;
+    private double armOutLimitSpeed = 0.25;
+    private double armInLimitSpeed = 0.25;
 
     /**
      * Constructs a new Arm
@@ -87,21 +78,22 @@ public class Arm extends SubsystemBase {
 
         // ---------- Shuffle Things ----------\\
         initialiseShuffleBoardValues();
-        angleEncoder.setDistancePerPulse(1);
         extensionMotor.overrideLimitSwitchesEnable(true);
+        linearActuator.setSensorPhase(false);
     }
 
     @Override
     public void periodic() {
         // Update to our current data
-        currentAngle = angleEncoder.getDistance() * angleChangePerPulse;
-        currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse;
+        currentAngle = angleEncoder.getAngleDeg();
+
+        currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + 2.21;
+
         // check current data
         ensureBounds();
 
-        grabberServo.setRelativeAngle(1 - xbox.getRawAxis(2));
+        grabberServo.setRelativeAngle(xbox.getRawAxis(2));
 
-        SmartDashboard.putNumber("Position Encoder", angleEncoder.getDistance());
         // Get Xbox POV for Extending
         switch (xbox.getPOV()) {
             case 0:
@@ -114,18 +106,22 @@ public class Arm extends SubsystemBase {
             case 180:
                 extensionMotor.set(-armInLimitSpeed);
                 break;
+
+            case 90:
+                extensionMotor.set(armInLimitSpeed * .25);
+                break;
+
+            case 270:
+                extensionMotor.set(-armInLimitSpeed * .25);
+                break;
             case -1:
                 extensionMotor.set(0.0);
                 break;
         }
-        // Buttons Y and A for angle adjustment
-        if (xbox.getRawButton(4)) {
-            if (canGoUp) {
-                linearActuator.set(1);
-            } else {
-                linearActuator.set(0.0);
-            }
-        } else if (xbox.getRawButton(1)) {
+
+        if (xbox.getYButton()) {
+            linearActuator.set(1);
+        } else if (xbox.getAButton()) {
             linearActuator.set(-1);
         } else {
             linearActuator.set(0.0);
@@ -151,8 +147,8 @@ public class Arm extends SubsystemBase {
             SmartShuffle.get("Ext").flashColor("red", "white", 15);
         }
 
-        SmartShuffle.get("Angle Encoder").update(angleEncoder.getDistance());
         SmartShuffle.get("Extension Encoder").update(currentExtension);
+        SmartShuffle.get("Angle Encoder").update(currentAngle);
 
     }
 
@@ -167,7 +163,7 @@ public class Arm extends SubsystemBase {
         SmartShuffle.add("Fwd Limit", 0 != extensionMotor.isFwdLimitSwitchClosed());
         SmartShuffle.add("Rev Limit", 0 != extensionMotor.isRevLimitSwitchClosed());
         SmartShuffle.setWidget(BuiltInWidgets.kTextView);
-        SmartShuffle.add("Angle Encoder", angleEncoder.getDistance());
+        SmartShuffle.add("Angle Encoder", currentAngle);
         SmartShuffle.add("Extension Encoder", extensionMotor.getSelectedSensorPosition());
     }
 
@@ -193,13 +189,13 @@ public class Arm extends SubsystemBase {
             xbox.setRumble(RumbleType.kBothRumble, 0);
         }
 
-        if (currentExtension > 37) {
+        if (currentExtension > 33) {
             armOutLimitSpeed = 0.25;
         } else {
             armOutLimitSpeed = 0.75;
         }
 
-        if (currentExtension < 2) {
+        if (currentExtension < 6) {
             armInLimitSpeed = 0.25;
         } else {
             armInLimitSpeed = 0.75;
