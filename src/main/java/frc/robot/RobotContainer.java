@@ -61,13 +61,12 @@ public class RobotContainer {
 
     public RobotContainer() {
         configureButtonBindings();
-        // Shuffleboard.getTab("Autonomous").add(m_chooser);
-        // m_chooser.setDefaultOption("Nothing", new InstantCommand());
-        // m_chooser.addOption("Test", ramAutoBuilder("test", Constants.AutoConstants.testEventMap));
-        // m_chooser.addOption("Another Test", ramAutoBuilder("anotherTest", Constants.AutoConstants.anotherTestEventMap));
-        // m_chooser.addOption("Blue Alliance", ramAutoBuilder("BlueAlliance", Constants.AutoConstants.blueAllianceEventMap));
-        // m_chooser.addOption("Charge Station", ramAutoBuilder("ChargeStation", Constants.AutoConstants.chargeStationEventMap));
-        // m_chooser.addOption("Forward Backward", ramAutoBuilder("ForwardBackward", Constants.AutoConstants.forwardBackwardEventmap));
+        //Shuffleboard.getTab("Autonomous").add(m_chooser);
+        //m_chooser.setDefaultOption("Nothing", new InstantCommand());
+        //m_chooser.addOption("Blue Alliance Charge Station", ramAutoBuilder("BlueAllianceChargeStation", Constants.AutoConstants.BlueAllianceChargeStation));
+        //m_chooser.addOption("Blue Alliance Forward Backward", ramAutoBuilder("BlueAllianceForwardBackward", Constants.AutoConstants.BlueAllianceForwardBackward));
+        //m_chooser.addOption("Red Alliance Charge Station", ramAutoBuilder("RedAllianceChargeStation", Constants.AutoConstants.RedAllianceChargeStation));
+        //m_chooser.addOption("Red Alliance Forward Backward", ramAutoBuilder("RedAllianceForwardBackward", Constants.AutoConstants.RedAllianceForwardBackward));
     }
 
     public Command ramAutoBuilder(String pathName, HashMap<String, Command> eventMap) {
@@ -143,11 +142,10 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         return new Autonomous(m_driveTrain, m_ahrs).getAutonomousCommand();
-        //return ramAutoBuilder("test", Constants.AutoConstants.testEventMap);
-        //return ramAutoBuilder("anotherTest", Constants.AutoConstants.anotherTestEventMap);
-        //return ramAutoBuilder("BlueAlliance", Constants.AutoConstants.blueAllianceEventMap);
-        //return ramAutoBuilder("ChargeStation", Constants.AutoConstants.chargeStationEventMap);
-        //return ramAutoBuilder("ChargeStation", Constants.AutoConstants.chargeStationEventMap);
+        //return ramAutoBuilder("BlueAllianceChargeStation", Constants.AutoConstants.BlueAllianceChargeStation);
+        //return ramAutoBuilder("BlueAllianceForwardBackward", Constants.AutoConstants.BlueAllianceForwardBackward);
+        //return ramAutoBuilder("RedAllianceChargeStation", Constants.AutoConstants.RedAllianceChargeStation);
+        //return ramAutoBuilder("RedAllianceForwardBackward", Constants.AutoConstants.RedAllianceForwardBackward);
         //return m_chooser.getSelected();
     }
 

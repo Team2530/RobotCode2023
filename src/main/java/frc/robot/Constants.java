@@ -146,11 +146,10 @@ public class Constants {
     public static class AutoConstants {
         public static final double K_MAX_SPEED_METERS_PER_SECOND = 2;
         public static final double K_MAX_ACCELERATION_METERS_PER_SECOND_SQUARED = 1;
-        public static final HashMap<String, Command> testEventMap = new HashMap<>();
-        public static final HashMap<String, Command> anotherTestEventMap = new HashMap<>();
-        public static final HashMap<String, Command> blueAllianceEventMap = new HashMap<>();
-        public static final HashMap<String, Command> chargeStationEventMap = new HashMap<>();
-        public static final HashMap<String, Command> forwardBackwardEventmap = new HashMap<>();
+        public static final HashMap<String, Command> BlueAllianceChargeStation = new HashMap<>();
+        public static final HashMap<String, Command> BlueAllianceForwardBackward = new HashMap<>();
+        public static final HashMap<String, Command> RedAllianceChargeStation = new HashMap<>();
+        public static final HashMap<String, Command> RedAllianceForwardBackward = new HashMap<>();
         public static final double K_RAMSETE_B = 2;
         public static final double K_RAMSETE_ZETA = 0.7;
     }

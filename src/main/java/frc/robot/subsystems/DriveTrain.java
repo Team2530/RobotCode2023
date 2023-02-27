@@ -266,21 +266,30 @@ public class DriveTrain extends SubsystemBase {
     // simulated encoder and gyro. We negate the right side so that positive
     // voltages make the right side move forward.
 
-    if (DriverStation.isTeleop()) {
-      m_drivetrainSimulator.setInputs(
+    if (DriverStation.isTeleop() | DriverStation.isAutonomous()) {
+      if(DriverStation.isTeleop()){
+        m_drivetrainSimulator.setInputs(
           -m_leftGroup.get() * RobotController.getInputVoltage(),
           m_rightGroup.get() * RobotController.getInputVoltage());
-      m_drivetrainSimulator.update(0.02);
-
+        m_drivetrainSimulator.update(0.02);
+      }
+      else if(DriverStation.isAutonomous()){
+        m_drivetrainSimulator.setInputs(
+          m_leftGroup.get() * RobotController.getInputVoltage(),
+          m_rightGroup.get() * RobotController.getInputVoltage());
+        m_drivetrainSimulator.update(0.02);
+      }
+      
       m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
       m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
       m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
       m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
-
+     
       int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
-      SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev,
-          "Yaw"));
-      angle.set(-m_drivetrainSimulator.getHeading().getDegrees());
+        SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev,
+            "Yaw"));
+        angle.set(-m_drivetrainSimulator.getHeading().getDegrees());
+     
     }
   }
 
