@@ -72,7 +72,7 @@ public class Autonomous extends CommandBase {
     var trajectoryOne = TrajectoryGenerator.generateTrajectory(
         new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
         List.of(),
-        new Pose2d(2, 2, Rotation2d.fromDegrees(90)),
+        new Pose2d(2, 0, Rotation2d.fromDegrees(0)),
         trajectoryConfig);
 
     TrajectoryConfig reverseTrajectoryConfig =
@@ -83,7 +83,7 @@ public class Autonomous extends CommandBase {
             .setReversed(true);
     
     var trajectoryTwo = TrajectoryGenerator.generateTrajectory(
-        new Pose2d(2, 2, Rotation2d.fromDegrees(90)),
+        new Pose2d(2, 0, Rotation2d.fromDegrees(0)),
         List.of(),
         new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
         reverseTrajectoryConfig);
