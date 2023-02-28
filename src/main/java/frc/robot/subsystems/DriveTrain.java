@@ -8,7 +8,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.hal.SimDouble;
@@ -18,31 +17,33 @@ import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.*;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj.simulation.*;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.RobotContainer;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.libraries.Deadzone;
-import frc.robot.libraries.SmartShuffle;
-import frc.robot.logging.*;
 
 public class DriveTrain extends SubsystemBase {
   private Joystick stick;
@@ -86,7 +87,7 @@ public class DriveTrain extends SubsystemBase {
   // ---------- PID Controllers ----------\\
   private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
   private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
-  private AHRS ahrs = RobotContainer.getAhrs();
+  private final AHRS ahrs;
   // Double for Rot PID
   private double yawCtl = 0.0;
   private double yawTarget = 0.0;
@@ -103,8 +104,7 @@ public class DriveTrain extends SubsystemBase {
   // ---------- Kinematics & Odometry ----------\\
   public Pose2d pose = new Pose2d();
   public final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
-  private final DifferentialDriveOdometry m_odometry = new DifferentialDriveOdometry(
-      ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+  private final DifferentialDriveOdometry m_odometry;
 
   public static double leftVoltage = 0;
   public static double rightVoltage = 0;
@@ -133,10 +133,10 @@ public class DriveTrain extends SubsystemBase {
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
-    m_rightLeader.setInverted(false);
-    m_rightFollower.setInverted(false);
-    m_leftLeader.setInverted(true);
-    m_leftFollower.setInverted(true);
+    m_rightLeader.setInverted(true);
+    m_rightFollower.setInverted(true);
+    m_leftLeader.setInverted(false);
+    m_leftFollower.setInverted(false);
 
     // ? Construct a Tank Drive
     this.tankDrive();
@@ -152,6 +152,9 @@ public class DriveTrain extends SubsystemBase {
 
     m_leftEncoder.reset();
     m_rightEncoder.reset();
+
+    m_odometry = new DifferentialDriveOdometry(
+      ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
 
     m_rightGroup.setInverted(true);
     SmartDashboard.putData("Field", m_fieldSim);
@@ -178,17 +181,9 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public void singleJoystickDrive(double StickY, double StickZ) {
-
-    if (RobotBase.isReal()) {
-      ((DifferentialDrive) driveBase).arcadeDrive(
-          Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-          -Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
-    } else {
-      ((DifferentialDrive) driveBase).arcadeDrive(
-          Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-          Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
-    }
-
+    ((DifferentialDrive) driveBase).arcadeDrive(
+        Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
+        Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
   }
 
   /** Sets speeds to the drivetrain motors. */

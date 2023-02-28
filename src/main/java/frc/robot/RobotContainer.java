@@ -34,9 +34,9 @@ public class RobotContainer {
 
     final Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
     final XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
-    public static SendableChooser<Command> m_chooser = new SendableChooser<>();
+    public SendableChooser<Command> m_chooser = new SendableChooser<>();
 
-    private static final AHRS m_ahrs = new AHRS();
+    private final AHRS m_ahrs = new AHRS();
 
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
@@ -60,6 +60,8 @@ public class RobotContainer {
     // ---------- Global Toggles ----------\\
 
     public RobotContainer() {
+        m_driveTrain.setDefaultCommand(new SingleJoystickDrive(m_driveTrain, stick, xbox));
+
         configureButtonBindings();
         //Shuffleboard.getTab("Autonomous").add(m_chooser);
         //m_chooser.setDefaultOption("Nothing", new InstantCommand());
@@ -150,24 +152,11 @@ public class RobotContainer {
     }
 
     /**
-     * Command to run in Telop mode
-     * 
-     * @return the command to run in Telop
-     */
-    public Command getTelopCommand() {
-        return new SingleJoystickDrive(m_driveTrain, stick, xbox);
-    }
-
-    /**
      * Command to run in Test Mode
      * 
      * @return the command to run in Test
      */
     public Command getTestCommand() {
         return null;
-    }
-
-    public static AHRS getAhrs() {
-        return m_ahrs;
     }
 }

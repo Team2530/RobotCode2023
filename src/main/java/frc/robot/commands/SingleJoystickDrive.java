@@ -30,6 +30,7 @@ public class SingleJoystickDrive extends CommandBase {
     this.stick = stick;
     this.xbox = xbox;
     // Use addRequirements() here to declare subsystem dependencies.
+    addRequirements(driveTrain);
   }
 
   /**
@@ -38,8 +39,8 @@ public class SingleJoystickDrive extends CommandBase {
   @Override
   public void execute() {
     driveTrain.singleJoystickDrive(
-        Deadzone.deadZone(stick.getY(), Constants.ControllerConstants.DEADZONE),
-        Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE));
+        Deadzone.deadZone(-stick.getY(), Constants.ControllerConstants.DEADZONE),
+        Deadzone.deadZone(-stick.getZ(), Constants.ControllerConstants.DEADZONE));
   }
 
   /** 
