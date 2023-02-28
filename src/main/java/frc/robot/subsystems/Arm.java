@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -218,15 +220,19 @@ public class Arm extends SubsystemBase {
      * @param angle the wanted angle
      * @return current state of the arm
      */
-    public boolean setArmAngle(double angle) {
-        if (Math.abs(angle - currentAngle) < 0.2) {
-            linearActuator.set(1);
-        } else if (Math.abs(angle - currentAngle) < 0.2) {
-            linearActuator.set(-1);
+
+    public boolean waitForArmAngle(double desiredArmAngle) {
+        if (currentAngle < (desiredArmAngle - 2)) {
+            linearActuator.set(0.4);
+        } else if (currentAngle > (desiredArmAngle + 2)) {
+            linearActuator.set(-0.4);
         } else {
             linearActuator.set(0.0);
+            System.out.println("asfijhseifjaw hfoiuawerhfiwuerfh");
             return true;
         }
+
+        System.out.println(desiredArmAngle - currentAngle);
 
         return false;
     }
@@ -314,5 +320,9 @@ public class Arm extends SubsystemBase {
         } else {
             linearActuator.set(0.0);
         }
+    }
+
+    public double getArmAngle() {
+        return currentAngle;
     }
 }
