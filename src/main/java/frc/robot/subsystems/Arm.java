@@ -11,7 +11,9 @@ import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
-import frc.robot.libraries.*;
+import frc.robot.libraries.DoubleServo;
+import frc.robot.libraries.PosSensor;
+import frc.robot.libraries.SmartShuffle;
 
 public class Arm extends SubsystemBase {
 
@@ -45,7 +47,7 @@ public class Arm extends SubsystemBase {
 
     // Distance from edge of robot to the rotation axis of the arm
     private final double kDistanceInsideRobot = -18.443;
-    // Distance above ground for pivot point
+    //! Distance above ground for pivot point - needs to be changed
     private final double kArmPivotHeight = 16.681;
     // Length of the arm fully retracted
     private final double kArmFullRetractedLength = 35.257;
@@ -60,10 +62,7 @@ public class Arm extends SubsystemBase {
 
     // ---------- Sensor Reading Constants ---------- \\
     // Min && max Encoder Readings for interpolation
-    private final double minExtensionEncoderReading = 0.0;
-    private final double maxExtensionEncoderReading = 1.0;
 
-    private final double angleChangePerPulse = 22.83;
     private final double extensionChangePerPulse = 6406.177;
 
     private double armOutLimitSpeed = 0.25;
