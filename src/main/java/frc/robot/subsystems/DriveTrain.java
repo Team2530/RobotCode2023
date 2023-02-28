@@ -4,11 +4,9 @@
 
 package frc.robot.subsystems;
 
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.hal.SimDouble;
@@ -18,31 +16,33 @@ import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.*;
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
+import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj.simulation.*;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
+import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RamseteCommand;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.RobotContainer;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.libraries.Deadzone;
-import frc.robot.libraries.SmartShuffle;
-import frc.robot.logging.*;
 
 public class DriveTrain extends SubsystemBase {
   private Joystick stick;
@@ -86,7 +86,7 @@ public class DriveTrain extends SubsystemBase {
   // ---------- PID Controllers ----------\\
   private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
   private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
-  private AHRS ahrs = RobotContainer.getAhrs();
+  private final AHRS ahrs;
   // Double for Rot PID
   private double yawCtl = 0.0;
   private double yawTarget = 0.0;
@@ -103,15 +103,7 @@ public class DriveTrain extends SubsystemBase {
   // ---------- Kinematics & Odometry ----------\\
   public Pose2d pose = new Pose2d();
   public final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
-  private final DifferentialDriveOdometry m_odometry = new DifferentialDriveOdometry(
-      ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
-
-  public static double leftVoltage = 0;
-  public static double rightVoltage = 0;
-  public static BiConsumer<Double, Double> voltage = (a, b) -> {
-    leftVoltage = a;
-    rightVoltage = b;
-  };
+  private final DifferentialDriveOdometry m_odometry;
 
   // Gains are for example purposes only - must be determined for your own
   // robot!
@@ -125,6 +117,7 @@ public class DriveTrain extends SubsystemBase {
       0.3);
   private final DifferentialDrivetrainSim m_drivetrainSimulator = new DifferentialDrivetrainSim(
       m_drivetrainSystem, DCMotor.getFalcon500(2), 8, kTrackWidth, kWheelRadius, null);
+  private final SimDouble simGyroAngle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]"), "Yaw"));
 
   /** Subsystem constructor. */
   public DriveTrain(AHRS ahrs, Joystick stick, XboxController xbox) {
@@ -135,8 +128,8 @@ public class DriveTrain extends SubsystemBase {
     // Todo: Create DriveTrain type and reverse motors if needed
     m_rightLeader.setInverted(false);
     m_rightFollower.setInverted(false);
-    m_leftLeader.setInverted(true);
-    m_leftFollower.setInverted(true);
+    m_leftLeader.setInverted(false);
+    m_leftFollower.setInverted(false);
 
     // ? Construct a Tank Drive
     this.tankDrive();
@@ -153,14 +146,11 @@ public class DriveTrain extends SubsystemBase {
     m_leftEncoder.reset();
     m_rightEncoder.reset();
 
+    m_odometry = new DifferentialDriveOdometry(
+      ahrs.getRotation2d(), m_leftEncoder.getDistance(), m_rightEncoder.getDistance());
+
     m_rightGroup.setInverted(true);
     SmartDashboard.putData("Field", m_fieldSim);
-
-    // who needs Safelt?
-    m_leftFollower.setSafetyEnabled(false);
-    m_leftLeader.setSafetyEnabled(false);
-    m_rightLeader.setSafetyEnabled(false);
-    m_rightFollower.setSafetyEnabled(false);
   }
 
   @Override
@@ -168,7 +158,6 @@ public class DriveTrain extends SubsystemBase {
     updatePeriodic();
     updateShuffleBoardValues();
     pose = getPose();
-    voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
 
     SmartDashboard.putNumber("Roll", ahrs.getRoll());
   }
@@ -178,17 +167,9 @@ public class DriveTrain extends SubsystemBase {
   }
 
   public void singleJoystickDrive(double StickY, double StickZ) {
-
-    if (RobotBase.isReal()) {
-      ((DifferentialDrive) driveBase).arcadeDrive(
-          Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-          -Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
-    } else {
-      ((DifferentialDrive) driveBase).arcadeDrive(
-          Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-          Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
-    }
-
+    ((DifferentialDrive) driveBase).arcadeDrive(
+        Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
+        Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
   }
 
   /** Sets speeds to the drivetrain motors. */
@@ -235,9 +216,7 @@ public class DriveTrain extends SubsystemBase {
    * Use to create a Tank Drive (Differential Drive)
    */
   private void tankDrive() {
-    m_leftFollower.follow(m_leftLeader);
-    m_rightFollower.follow(m_rightLeader);
-    driveBase = new DifferentialDrive(m_leftLeader, m_rightLeader);
+    driveBase = new DifferentialDrive(m_leftGroup, m_rightGroup);
   }
 
   private void setAll(double speed) {
@@ -267,30 +246,19 @@ public class DriveTrain extends SubsystemBase {
     // voltages make the right side move forward.
 
     if (DriverStation.isTeleop() | DriverStation.isAutonomous()) {
-      if(DriverStation.isTeleop()){
-        m_drivetrainSimulator.setInputs(
-          -m_leftGroup.get() * RobotController.getInputVoltage(),
-          m_rightGroup.get() * RobotController.getInputVoltage());
-        m_drivetrainSimulator.update(0.02);
-      }
-      else if(DriverStation.isAutonomous()){
-        m_drivetrainSimulator.setInputs(
+      m_drivetrainSimulator.setInputs(
           m_leftGroup.get() * RobotController.getInputVoltage(),
           m_rightGroup.get() * RobotController.getInputVoltage());
-        m_drivetrainSimulator.update(0.02);
-      }
-      
-      m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
-      m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
-      m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
-      m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
-     
-      int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
-        SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev,
-            "Yaw"));
-        angle.set(-m_drivetrainSimulator.getHeading().getDegrees());
-     
+      m_drivetrainSimulator.update(0.02);
     }
+    
+    m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
+    m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
+    m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
+    m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
+    
+    simGyroAngle.set(Math.IEEEremainder(-m_drivetrainSimulator.getHeading().getDegrees(), 360));
+     
   }
 
   /** Update odometry - this should be run every robot loop. */

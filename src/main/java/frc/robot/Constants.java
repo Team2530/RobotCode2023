@@ -173,13 +173,6 @@ public class Constants {
             K_FEED_FORWARD,
             kDriveKinematics,
             10);
-
-        // Setup trajectory constraints
-        public static final TrajectoryConfig kTrajectoryConfig =
-        new TrajectoryConfig(AutoConstants.K_MAX_SPEED_METERS_PER_SECOND, 
-            AutoConstants.K_MAX_ACCELERATION_METERS_PER_SECOND_SQUARED)
-            .setKinematics(kDriveKinematics)
-            .addConstraint(kAutoVoltageConstraint);
     }
 
 }

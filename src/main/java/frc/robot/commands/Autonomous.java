@@ -17,7 +17,9 @@ import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.DriveTrainConstants;
 import frc.robot.subsystems.DriveTrain;
 import static edu.wpi.first.wpilibj2.command.Commands.print;
 import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
@@ -59,42 +61,35 @@ public class Autonomous extends CommandBase {
     return false;
   }
 
-  public static Trajectory getAnglTrajectory(){
-    var trajectoryOne =
-    TrajectoryGenerator.generateTrajectory(
-    new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-    List.of(),
-    new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
-    new TrajectoryConfig(Units.feetToMeters(3.0), Units.feetToMeters(3.0)));
-
-    var trajectoryTwo =
-    TrajectoryGenerator.generateTrajectory(
-    new Pose2d(3, 0, Rotation2d.fromDegrees(0)),
-    List.of(new Translation2d(3, 3)),
-    new Pose2d(0, 3, Rotation2d.fromDegrees(0)),
-    new TrajectoryConfig(Units.feetToMeters(3.0), Units.feetToMeters(3.0)));
-
-    return trajectoryOne.concatenate(trajectoryTwo);
-}
-
   public Trajectory goForwardAndComeBack(){
-    TrajectoryConfig config = new TrajectoryConfig(Units.feetToMeters(3.0), Units.feetToMeters(3.0));
+    // Setup trajectory constraints
+    TrajectoryConfig trajectoryConfig =
+        new TrajectoryConfig(AutoConstants.K_MAX_SPEED_METERS_PER_SECOND, 
+            AutoConstants.K_MAX_ACCELERATION_METERS_PER_SECOND_SQUARED)
+            .setKinematics(DriveConstants.kDriveKinematics)
+            .addConstraint(DriveConstants.kAutoVoltageConstraint);
 
     var trajectoryOne = TrajectoryGenerator.generateTrajectory(
-            new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            List.of(),
-            new Pose2d(2, 0, Rotation2d.fromDegrees(0)),
-            DriveConstants.kTrajectoryConfig);
+        new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+        List.of(),
+        new Pose2d(2, 2, Rotation2d.fromDegrees(90)),
+        trajectoryConfig);
 
+    TrajectoryConfig reverseTrajectoryConfig =
+        new TrajectoryConfig(AutoConstants.K_MAX_SPEED_METERS_PER_SECOND, 
+            AutoConstants.K_MAX_ACCELERATION_METERS_PER_SECOND_SQUARED)
+            .setKinematics(DriveConstants.kDriveKinematics)
+            .addConstraint(DriveConstants.kAutoVoltageConstraint)
+            .setReversed(true);
+    
     var trajectoryTwo = TrajectoryGenerator.generateTrajectory(
-            new Pose2d(2, 0, Rotation2d.fromDegrees(0)),
-            List.of(),
-            new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
-            DriveConstants.kTrajectoryConfig.setReversed(true));
+        new Pose2d(2, 2, Rotation2d.fromDegrees(90)),
+        List.of(),
+        new Pose2d(0, 0, Rotation2d.fromDegrees(0)),
+        reverseTrajectoryConfig);
 
     trajectoryOne = trajectoryOne.concatenate(trajectoryTwo);
 
-    this.driveTrain.resetOdometry(trajectoryOne.getInitialPose());
     return trajectoryOne;
 }
 

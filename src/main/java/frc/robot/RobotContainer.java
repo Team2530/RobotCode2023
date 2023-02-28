@@ -1,20 +1,5 @@
 package frc.robot;
 
-import frc.robot.Constants.AutoConstants;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.commands.*;
-import frc.robot.libraries.*;
-import frc.robot.subsystems.*;
-import edu.wpi.first.math.controller.RamseteController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.*;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-
 import java.util.HashMap;
 import java.util.List;
 
@@ -22,6 +7,22 @@ import com.kauailabs.navx.frc.AHRS;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.auto.RamseteAutoBuilder;
+
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
+import frc.robot.commands.Autonomous;
+import frc.robot.commands.SingleJoystickDrive;
+import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.DriveTrain;
+import frc.robot.subsystems.USBCamera;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -34,9 +35,9 @@ public class RobotContainer {
 
     final Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
     final XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
-    public static SendableChooser<Command> m_chooser = new SendableChooser<>();
+    public SendableChooser<Command> m_chooser = new SendableChooser<>();
 
-    private static final AHRS m_ahrs = new AHRS();
+    private final AHRS m_ahrs = new AHRS();
 
     // ---------- Subsystems ----------\\
     private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
@@ -60,6 +61,8 @@ public class RobotContainer {
     // ---------- Global Toggles ----------\\
 
     public RobotContainer() {
+        m_driveTrain.setDefaultCommand(new SingleJoystickDrive(m_driveTrain, stick, xbox));
+
         configureButtonBindings();
         //Shuffleboard.getTab("Autonomous").add(m_chooser);
         //m_chooser.setDefaultOption("Nothing", new InstantCommand());
@@ -119,10 +122,6 @@ public class RobotContainer {
 
     }
 
-    public DriveTrain getDriveTrain() {
-        return m_driveTrain;
-    }
-
     /**
      * Use this to pass the enable command to the main {@link Robot} class.
      * This command is run immediately when the robot is enabled (not simply turned
@@ -150,24 +149,11 @@ public class RobotContainer {
     }
 
     /**
-     * Command to run in Telop mode
-     * 
-     * @return the command to run in Telop
-     */
-    public Command getTelopCommand() {
-        return new SingleJoystickDrive(m_driveTrain, stick, xbox);
-    }
-
-    /**
      * Command to run in Test Mode
      * 
      * @return the command to run in Test
      */
     public Command getTestCommand() {
         return null;
-    }
-
-    public static AHRS getAhrs() {
-        return m_ahrs;
     }
 }
