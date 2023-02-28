@@ -1,30 +1,28 @@
 package frc.robot.subsystems;
 
-import java.util.function.Supplier;
-
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.sensors.CANCoder;
-
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.shuffleboard.*;
-import edu.wpi.first.wpilibj.simulation.*;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.libraries.*;
 
 public class Arm extends SubsystemBase {
 
     // ---------- Motors ----------\\
-    private WPI_TalonSRX positionMotor = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
+    private WPI_TalonSRX linearActuator = new WPI_TalonSRX(Constants.PortsConstants.LINEAR_ACTUATOR_PORT);
     private WPI_TalonFX extensionMotor = new WPI_TalonFX(Constants.PortsConstants.EXTENTION_PORT);
-    private SpecialServo grabberServo = new SpecialServo(Constants.PortsConstants.GRABBER_PORT);
+    private DoubleServo grabberServo = new DoubleServo(Constants.PortsConstants.GRABBER_PORT);
 
-    private Encoder positionEncoder = new Encoder(Constants.PortsConstants.ARM_ENCODER_PORT,
-            Constants.PortsConstants.ARM_ENCODER_PORT + 1);
+    private PosSensor angleEncoder = new PosSensor(new DigitalInput(0));
+
+    // For simulation purposes
 
     // ---------- Subsystems ----------\\
     private DriveTrain driveTrain;
@@ -33,97 +31,46 @@ public class Arm extends SubsystemBase {
     private XboxController xbox;
     private Joystick stick;
 
+    double calculatedLength = 0.0;
+
     // --------- Values ----------\\
-    // lots of constants in constants folder
+    private double currentAngle = 0.0;
+    private double currentExtension = 0.0;
 
-    /** Our wanted position (double) */
-    private double positionValue;
-    /** An Enum representation of our wanted position */
-    private Position position;
-    /** Our wanted extension (double) */
-    private double extensionValue;
-    /** An Enum representation of our wanted extetnion */
-    private Extension extension;
+    /** How far off our calculated and reset when we hit our encoder */
+    private double eOff = 0.0;
 
-    /** Current encoder reading of extension (how much out/in the arm is) */
-    private double currentExtension;
+    private boolean canGoUp = true;
+    private boolean canExtend = true;
 
-    /**
-     * Current encoder reading of position (how much angle the arm has)
-     * <p>
-     * <em>Zero should be the equilvalent to zero degrees relative to the
-     * ground</em>
-     */
-    private double currentPosition;
+    // Distance from edge of robot to the rotation axis of the arm
+    private final double kDistanceInsideRobot = -18.443;
+    // Distance above ground for pivot point
+    private final double kArmPivotHeight = 16.681;
+    // Length of the arm fully retracted
+    private final double kArmFullRetractedLength = 35.257;
 
-    // ---------- Preset Positions ----------\\
-    public enum Extension {
-        FULL(1),
-        TWOTHIRDS(.66),
-        HALF(.5),
-        ONEQUARTER(.25),
-        RETRACTED(0),
-        CUSTOM(-1);
+    // Min && Max Angles
+    private final double kMinAngle = -25;
+    private final double kMaxAngle = 66.0;
 
-        /** The double value represented by the extension enum */
-        private double length;
+    // Min && Max Extension Values for interpolating
+    private final double minExtension = 0.0;
+    private final double maxExtension = 47.5;
 
-        private static final Extension[] vals = values();
+    // ---------- Sensor Reading Constants ---------- \\
+    // Min && max Encoder Readings for interpolation
+    private final double minExtensionEncoderReading = 0.0;
+    private final double maxExtensionEncoderReading = 1.0;
 
-        private Extension(double length) {
-            this.length = length;
-        }
+    private final double angleChangePerPulse = 22.83;
+    private final double extensionChangePerPulse = 6406.177;
 
-        public Extension extend() {
-            if (this != FULL) {
-                return vals[(this.ordinal() - 1)];
-            } else {
-                return FULL;
-            }
-        }
+    private double armOutLimitSpeed = 0.25;
+    private double armInLimitSpeed = 0.25;
 
-        public Extension retract() {
-            if (this != RETRACTED) {
-                return vals[(this.ordinal() + 1)];
-            } else {
-                return RETRACTED;
-            }
-        }
-    }
-
-    public enum Position {
-        HIGH(1),
-        MEDIUM(.66),
-        HALF(0.5),
-        LOW(.2),
-        FLOOR(0),
-        Custom(-1);
-
-        /** The double value represented by the position enum */
-        private double angle;
-
-        private static final Position[] vals = values();
-
-        private Position(double position) {
-            this.angle = position;
-        }
-
-        public Position raise() {
-            if (this != HIGH) {
-                return vals[(this.ordinal() - 1)];
-            } else {
-                return HIGH;
-            }
-        }
-
-        public Position lower() {
-            if (this != FLOOR) {
-                return vals[(this.ordinal() + 1)];
-            } else {
-                return FLOOR;
-            }
-        }
-    }
+    // If the arm is at full extension and past the limit, we need to retract
+    private boolean needsToGoIn = false;
 
     /**
      * Constructs a new Arm
@@ -136,174 +83,35 @@ public class Arm extends SubsystemBase {
         this.stick = stick;
 
         // Initial Arm Conditions
-        this.position = Position.HIGH;
-        this.extension = Extension.RETRACTED;
-        // More initial Conditions
-        this.positionValue = 1.0;
-        this.extensionValue = 0.0;
 
         // ---------- Shuffle Things ----------\\
         initialiseShuffleBoardValues();
-        positionEncoder.setDistancePerPulse(1f / 4096f);
         extensionMotor.overrideLimitSwitchesEnable(true);
-
-        // TODO: Reverse Motors if needed!
+        linearActuator.setSensorPhase(false);
     }
 
     @Override
     public void periodic() {
-        SmartDashboard.putBoolean("Limit 1", 0 != extensionMotor.isFwdLimitSwitchClosed());
-        SmartDashboard.putBoolean("Limit 2", 0 != extensionMotor.isRevLimitSwitchClosed());
-        grabberServo.setRelativeAngle(1 - xbox.getRawAxis(2));
+        // ? Update to our current data
+        // 360 is for reversing the angle and 46.3 gets us to our zero point
+        currentAngle = 360 - angleEncoder.getAngleDeg() - 46.3;
+        currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + eOff;
 
-        SmartDashboard.putNumber("Position Encoder", positionEncoder.getDistance());
-
-        // ? Code for arm, change the number in
-        // ? set() to change speed
-        switch (xbox.getPOV()) {
-            case 0:
-                extensionMotor.set(0.75);
-                break;
-            case 180:
-                extensionMotor.set(-0.75);
-                break;
-            case -1:
-                extensionMotor.set(0.0);
-                break;
+        // reset our encoder reading if our reverse limit switch is closed
+        if (extensionMotor.isRevLimitSwitchClosed() == 1) {
+            eOff = -extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse;
         }
 
-        if (xbox.getRawButton(4)) {
-            positionMotor.set(1);
-        } else if (xbox.getRawButton(1)) {
-            positionMotor.set(-1);
-        } else {
-            positionMotor.set(0.0);
-        }
-
+        // check current data
+        ensureBounds();
+        // Does all arm updating
+        updateArm();
+        // Sets the grabber to the xbox left trigger
+        grabberServo.setRelativeAngle(xbox.getRawAxis(2));
+        // Does all the linear actuator updating
+        updateLinearActuator();
+        // Updates shuffleboard values
         updateShuffleBoardValues();
-
-    }
-
-    /**
-     * Sets the Arm Position to a preset position
-     * 
-     * @param position the Position value in {@code Position}
-     */
-    public void setArmPosition(Position position) {
-        this.positionValue = position.angle;
-        this.position = position;
-    }
-
-    /**
-     * Sets the arm to the passed in position. This will set the position enum to
-     * custom so we may move more freely as we choose a position
-     * 
-     * @param position the double value of position to move the arm to
-     */
-    public void setArmPosition(double position) {
-        this.positionValue = position;
-        this.position = Position.Custom;
-    }
-
-    /**
-     * Sets the arm to the preset extension
-     * 
-     * @param extension the extension value in {@code extension}
-     */
-    public void setArmExtension(Extension extension) {
-        this.positionValue = extension.length;
-        this.extension = extension;
-    }
-
-    /**
-     * Sets the arm extension to the double extension
-     * 
-     * @param extension the double value of extension to move the arm to
-     */
-    public void setArmExtension(double extension) {
-        this.extensionValue = extension;
-        this.extension = Extension.CUSTOM;
-    }
-
-    /**
-     * Raises the arm by a setpoint
-     */
-
-    public void raiseArm() {
-        position = position.raise();
-        positionValue = position.angle;
-    }
-
-    /**
-     * Lowers the arm by a setpoint
-     */
-    public void lowerArm() {
-        position = position.lower();
-        positionValue = position.angle;
-    }
-
-    /**
-     * Extends the arm by a setpoint
-     */
-    public void extendArm() {
-        extension = extension.extend();
-        extensionValue = extension.length;
-    }
-
-    /**
-     * Retracts the arm by a setpoint
-     */
-    public void retractArm() {
-        extension = extension.retract();
-        extensionValue = extension.length;
-    }
-
-    public void grab() {
-        grabberServo.setRelativeAngle(.6);
-    }
-
-    public void release() {
-        grabberServo.setRelativeAngle(0);
-    }
-
-    /** Makes sure the Arm doesn't become <em>illegal</em> */
-    private void ensureLength() {
-        // Normalized Values
-        double cExtension = currentExtension * Constants.ArmConstants.EXTENSION_PER_TICK;
-        double cPosition = currentPosition * Constants.ArmConstants.DELTA_ANGLE_PER_PULSE;
-        double heightToEncoder = 13.22;
-
-        // get height and base of extention
-        double extensionFromRobot = cExtension * Math.cos(cPosition) + Constants.ArmConstants.ENDPOINT_TO_ROBOT;
-        double height = cExtension * Math.sin(cPosition) + Constants.ArmConstants.ENCODER_HEIGHT;
-        // If we are greater than our maximum base extension
-        if (extensionFromRobot >= 47) {
-            extensionValue = 47;
-            extension = Extension.FULL;
-            extensionMotor.set(0.0);
-
-            // vibrate xbox controler
-            xbox.setRumble(RumbleType.kLeftRumble, 1);
-            xbox.setRumble(RumbleType.kRightRumble, 1);
-        } else {
-            xbox.setRumble(RumbleType.kLeftRumble, 0);
-            xbox.setRumble(RumbleType.kRightRumble, 0);
-        }
-
-        // If we are greater than our maximum height extension
-        if (height >= 77) {
-            extensionValue = 77;
-            extension = Extension.FULL;
-            extensionMotor.set(0.0);
-
-            // vibrate xbox controlers
-            xbox.setRumble(RumbleType.kLeftRumble, 1);
-            xbox.setRumble(RumbleType.kRightRumble, 1);
-        } else {
-            xbox.setRumble(RumbleType.kLeftRumble, 0);
-            xbox.setRumble(RumbleType.kRightRumble, 0);
-        }
-
     }
 
     /**
@@ -311,24 +119,21 @@ public class Arm extends SubsystemBase {
      * ! Make sure method is called in periodic or values won't update
      */
     public void updateShuffleBoardValues() {
-        // SmartShuffle.get("Arm Position").update(position + " " + positionValue);
-        // SmartShuffle.get("Arm Extension").update(extension + " " + extensionValue);
-
-        if (positionValue < currentPosition) {
-            SmartShuffle.get("Pos").flashColor("yellow", "white", 20);
-        } else if (positionValue > currentPosition) {
-            SmartShuffle.get("Pos").flashColor("red", "white", 20);
-        } else {
+        if (canGoUp) {
             SmartShuffle.get("Pos").changeColor("green");
+        } else {
+            SmartShuffle.get("Pos").flashColor("red", "white", 15);
         }
 
-        if (extensionValue < currentExtension) {
-            SmartShuffle.get("Ext").flashColor("yellow", "white", 20);
-        } else if (extensionValue > currentExtension) {
-            SmartShuffle.get("Ext").flashColor("red", "white", 20);
-        } else {
+        if (canExtend) {
             SmartShuffle.get("Ext").changeColor("green");
+        } else {
+            SmartShuffle.get("Ext").flashColor("red", "white", 15);
         }
+
+        SmartShuffle.get("Extension Encoder").update(currentExtension);
+        SmartShuffle.get("Angle Encoder").update(currentAngle);
+
     }
 
     private void initialiseShuffleBoardValues() {
@@ -339,5 +144,175 @@ public class Arm extends SubsystemBase {
         SmartShuffle.setWidget(BuiltInWidgets.kBooleanBox);
         SmartShuffle.add("Ext", true);
         SmartShuffle.add("Pos", true);
+        SmartShuffle.add("Fwd Limit", 0 != extensionMotor.isFwdLimitSwitchClosed());
+        SmartShuffle.add("Rev Limit", 0 != extensionMotor.isRevLimitSwitchClosed());
+        SmartShuffle.setWidget(BuiltInWidgets.kTextView);
+        SmartShuffle.add("Angle Encoder", currentAngle);
+        SmartShuffle.add("Extension Encoder", extensionMotor.getSelectedSensorPosition());
+    }
+
+    private void ensureBounds() {
+        // calcualte based on our current extension value and angle value
+        double calculatedLength = Math.cos(Math.toRadians(currentAngle))
+                * (kDistanceInsideRobot + kArmFullRetractedLength + currentExtension);
+        double calculatedHeight = Math.sin(Math.toRadians(currentAngle))
+                * kArmFullRetractedLength + kArmPivotHeight;
+        // If we are close to being our of bounds, we shall rumble
+        if (calculatedHeight > 77) {
+            xbox.setRumble(RumbleType.kBothRumble, 1);
+            canGoUp = false;
+        } else {
+            canGoUp = true;
+            xbox.setRumble(RumbleType.kBothRumble, 0);
+        }
+
+        if (calculatedLength > (Math.abs(currentAngle) > 2 ? 45 : 48)) {
+            xbox.setRumble(RumbleType.kBothRumble, 1);
+            canExtend = false;
+        } else {
+            canExtend = true;
+            xbox.setRumble(RumbleType.kBothRumble, 0);
+        }
+
+        if (!canExtend && calculatedLength > (Math.abs(currentAngle) > 2 ? 45 : 48)) {
+            needsToGoIn = true;
+        } else {
+            needsToGoIn = false;
+        }
+
+        // ? Slow down when we are reaching ends
+        if (currentExtension > 33) {
+            armOutLimitSpeed = 0.25;
+        } else {
+            armOutLimitSpeed = 0.75;
+        }
+
+        if (currentExtension < 6) {
+            armInLimitSpeed = 0.25;
+        } else {
+            armInLimitSpeed = 0.75;
+        }
+    }
+
+    public boolean zeroArm() {
+        if (currentExtension > 0.1) {
+            extensionMotor.set(-armInLimitSpeed);
+        } else {
+            extensionMotor.set(0.0);
+        }
+
+        // grabberServo.setRelativeAngle(1);
+
+        if (currentAngle < kMaxAngle) {
+            linearActuator.set(1);
+        } else {
+            linearActuator.set(0.0);
+        }
+
+        return Math.abs(currentAngle - kMaxAngle) < 0.1 && currentExtension < 0.1;
+    }
+
+    /**
+     * Will set the arm angle to the desired angle
+     * 
+     * @param angle the wanted angle
+     * @return current state of the arm
+     */
+    public boolean setArmAngle(double angle) {
+        if (Math.abs(angle - currentAngle) < 0.2) {
+            linearActuator.set(1);
+        } else if (Math.abs(angle - currentAngle) < 0.2) {
+            linearActuator.set(-1);
+        } else {
+            linearActuator.set(0.0);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Will set the arm extension to the wanted extension
+     * 
+     * @param extensionInches the wanted extension
+     * @return current state of extension
+     */
+    public boolean setArmExtension(double extensionInches) {
+        if (Math.abs(extensionInches - currentExtension) < 0.2) {
+            extensionMotor.set(0.75);
+        } else if (Math.abs(extensionInches - currentExtension) > 0.2) {
+            extensionMotor.set(-0.75);
+        } else {
+            extensionMotor.set(0.0);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Updates the arm based on input and limits
+     */
+    private void updateArm() {
+        // Get Xbox POV for Extending
+        switch (xbox.getPOV()) {
+            // Run arm out
+            case 0:
+                // Arm can extend
+                if (canExtend) {
+                    extensionMotor.set(armOutLimitSpeed);
+                } else {
+                    // Set to 0 if nothing needs to happen
+                    extensionMotor.set(0.0);
+                }
+                break;
+            // Run arm in
+            case 180:
+                extensionMotor.set(-armInLimitSpeed);
+                break;
+            // Run arm in slowly
+            case 90:
+                extensionMotor.set(armInLimitSpeed * .5);
+                break;
+            // Run arm out slowly
+            case 270:
+                extensionMotor.set(-armInLimitSpeed * .5);
+                break;
+            // If no button is pressed
+            case -1:
+                extensionMotor.set(0.0);
+                break;
+        }
+    }
+
+    /**
+     * Updated the linear actuator based on inputs and make sure our limits are <em>
+     * fairly good</em>
+     */
+    private void updateLinearActuator() {
+        // If Y button is pressed, we will make the arm go up
+        if (xbox.getYButton()) {
+            linearActuator.set(1);
+            // If arm goes up and it will make us be outside our limit, we go in else, leave
+            // it alone
+            if (needsToGoIn) {
+                extensionMotor.set(-0.5);
+            } else {
+                extensionMotor.set(0.0);
+            }
+            // If A button is pressed, make the arm go down
+        } else if (xbox.getAButton()) {
+            linearActuator.set(-1);
+            // If arm goes down and it will make us be outside our limit, we go in else,
+            // leave
+            // it alone
+            if (needsToGoIn) {
+                extensionMotor.set(-0.5);
+            } else {
+                extensionMotor.set(0.0);
+            }
+        } else {
+            linearActuator.set(0.0);
+        }
     }
 }

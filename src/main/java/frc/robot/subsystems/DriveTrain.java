@@ -5,10 +5,7 @@
 package frc.robot.subsystems;
 
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
-
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.hal.SimDouble;
@@ -30,13 +27,10 @@ import edu.wpi.first.wpilibj.simulation.*;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
 import frc.robot.libraries.Deadzone;
-import frc.robot.libraries.SmartShuffle;
-import frc.robot.logging.*;
 
 public class DriveTrain extends SubsystemBase {
   private Joystick stick;
@@ -87,6 +81,7 @@ public class DriveTrain extends SubsystemBase {
 
   // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
   private double driveModeSpeed = 1.0;
+  private double zTurningSpeed = 1.0;
 
   private double deltaTime = 0.0;
   private double startTime = 0.0;
@@ -176,11 +171,11 @@ public class DriveTrain extends SubsystemBase {
     if (RobotBase.isReal()) {
       ((DifferentialDrive) driveBase).arcadeDrive(
           Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-          -Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
+          -Deadzone.deadZone(StickZ * driveModeSpeed * zTurningSpeed, Constants.ControllerConstants.DEADZONE));
     } else {
       ((DifferentialDrive) driveBase).arcadeDrive(
           Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
-          Deadzone.deadZone(StickZ * driveModeSpeed, Constants.ControllerConstants.DEADZONE));
+          Deadzone.deadZone(StickZ * driveModeSpeed * zTurningSpeed, Constants.ControllerConstants.DEADZONE));
     }
 
   }
@@ -286,5 +281,9 @@ public class DriveTrain extends SubsystemBase {
 
   public void toggleTurtleMode(double maxSpeed) {
     driveModeSpeed = maxSpeed;
+  }
+
+  public void toggleSlowTurning(double slowTurning) {
+    zTurningSpeed = slowTurning;
   }
 }

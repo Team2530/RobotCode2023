@@ -1,10 +1,7 @@
 package frc.robot;
 
 import frc.robot.commands.*;
-import frc.robot.libraries.*;
 import frc.robot.subsystems.*;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -68,6 +65,14 @@ public class RobotContainer {
                     m_driveTrain.toggleTurtleMode(0.75);
                 }));
 
+        // ? Button 6 (trigger used for slow speed for turning)
+        new JoystickButton(stick, Constants.ControllerConstants.J_SLOW_SPEED_TURRNNG).onTrue(
+                new InstantCommand(() -> {
+                    m_driveTrain.toggleSlowTurning(0.5);
+                })).onFalse(new InstantCommand(() -> {
+                    m_driveTrain.toggleSlowTurning(1.0);
+                }));
+
         // if(RobotBase.isSimulation()) {
         // new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
         // new InstantCommand(() -> {
@@ -116,7 +121,7 @@ public class RobotContainer {
      * @return the command to run in Test
      */
     public Command getTestCommand() {
-        return null;
+        return new WaitUntilCommand(m_arm::zeroArm);
     }
 
     public static AHRS getAhrs() {

@@ -113,8 +113,11 @@ public class Constants {
         // Joystick)
         public static final int J_FULL_SPEED = 1;
         public static final int J_TURTLE_TOGGLE = 2;
+        public static final int J_SLOW_SPEED_TURRNNG = 3;
         public static final int J_SIMULATION_RESET = 4;
         public static final int J_DRIVE_STRAIGHT = 12;
+
+        //Arm Constants
 
         // Xbox Buttons (Use X_ before the button name to indicate use with Xbox
         // controller)
