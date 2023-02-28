@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
 import frc.robot.libraries.*;
 
@@ -34,6 +35,9 @@ public class Arm extends SubsystemBase {
     // --------- Values ----------\\
     private double currentAngle = 0.0;
     private double currentExtension = 0.0;
+
+    /** How far off our calculated and reset when we hit our encoder */
+    private double eOff = 0.0;
 
     private boolean canGoUp = true;
     private boolean canExtend = true;
@@ -87,7 +91,12 @@ public class Arm extends SubsystemBase {
         // Update to our current data
         currentAngle = angleEncoder.getAngleDeg();
 
-        currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + 2.21;
+        currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + eOff;
+
+        // reset our encoder reading if our reverse limit switch is closed
+        if (extensionMotor.isRevLimitSwitchClosed() == 1) {
+            eOff = -extensionChangePerPulse / extensionChangePerPulse;
+        }
 
         // check current data
         ensureBounds();
@@ -96,6 +105,7 @@ public class Arm extends SubsystemBase {
 
         // Get Xbox POV for Extending
         switch (xbox.getPOV()) {
+            // Run arm out
             case 0:
                 if (canExtend) {
                     extensionMotor.set(armOutLimitSpeed);
@@ -103,17 +113,19 @@ public class Arm extends SubsystemBase {
                     extensionMotor.set(0.0);
                 }
                 break;
+            // Run arm in
             case 180:
                 extensionMotor.set(-armInLimitSpeed);
                 break;
-
+            // Run arm in slowly
             case 90:
                 extensionMotor.set(armInLimitSpeed * .25);
                 break;
-
+            // Run arm out slowly
             case 270:
                 extensionMotor.set(-armInLimitSpeed * .25);
                 break;
+            // If no button is pressed
             case -1:
                 extensionMotor.set(0.0);
                 break;
@@ -219,4 +231,43 @@ public class Arm extends SubsystemBase {
 
         return /* Math.abs(currentAngle - kMaxAngle) < 0.1 && **/ currentExtension < 0.1;
     }
+
+    /**
+     * Will set the arm angle to the desired angle
+     * 
+     * @param angle the wanted angle
+     * @return current state of the arm
+     */
+    public boolean setArmAngle(double angle) {
+        if (Math.abs(angle - currentAngle) < 0.2) {
+            linearActuator.set(1);
+        } else if (Math.abs(angle - currentAngle) < 0.2) {
+            linearActuator.set(-1);
+        } else {
+            linearActuator.set(0.0);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Will set the arm extension to the wanted extension
+     * 
+     * @param extensionInches the wanted extension
+     * @return current state of extension
+     */
+    public boolean setArmExtension(double extensionInches) {
+        if (Math.abs(extensionInches - currentExtension) < 0.2) {
+            extensionMotor.set(0.75);
+        } else if (Math.abs(extensionInches - currentExtension) > 0.2) {
+            extensionMotor.set(-0.75);
+        } else {
+            extensionMotor.set(0.0);
+            return true;
+        }
+
+        return false;
+    }
+
 }
