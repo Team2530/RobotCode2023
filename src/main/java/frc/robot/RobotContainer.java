@@ -1,20 +1,5 @@
 package frc.robot;
 
-import frc.robot.Constants.AutoConstants;
-import frc.robot.Constants.DriveConstants;
-import frc.robot.commands.*;
-import frc.robot.libraries.*;
-import frc.robot.subsystems.*;
-import edu.wpi.first.math.controller.RamseteController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.*;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj2.command.*;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-
 import java.util.HashMap;
 import java.util.List;
 
@@ -22,6 +7,22 @@ import com.kauailabs.navx.frc.AHRS;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.auto.RamseteAutoBuilder;
+
+import edu.wpi.first.math.controller.RamseteController;
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
+import frc.robot.commands.Autonomous;
+import frc.robot.commands.SingleJoystickDrive;
+import frc.robot.subsystems.Arm;
+import frc.robot.subsystems.DriveTrain;
+import frc.robot.subsystems.USBCamera;
 
 /**
  * This class is where the bulk of the robot should be declared. Since
@@ -119,10 +120,6 @@ public class RobotContainer {
         // m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
         // }));
 
-    }
-
-    public DriveTrain getDriveTrain() {
-        return m_driveTrain;
     }
 
     /**

@@ -4,7 +4,6 @@
 
 package frc.robot.subsystems;
 
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
@@ -106,13 +105,6 @@ public class DriveTrain extends SubsystemBase {
   public final DifferentialDriveKinematics m_kinematics = new DifferentialDriveKinematics(kTrackWidth);
   private final DifferentialDriveOdometry m_odometry;
 
-  public static double leftVoltage = 0;
-  public static double rightVoltage = 0;
-  public static BiConsumer<Double, Double> voltage = (a, b) -> {
-    leftVoltage = a;
-    rightVoltage = b;
-  };
-
   // Gains are for example purposes only - must be determined for your own
   // robot!
   private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(1, 3);
@@ -125,6 +117,7 @@ public class DriveTrain extends SubsystemBase {
       0.3);
   private final DifferentialDrivetrainSim m_drivetrainSimulator = new DifferentialDrivetrainSim(
       m_drivetrainSystem, DCMotor.getFalcon500(2), 8, kTrackWidth, kWheelRadius, null);
+  private final SimDouble simGyroAngle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]"), "Yaw"));
 
   /** Subsystem constructor. */
   public DriveTrain(AHRS ahrs, Joystick stick, XboxController xbox) {
@@ -133,8 +126,8 @@ public class DriveTrain extends SubsystemBase {
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
-    m_rightLeader.setInverted(true);
-    m_rightFollower.setInverted(true);
+    m_rightLeader.setInverted(false);
+    m_rightFollower.setInverted(false);
     m_leftLeader.setInverted(false);
     m_leftFollower.setInverted(false);
 
@@ -158,12 +151,6 @@ public class DriveTrain extends SubsystemBase {
 
     m_rightGroup.setInverted(true);
     SmartDashboard.putData("Field", m_fieldSim);
-
-    // who needs Safelt?
-    m_leftFollower.setSafetyEnabled(false);
-    m_leftLeader.setSafetyEnabled(false);
-    m_rightLeader.setSafetyEnabled(false);
-    m_rightFollower.setSafetyEnabled(false);
   }
 
   @Override
@@ -171,7 +158,6 @@ public class DriveTrain extends SubsystemBase {
     updatePeriodic();
     updateShuffleBoardValues();
     pose = getPose();
-    voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
 
     SmartDashboard.putNumber("Roll", ahrs.getRoll());
   }
@@ -230,9 +216,7 @@ public class DriveTrain extends SubsystemBase {
    * Use to create a Tank Drive (Differential Drive)
    */
   private void tankDrive() {
-    m_leftFollower.follow(m_leftLeader);
-    m_rightFollower.follow(m_rightLeader);
-    driveBase = new DifferentialDrive(m_leftLeader, m_rightLeader);
+    driveBase = new DifferentialDrive(m_leftGroup, m_rightGroup);
   }
 
   private void setAll(double speed) {
@@ -262,30 +246,19 @@ public class DriveTrain extends SubsystemBase {
     // voltages make the right side move forward.
 
     if (DriverStation.isTeleop() | DriverStation.isAutonomous()) {
-      if(DriverStation.isTeleop()){
-        m_drivetrainSimulator.setInputs(
-          -m_leftGroup.get() * RobotController.getInputVoltage(),
-          m_rightGroup.get() * RobotController.getInputVoltage());
-        m_drivetrainSimulator.update(0.02);
-      }
-      else if(DriverStation.isAutonomous()){
-        m_drivetrainSimulator.setInputs(
+      m_drivetrainSimulator.setInputs(
           m_leftGroup.get() * RobotController.getInputVoltage(),
           m_rightGroup.get() * RobotController.getInputVoltage());
-        m_drivetrainSimulator.update(0.02);
-      }
-      
-      m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
-      m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
-      m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
-      m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
-     
-      int dev = SimDeviceDataJNI.getSimDeviceHandle("navX-Sensor[0]");
-        SimDouble angle = new SimDouble(SimDeviceDataJNI.getSimValueHandle(dev,
-            "Yaw"));
-        angle.set(-m_drivetrainSimulator.getHeading().getDegrees());
-     
+      m_drivetrainSimulator.update(0.02);
     }
+    
+    m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
+    m_leftEncoderSim.setRate(m_drivetrainSimulator.getLeftVelocityMetersPerSecond());
+    m_rightEncoderSim.setDistance(m_drivetrainSimulator.getRightPositionMeters());
+    m_rightEncoderSim.setRate(m_drivetrainSimulator.getRightVelocityMetersPerSecond());
+    
+    simGyroAngle.set(Math.IEEEremainder(-m_drivetrainSimulator.getHeading().getDegrees(), 360));
+     
   }
 
   /** Update odometry - this should be run every robot loop. */
