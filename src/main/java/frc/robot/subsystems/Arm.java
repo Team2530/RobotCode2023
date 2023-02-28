@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -51,7 +52,7 @@ public class Arm extends SubsystemBase {
 
     // Min && Max Angles
     private final double kMinAngle = -25;
-    private final double kMaxAngle = 45.0;
+    private final double kMaxAngle = 66.0;
 
     // Min && Max Extension Values for interpolating
     private final double minExtension = 0.0;
@@ -67,6 +68,9 @@ public class Arm extends SubsystemBase {
 
     private double armOutLimitSpeed = 0.25;
     private double armInLimitSpeed = 0.25;
+
+    // If the arm is at full extension and past the limit, we need to retract
+    private boolean needsToGoIn = false;
 
     /**
      * Constructs a new Arm
@@ -88,57 +92,25 @@ public class Arm extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // Update to our current data
-        currentAngle = angleEncoder.getAngleDeg();
-
+        // ? Update to our current data
+        // 360 is for reversing the angle and 46.3 gets us to our zero point
+        currentAngle = 360 - angleEncoder.getAngleDeg() - 46.3;
         currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + eOff;
 
         // reset our encoder reading if our reverse limit switch is closed
         if (extensionMotor.isRevLimitSwitchClosed() == 1) {
-            eOff = -extensionChangePerPulse / extensionChangePerPulse;
+            eOff = -extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse;
         }
 
         // check current data
         ensureBounds();
-
+        // Does all arm updating
+        updateArm();
+        // Sets the grabber to the xbox left trigger
         grabberServo.setRelativeAngle(xbox.getRawAxis(2));
-
-        // Get Xbox POV for Extending
-        switch (xbox.getPOV()) {
-            // Run arm out
-            case 0:
-                if (canExtend) {
-                    extensionMotor.set(armOutLimitSpeed);
-                } else {
-                    extensionMotor.set(0.0);
-                }
-                break;
-            // Run arm in
-            case 180:
-                extensionMotor.set(-armInLimitSpeed);
-                break;
-            // Run arm in slowly
-            case 90:
-                extensionMotor.set(armInLimitSpeed * .25);
-                break;
-            // Run arm out slowly
-            case 270:
-                extensionMotor.set(-armInLimitSpeed * .25);
-                break;
-            // If no button is pressed
-            case -1:
-                extensionMotor.set(0.0);
-                break;
-        }
-
-        if (xbox.getYButton()) {
-            linearActuator.set(1);
-        } else if (xbox.getAButton()) {
-            linearActuator.set(-1);
-        } else {
-            linearActuator.set(0.0);
-        }
-
+        // Does all the linear actuator updating
+        updateLinearActuator();
+        // Updates shuffleboard values
         updateShuffleBoardValues();
     }
 
@@ -181,9 +153,10 @@ public class Arm extends SubsystemBase {
 
     private void ensureBounds() {
         // calcualte based on our current extension value and angle value
-        // double calculatedLength = Math.cos(Math.toRadians(currentAngle)) *
-        // (kDistanceInsideRobot + kArmFullRetractedLength + currentExtension);
-        double calculatedHeight = Math.sin(Math.toRadians(currentAngle)) * kArmFullRetractedLength + kArmPivotHeight;
+        double calculatedLength = Math.cos(Math.toRadians(currentAngle))
+                * (kDistanceInsideRobot + kArmFullRetractedLength + currentExtension);
+        double calculatedHeight = Math.sin(Math.toRadians(currentAngle))
+                * kArmFullRetractedLength + kArmPivotHeight;
         // If we are close to being our of bounds, we shall rumble
         if (calculatedHeight > 77) {
             xbox.setRumble(RumbleType.kBothRumble, 1);
@@ -193,7 +166,7 @@ public class Arm extends SubsystemBase {
             xbox.setRumble(RumbleType.kBothRumble, 0);
         }
 
-        if (calculatedLength > 47) {
+        if (calculatedLength > (Math.abs(currentAngle) > 2 ? 45 : 48)) {
             xbox.setRumble(RumbleType.kBothRumble, 1);
             canExtend = false;
         } else {
@@ -201,6 +174,13 @@ public class Arm extends SubsystemBase {
             xbox.setRumble(RumbleType.kBothRumble, 0);
         }
 
+        if (!canExtend && calculatedLength > (Math.abs(currentAngle) > 2 ? 45 : 48)) {
+            needsToGoIn = true;
+        } else {
+            needsToGoIn = false;
+        }
+
+        // ? Slow down when we are reaching ends
         if (currentExtension > 33) {
             armOutLimitSpeed = 0.25;
         } else {
@@ -221,15 +201,15 @@ public class Arm extends SubsystemBase {
             extensionMotor.set(0.0);
         }
 
-        grabberServo.setRelativeAngle(0.0);
+        // grabberServo.setRelativeAngle(1);
 
-        // if (currentAngle < kMaxAngle) {
-        // linearActuator.set(0.5);
-        // } else {
-        // linearActuator.set(0.0);
-        // }
+        if (currentAngle < kMaxAngle) {
+            linearActuator.set(1);
+        } else {
+            linearActuator.set(0.0);
+        }
 
-        return /* Math.abs(currentAngle - kMaxAngle) < 0.1 && **/ currentExtension < 0.1;
+        return Math.abs(currentAngle - kMaxAngle) < 0.1 && currentExtension < 0.1;
     }
 
     /**
@@ -270,4 +250,69 @@ public class Arm extends SubsystemBase {
         return false;
     }
 
+    /**
+     * Updates the arm based on input and limits
+     */
+    private void updateArm() {
+        // Get Xbox POV for Extending
+        switch (xbox.getPOV()) {
+            // Run arm out
+            case 0:
+                // Arm can extend
+                if (canExtend) {
+                    extensionMotor.set(armOutLimitSpeed);
+                } else {
+                    // Set to 0 if nothing needs to happen
+                    extensionMotor.set(0.0);
+                }
+                break;
+            // Run arm in
+            case 180:
+                extensionMotor.set(-armInLimitSpeed);
+                break;
+            // Run arm in slowly
+            case 90:
+                extensionMotor.set(armInLimitSpeed * .5);
+                break;
+            // Run arm out slowly
+            case 270:
+                extensionMotor.set(-armInLimitSpeed * .5);
+                break;
+            // If no button is pressed
+            case -1:
+                extensionMotor.set(0.0);
+                break;
+        }
+    }
+
+    /**
+     * Updated the linear actuator based on inputs and make sure our limits are <em>
+     * fairly good</em>
+     */
+    private void updateLinearActuator() {
+        // If Y button is pressed, we will make the arm go up
+        if (xbox.getYButton()) {
+            linearActuator.set(1);
+            // If arm goes up and it will make us be outside our limit, we go in else, leave
+            // it alone
+            if (needsToGoIn) {
+                extensionMotor.set(-0.5);
+            } else {
+                extensionMotor.set(0.0);
+            }
+            // If A button is pressed, make the arm go down
+        } else if (xbox.getAButton()) {
+            linearActuator.set(-1);
+            // If arm goes down and it will make us be outside our limit, we go in else,
+            // leave
+            // it alone
+            if (needsToGoIn) {
+                extensionMotor.set(-0.5);
+            } else {
+                extensionMotor.set(0.0);
+            }
+        } else {
+            linearActuator.set(0.0);
+        }
+    }
 }
