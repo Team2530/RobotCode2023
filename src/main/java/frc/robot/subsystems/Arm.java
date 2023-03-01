@@ -1,19 +1,20 @@
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
+
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
-import frc.robot.libraries.DoubleServo;
-import frc.robot.libraries.PosSensor;
-import frc.robot.libraries.SmartShuffle;
+import frc.robot.libraries.*;
 
 public class Arm extends SubsystemBase {
 
@@ -47,7 +48,7 @@ public class Arm extends SubsystemBase {
 
     // Distance from edge of robot to the rotation axis of the arm
     private final double kDistanceInsideRobot = -18.443;
-    //! Distance above ground for pivot point - needs to be changed
+    // Distance above ground for pivot point
     private final double kArmPivotHeight = 16.681;
     // Length of the arm fully retracted
     private final double kArmFullRetractedLength = 35.257;
@@ -62,7 +63,10 @@ public class Arm extends SubsystemBase {
 
     // ---------- Sensor Reading Constants ---------- \\
     // Min && max Encoder Readings for interpolation
+    private final double minExtensionEncoderReading = 0.0;
+    private final double maxExtensionEncoderReading = 1.0;
 
+    private final double angleChangePerPulse = 22.83;
     private final double extensionChangePerPulse = 6406.177;
 
     private double armOutLimitSpeed = 0.25;
@@ -104,11 +108,18 @@ public class Arm extends SubsystemBase {
         // check current data
         ensureBounds();
         // Does all arm updating
-        updateArm();
+        if (DriverStation.isTeleopEnabled()) {
+            updateArm();
+        }
         // Sets the grabber to the xbox left trigger
-        grabberServo.setRelativeAngle(xbox.getRawAxis(2));
+        if (DriverStation.isTeleopEnabled()) {
+            grabberServo.setRelativeAngle(xbox.getRawAxis(2));
+        }
         // Does all the linear actuator updating
-        updateLinearActuator();
+        if (DriverStation.isTeleopEnabled()) {
+            updateLinearActuator();
+        }
+
         // Updates shuffleboard values
         updateShuffleBoardValues();
     }
@@ -217,15 +228,18 @@ public class Arm extends SubsystemBase {
      * @param angle the wanted angle
      * @return current state of the arm
      */
-    public boolean setArmAngle(double angle) {
-        if (Math.abs(angle - currentAngle) < 0.2) {
+
+    public boolean waitForArmAngle(double desiredArmAngle) {
+        if (currentAngle < (desiredArmAngle - 2)) {
             linearActuator.set(1);
-        } else if (Math.abs(angle - currentAngle) < 0.2) {
+        } else if (currentAngle > (desiredArmAngle + 2)) {
             linearActuator.set(-1);
         } else {
             linearActuator.set(0.0);
             return true;
         }
+
+        System.out.println(desiredArmAngle - currentAngle);
 
         return false;
     }
@@ -236,11 +250,11 @@ public class Arm extends SubsystemBase {
      * @param extensionInches the wanted extension
      * @return current state of extension
      */
-    public boolean setArmExtension(double extensionInches) {
-        if (Math.abs(extensionInches - currentExtension) < 0.2) {
-            extensionMotor.set(0.75);
-        } else if (Math.abs(extensionInches - currentExtension) > 0.2) {
-            extensionMotor.set(-0.75);
+    public boolean waitForArmExtension(double extensionInches) {
+        if (currentExtension < (extensionInches - 3)) {
+            extensionMotor.set(armOutLimitSpeed);
+        } else if (currentExtension > (extensionInches + 3)) {
+            extensionMotor.set(-armInLimitSpeed);
         } else {
             extensionMotor.set(0.0);
             return true;
@@ -313,5 +327,19 @@ public class Arm extends SubsystemBase {
         } else {
             linearActuator.set(0.0);
         }
+    }
+
+    public double getArmAngle() {
+        return currentAngle;
+    }
+
+    public boolean closeGrabber(double startSeconds) {
+        grabberServo.setRelativeAngle(1);
+        return Timer.getFPGATimestamp() - startSeconds > 1.5;
+    }
+
+    public boolean openGrabber(double startSeconds) {
+        grabberServo.setRelativeAngle(0.5d);
+        return Timer.getFPGATimestamp() - startSeconds > 1.5;
     }
 }
