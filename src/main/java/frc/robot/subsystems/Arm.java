@@ -1,13 +1,10 @@
 package frc.robot.subsystems;
 
-import java.util.function.BooleanSupplier;
-
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
@@ -107,18 +104,11 @@ public class Arm extends SubsystemBase {
         // check current data
         ensureBounds();
         // Does all arm updating
-        if (DriverStation.isTeleopEnabled()) {
-            updateArm();
-        }
+        updateArm();
         // Sets the grabber to the xbox left trigger
-        if (DriverStation.isTeleopEnabled()) {
-            grabberServo.setRelativeAngle(xbox.getRawAxis(2));
-        }
+        grabberServo.setRelativeAngle(xbox.getRawAxis(2));
         // Does all the linear actuator updating
-        if (DriverStation.isTeleopEnabled()) {
-            updateLinearActuator();
-        }
-
+        updateLinearActuator();
         // Updates shuffleboard values
         updateShuffleBoardValues();
     }
@@ -227,18 +217,15 @@ public class Arm extends SubsystemBase {
      * @param angle the wanted angle
      * @return current state of the arm
      */
-
-    public boolean waitForArmAngle(double desiredArmAngle) {
-        if (currentAngle < (desiredArmAngle - 2)) {
+    public boolean setArmAngle(double angle) {
+        if (Math.abs(angle - currentAngle) < 0.2) {
             linearActuator.set(1);
-        } else if (currentAngle > (desiredArmAngle + 2)) {
+        } else if (Math.abs(angle - currentAngle) < 0.2) {
             linearActuator.set(-1);
         } else {
             linearActuator.set(0.0);
             return true;
         }
-
-        System.out.println(desiredArmAngle - currentAngle);
 
         return false;
     }
@@ -249,11 +236,11 @@ public class Arm extends SubsystemBase {
      * @param extensionInches the wanted extension
      * @return current state of extension
      */
-    public boolean waitForArmExtension(double extensionInches) {
-        if (currentExtension < (extensionInches - 3)) {
-            extensionMotor.set(armOutLimitSpeed);
-        } else if (currentExtension > (extensionInches + 3)) {
-            extensionMotor.set(-armInLimitSpeed);
+    public boolean setArmExtension(double extensionInches) {
+        if (Math.abs(extensionInches - currentExtension) < 0.2) {
+            extensionMotor.set(0.75);
+        } else if (Math.abs(extensionInches - currentExtension) > 0.2) {
+            extensionMotor.set(-0.75);
         } else {
             extensionMotor.set(0.0);
             return true;
@@ -326,19 +313,5 @@ public class Arm extends SubsystemBase {
         } else {
             linearActuator.set(0.0);
         }
-    }
-
-    public double getArmAngle() {
-        return currentAngle;
-    }
-
-    public boolean closeGrabber(double startSeconds) {
-        grabberServo.setRelativeAngle(1);
-        return Timer.getFPGATimestamp() - startSeconds > 1.5;
-    }
-
-    public boolean openGrabber(double startSeconds) {
-        grabberServo.setRelativeAngle(0.5d);
-        return Timer.getFPGATimestamp() - startSeconds > 1.5;
     }
 }

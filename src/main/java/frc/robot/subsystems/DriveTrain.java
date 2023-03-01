@@ -158,6 +158,8 @@ public class DriveTrain extends SubsystemBase {
     updateShuffleBoardValues();
     pose = getPose();
     voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
+
+    SmartDashboard.putNumber("Roll", ahrs.getRoll());
   }
 
   public void setMode(Modes m) {
@@ -283,9 +285,5 @@ public class DriveTrain extends SubsystemBase {
 
   public void toggleSlowTurning(double slowTurning) {
     zTurningSpeed = slowTurning;
-  }
-
-  public void drive(double y, double z) {
-    ((DifferentialDrive) driveBase).arcadeDrive(y, z);
   }
 }
