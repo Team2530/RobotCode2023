@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
@@ -24,6 +25,8 @@ public class Autonomous extends CommandBase {
   private DriveTrain driveTrain;
   private Arm arm;
 
+  private double startTime = 0.0;
+
   /** Creates a new Autonomous. */
   public Autonomous(DriveTrain driveTrain, AHRS ahrs, Arm arm) {
     this.ahrs = ahrs;
@@ -34,28 +37,66 @@ public class Autonomous extends CommandBase {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    double time = Timer.getFPGATimestamp();
     // sets desired angle to 0
     System.out.println("Starting auto");
     SequentialCommandGroup auto = new SequentialCommandGroup(
-        // new Command(() -> {
-        // driveTrain.singleJoystickDrive(-0.3, 0);
-        // }),
+        // Close the grabber at the start
+        new InstantCommand(() -> {
+          driveTrain.toggleTurtleMode(1);
+        }),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            driveTrain.singleJoystickDrive(-0.2, 0);
+            return (Timer.getFPGATimestamp() - startTime) >= 1;
+          }
+        }),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return arm.closeGrabber(startTime);
+          }
+        }),
+        new PrintCommand("1"),
+        // Set arm angle to desired angle
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             return arm.waitForArmAngle(33.5);
           }
         }),
-
+        new PrintCommand("2"),
+        // set arm extension to granted extension
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            driveTrain.singleJoystickDrive(0.4, 0);
-            return (Timer.getFPGATimestamp() - time) >= 3.0;
+            return arm.waitForArmExtension(39);
           }
         }),
-
-        // new WaitCommand(5),
-
+        new PrintCommand("3"),
+        // update timer for grabber as it relies on time
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        // release the kraken (gamepiece)
+        new InstantCommand(() -> {
+          arm.openGrabber(startTime);
+        }),
+        // Wait for a second for things to slow down and settle
+        new WaitCommand(1),
+        new WaitUntilCommand(arm::zeroArm),
+        // update timer
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            driveTrain.singleJoystickDrive(0.5, 0);
+            return (Timer.getFPGATimestamp() - startTime) >= 4.5;
+          }
+        }),
         new InstantCommand(() -> {
           driveTrain.drive(0, 0);
         }));

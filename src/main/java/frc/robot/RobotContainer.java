@@ -6,6 +6,8 @@ import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj2.command.*;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 
+import java.util.function.BooleanSupplier;
+
 import com.kauailabs.navx.frc.AHRS;
 
 /**
@@ -119,7 +121,14 @@ public class RobotContainer {
      * @return the command to run in Test
      */
     public Command getTestCommand() {
-        return new WaitUntilCommand(m_arm::zeroArm);
+        double startTime = Timer.getFPGATimestamp();
+        return new SequentialCommandGroup(
+                new WaitUntilCommand(m_arm::zeroArm),
+                new WaitUntilCommand(new BooleanSupplier() {
+                    public boolean getAsBoolean() {
+                        return m_arm.closeGrabber(startTime);
+                    }
+                }));
     }
 
     public static AHRS getAhrs() {
