@@ -70,9 +70,6 @@ public class DriveTrain extends SubsystemBase {
   private final WPI_TalonFX m_rightLeader = new WPI_TalonFX(10);
   private final WPI_TalonFX m_rightFollower = new WPI_TalonFX(20);
 
-  private final MotorControllerGroup m_leftGroup = new MotorControllerGroup(m_leftLeader, m_leftFollower);
-  private final MotorControllerGroup m_rightGroup = new MotorControllerGroup(m_rightLeader, m_rightFollower);
-
   // ---------- Encoders ----------\\
   private final Encoder m_leftEncoder = new Encoder(2, 3);
   private final Encoder m_rightEncoder = new Encoder(4, 5);
@@ -148,7 +145,7 @@ public class DriveTrain extends SubsystemBase {
     m_leftEncoder.reset();
     m_rightEncoder.reset();
 
-    m_rightGroup.setInverted(true);
+    // m_rightGroup.setInverted(true);
     SmartDashboard.putData("Field", m_fieldSim);
 
     // who needs Safelt?
@@ -195,8 +192,8 @@ public class DriveTrain extends SubsystemBase {
     double leftOutput = m_leftPIDController.calculate(m_leftEncoder.getRate(), speeds.leftMetersPerSecond);
     double rightOutput = m_rightPIDController.calculate(m_rightEncoder.getRate(), speeds.rightMetersPerSecond);
 
-    m_leftGroup.setVoltage(leftOutput + leftFeedforward);
-    m_rightGroup.setVoltage(rightOutput + rightFeedforward);
+    m_leftLeader.setVoltage(leftOutput + leftFeedforward);
+    m_rightLeader.setVoltage(rightOutput + rightFeedforward);
   }
 
   public void reset(Pose2d pose) {
@@ -238,8 +235,8 @@ public class DriveTrain extends SubsystemBase {
   }
 
   private void setAll(double speed) {
-    m_leftGroup.set(speed);
-    m_rightGroup.set(speed);
+    m_leftLeader.set(speed);
+    m_rightLeader.set(speed);
   }
 
   /** Update all ShuffleBoard values */
@@ -265,8 +262,8 @@ public class DriveTrain extends SubsystemBase {
 
     if (DriverStation.isTeleop()) {
       m_drivetrainSimulator.setInputs(
-          -m_leftGroup.get() * RobotController.getInputVoltage(),
-          m_rightGroup.get() * RobotController.getInputVoltage());
+          -m_leftLeader.get() * RobotController.getInputVoltage(),
+          m_rightLeader.get() * RobotController.getInputVoltage());
       m_drivetrainSimulator.update(0.02);
 
       m_leftEncoderSim.setDistance(m_drivetrainSimulator.getLeftPositionMeters());
