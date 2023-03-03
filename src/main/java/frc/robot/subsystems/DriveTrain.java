@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -70,27 +71,33 @@ public class DriveTrain extends SubsystemBase {
   private final WPI_TalonFX m_rightLeader = new WPI_TalonFX(10);
   private final WPI_TalonFX m_rightFollower = new WPI_TalonFX(20);
 
+  MotorControllerGroup left = new MotorControllerGroup(m_leftLeader, m_leftFollower);
+  MotorControllerGroup right = new MotorControllerGroup(m_rightLeader, m_rightFollower);
+
   // ---------- Encoders ----------\\
   private final Encoder m_leftEncoder = new Encoder(2, 3);
   private final Encoder m_rightEncoder = new Encoder(4, 5);
 
   // ---------- PID Controllers ----------\\
-  private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
-  private final PIDController m_rightPIDController = new PIDController(0, 0, 0);
+  // private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
+  // private final PIDController m_rightPIDController = new PIDController(0, 0,
+  // 0);
+
+  private final PIDController levelPID = new PIDController(0.028, 0, 0);
   private AHRS ahrs = RobotContainer.getAhrs();
   // Double for Rot PID
-  private double yawCtl = 0.0;
-  private double yawTarget = 0.0;
+  // private double yawCtl = 0.0;
+  // private double yawTarget = 0.0;
 
   // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
-  private double driveModeSpeed = 1.0;
+  private double driveModeSpeed = 0.75;
   private double zTurningSpeed = 1.0;
 
-  private double deltaTime = 0.0;
-  private double startTime = 0.0;
+  // private double deltaTime = 0.0;
+  // private double startTime = 0.0;
 
-  // What is driveModeSpeed set to in Turtle Mode
-  private final double TURTLE_MODE_MULTIPLYER = 0.5;
+  // // What is driveModeSpeed set to in Turtle Mode
+  // private final double TURTLE_MODE_MULTIPLYER = 0.5;
 
   // ---------- Kinematics & Odometry ----------\\
   public Pose2d pose = new Pose2d();
@@ -100,14 +107,15 @@ public class DriveTrain extends SubsystemBase {
 
   public static double leftVoltage = 0;
   public static double rightVoltage = 0;
-  public static BiConsumer<Double, Double> voltage = (a, b) -> {
-    leftVoltage = a;
-    rightVoltage = b;
-  };
+  // public static BiConsumer<Double, Double> voltage = (a, b) -> {
+  // leftVoltage = a;
+  // rightVoltage = b;
+  // };
 
   // Gains are for example purposes only - must be determined for your own
   // robot!
-  private final SimpleMotorFeedforward m_feedforward = new SimpleMotorFeedforward(1, 3);
+  // private final SimpleMotorFeedforward m_feedforward = new
+  // SimpleMotorFeedforward(1, 3);
 
   // ---------- Simulation Classes ----------\\
   private final EncoderSim m_leftEncoderSim = new EncoderSim(m_leftEncoder);
@@ -125,14 +133,22 @@ public class DriveTrain extends SubsystemBase {
     this.xbox = xbox;
 
     // Todo: Create DriveTrain type and reverse motors if needed
+    // m_rightLeader.setInverted(false);
+    // m_rightFollower.setInverted(false);
+    // m_leftLeader.setInverted(true);
+    // m_leftFollower.setInverted(true);
+
     m_rightLeader.setInverted(false);
     m_rightFollower.setInverted(false);
-    m_leftLeader.setInverted(true);
-    m_leftFollower.setInverted(true);
+    m_leftLeader.setInverted(false);
+    m_leftFollower.setInverted(false);
+
+    left.setInverted(true);
+    right.setInverted(false);
 
     // ? Construct a Tank Drive
     this.tankDrive();
-    createValues();
+    // createValues();
 
     ahrs.reset();
 
@@ -157,14 +173,17 @@ public class DriveTrain extends SubsystemBase {
 
   @Override
   public void periodic() {
+    SmartDashboard.putNumber("L motor", m_leftLeader.get());
+
     updatePeriodic();
     updateShuffleBoardValues();
     pose = getPose();
-    voltage.accept(m_leftLeader.getMotorOutputVoltage(), m_rightLeader.getMotorOutputVoltage());
+    // voltage.accept(m_leftLeader.getMotorOutputVoltage(),
+    // m_rightLeader.getMotorOutputVoltage());
 
-    if (DriverStation.isAutonomousEnabled()) {
+    // if (DriverStation.isAutonomousEnabled()) {
 
-    }
+    // }
   }
 
   public void setMode(Modes m) {
@@ -186,15 +205,17 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /** Sets speeds to the drivetrain motors. */
-  public void setSpeeds(DifferentialDriveWheelSpeeds speeds) {
-    var leftFeedforward = m_feedforward.calculate(speeds.leftMetersPerSecond);
-    var rightFeedforward = m_feedforward.calculate(speeds.rightMetersPerSecond);
-    double leftOutput = m_leftPIDController.calculate(m_leftEncoder.getRate(), speeds.leftMetersPerSecond);
-    double rightOutput = m_rightPIDController.calculate(m_rightEncoder.getRate(), speeds.rightMetersPerSecond);
+  // public void setSpeeds(DifferentialDriveWheelSpeeds speeds) {
+  // var leftFeedforward = m_feedforward.calculate(speeds.leftMetersPerSecond);
+  // var rightFeedforward = m_feedforward.calculate(speeds.rightMetersPerSecond);
+  // double leftOutput = m_leftPIDController.calculate(m_leftEncoder.getRate(),
+  // speeds.leftMetersPerSecond);
+  // double rightOutput = m_rightPIDController.calculate(m_rightEncoder.getRate(),
+  // speeds.rightMetersPerSecond);
 
-    m_leftLeader.setVoltage(leftOutput + leftFeedforward);
-    m_rightLeader.setVoltage(rightOutput + rightFeedforward);
-  }
+  // m_leftLeader.setVoltage(leftOutput + leftFeedforward);
+  // m_rightLeader.setVoltage(rightOutput + rightFeedforward);
+  // }
 
   public void reset(Pose2d pose) {
     ahrs.reset();
@@ -220,23 +241,23 @@ public class DriveTrain extends SubsystemBase {
   /**
    * Use to create a MecanumDrive
    */
-  private void mecanumDrive() {
-    // driveBase = new MecanumDrive(motorFL, motorBL, motorFR, motorBR);
-    // driveBase.setSafetyEnabled(false);
-  }
+  // private void mecanumDrive() {
+  // // driveBase = new MecanumDrive(motorFL, motorBL, motorFR, motorBR);
+  // // driveBase.setSafetyEnabled(false);
+  // }
 
   /**
    * Use to create a Tank Drive (Differential Drive)
    */
   private void tankDrive() {
-    m_leftFollower.follow(m_leftLeader);
-    m_rightFollower.follow(m_rightLeader);
-    driveBase = new DifferentialDrive(m_leftLeader, m_rightLeader);
+    // m_leftFollower.follow(m_leftLeader);
+    // m_rightFollower.follow(m_rightLeader);
+    driveBase = new DifferentialDrive(left, right);
   }
 
   private void setAll(double speed) {
-    m_leftLeader.set(speed);
-    m_rightLeader.set(speed);
+    left.set(speed);
+    right.set(speed);
   }
 
   /** Update all ShuffleBoard values */
@@ -244,9 +265,9 @@ public class DriveTrain extends SubsystemBase {
 
   }
 
-  private void createValues() {
+  // private void createValues() {
 
-  }
+  // }
 
   /** Check the current robot pose. */
   public Pose2d getPose() {
@@ -294,5 +315,23 @@ public class DriveTrain extends SubsystemBase {
 
   public void drive(double y, double z) {
     ((DifferentialDrive) driveBase).arcadeDrive(y, z);
+  }
+
+  public boolean level() {
+    double currentPitch = ahrs.getRoll();
+    // PID output for achieving "levelness"
+    double speed = levelPID.calculate(currentPitch, 0.0);
+    // Keep speed maxed at 100%
+    speed = Math.abs(speed) > 1 ? 1 * Math.signum(speed) * 0.4 : speed * 0.4;
+    this.setAll(-speed);
+
+    // ! for simulation purposes only
+    // currentPitch += speed;
+
+    // See values
+    System.out.println(speed + " " + currentPitch);
+
+    // If the charge station is level, we can stop moving
+    return Math.abs(currentPitch) < 0.7;
   }
 }

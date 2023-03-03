@@ -73,11 +73,8 @@ public class RobotContainer {
                     m_driveTrain.toggleSlowTurning(1.0);
                 }));
 
-        // if(RobotBase.isSimulation()) {
-        // new JoystickButton(stick, Constants.J_SIMULATION_RESET).onTrue(
-        // new InstantCommand(() -> {
-        // m_driveTrain.simulationReset(new Pose2d(1, 1, new Rotation2d()));
-        // }));
+        new JoystickButton(stick, 12).toggleOnTrue(
+                new WaitUntilCommand(m_driveTrain::level));
 
     }
 

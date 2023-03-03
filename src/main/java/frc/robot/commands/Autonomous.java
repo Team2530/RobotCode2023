@@ -39,69 +39,173 @@ public class Autonomous extends CommandBase {
   public void initialize() {
     // sets desired angle to 0
     System.out.println("Starting auto");
+    /**
+     * Normal Auto
+     */
     SequentialCommandGroup auto = new SequentialCommandGroup(
         // Close the grabber at the start
         new InstantCommand(() -> {
           driveTrain.toggleTurtleMode(1);
         }),
+        new PrintCommand("1"),
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
+        new PrintCommand("2"),
+
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             driveTrain.singleJoystickDrive(-0.2, 0);
             return (Timer.getFPGATimestamp() - startTime) >= 1;
           }
         }),
+        new PrintCommand("3"),
+
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
+        new PrintCommand("4"),
+
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             return arm.closeGrabber(startTime);
           }
         }),
-        new PrintCommand("1"),
+        new PrintCommand("5"),
+
         // Set arm angle to desired angle
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             return arm.waitForArmAngle(33.5);
           }
         }),
-        new PrintCommand("2"),
+        new PrintCommand("6"),
+
         // set arm extension to granted extension
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             return arm.waitForArmExtension(39);
           }
         }),
-        new PrintCommand("3"),
+        new PrintCommand("7"),
+
         // update timer for grabber as it relies on time
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
+        new PrintCommand("8"),
+
         // release the kraken (gamepiece)
         new InstantCommand(() -> {
           arm.openGrabber(startTime);
         }),
+        new PrintCommand("9"),
+
         // Wait for a second for things to slow down and settle
         new WaitCommand(1),
+        new PrintCommand("10"),
+
         new WaitUntilCommand(arm::zeroArm),
+        new PrintCommand("11"),
+
         // update timer
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
+        new PrintCommand("12"),
+
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             driveTrain.singleJoystickDrive(0.5, 0);
             return (Timer.getFPGATimestamp() - startTime) >= 4.5;
           }
         }),
+        new PrintCommand("13"),
+
         new InstantCommand(() -> {
           driveTrain.drive(0, 0);
+        }),
+        new PrintCommand("14"),
+
+        new InstantCommand(() -> {
+          driveTrain.toggleTurtleMode(0.75);
         }));
 
-    auto.schedule();
+    // auto.schedule();
+
+    /**
+     * Auto with balance
+     */
+    SequentialCommandGroup autoBalance = new SequentialCommandGroup(
+
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new PrintCommand("4"),
+
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return arm.closeGrabber(startTime);
+          }
+        }),
+        new PrintCommand("5"),
+
+        // Set arm angle to desired angle
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return arm.waitForArmAngle(33.5);
+          }
+        }),
+        new PrintCommand("6"),
+
+        // set arm extension to granted extension
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return arm.waitForArmExtension(39);
+          }
+        }),
+        new PrintCommand("7"),
+
+        // update timer for grabber as it relies on time
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new PrintCommand("8"),
+
+        // release the kraken (gamepiece)
+        new InstantCommand(() -> {
+          arm.openGrabber(startTime);
+        }),
+        new PrintCommand("9"),
+
+        // Wait for a second for things to slow down and settle
+        new WaitCommand(1),
+        new PrintCommand("10"),
+
+        new WaitUntilCommand(arm::zeroArm),
+        new PrintCommand("11"),
+
+        // Close the grabber at the start
+        new InstantCommand(() -> {
+          driveTrain.toggleTurtleMode(1);
+        }),
+        new PrintCommand("1"),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new PrintCommand("2"),
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            driveTrain.singleJoystickDrive(0.6, 0);
+            return (Timer.getFPGATimestamp() - startTime) >= 1.75;
+          }
+        }),
+        new WaitUntilCommand(driveTrain::level),
+        new PrintCommand("Robot is Level!")
+
+    );
+
+    autoBalance.schedule();
 
   }
 

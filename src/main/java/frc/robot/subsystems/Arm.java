@@ -11,6 +11,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
@@ -55,7 +57,7 @@ public class Arm extends SubsystemBase {
 
     // Min && Max Angles
     private final double kMinAngle = -25;
-    private final double kMaxAngle = 66.0;
+    private final double kMaxAngle = 64.0;
 
     // Min && Max Extension Values for interpolating
     private final double minExtension = 0.0;
@@ -219,7 +221,7 @@ public class Arm extends SubsystemBase {
             linearActuator.set(0.0);
         }
 
-        return Math.abs(currentAngle - kMaxAngle) < 0.1 && currentExtension < 0.1;
+        return Math.abs(currentAngle - kMaxAngle) < 2 && currentExtension < 0.1;
     }
 
     /**
@@ -298,6 +300,29 @@ public class Arm extends SubsystemBase {
         }
     }
 
+    public boolean presetDown() {
+        if (currentExtension > 9.5) {
+            extensionMotor.set(-armInLimitSpeed);
+        } else if (currentExtension < 8.5) {
+            extensionMotor.set(-armOutLimitSpeed);
+        } else {
+            extensionMotor.set(0.0);
+
+        }
+
+        // grabberServo.setRelativeAngle(1);
+
+        if (currentAngle < -23.2) {
+            linearActuator.set(1);
+        } else if (currentAngle > -23.7) {
+            linearActuator.set(-1);
+        } else {
+            linearActuator.set(0.0);
+        }
+
+        return Math.abs(currentAngle - kMaxAngle) < 0.1 && Math.abs(currentExtension - 9) < .5;
+    }
+
     /**
      * Updated the linear actuator based on inputs and make sure our limits are <em>
      * fairly good</em>
@@ -342,4 +367,5 @@ public class Arm extends SubsystemBase {
         grabberServo.setRelativeAngle(0.5d);
         return Timer.getFPGATimestamp() - startSeconds > 1.5;
     }
+
 }

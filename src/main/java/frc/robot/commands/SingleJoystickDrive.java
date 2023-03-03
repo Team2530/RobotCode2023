@@ -18,11 +18,11 @@ public class SingleJoystickDrive extends CommandBase {
   Joystick stick;
   XboxController xbox;
 
-  private final SlewRateLimiter m_speedLimiter = new SlewRateLimiter(3);
-  private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
+  // private final SlewRateLimiter m_speedLimiter = new SlewRateLimiter(3);
+  // private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
 
-  private final RamseteController m_ramsete = new RamseteController();
-  private final Timer m_timer = new Timer();
+  // private final RamseteController m_ramsete = new RamseteController();
+  // private final Timer m_timer = new Timer();
 
   public SingleJoystickDrive(DriveTrain driveTrain, Joystick stick, XboxController xbox) {
     this.driveTrain = driveTrain;
@@ -41,11 +41,12 @@ public class SingleJoystickDrive extends CommandBase {
         Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE));
   }
 
-  /** 
+  /**
    * Called once the command ends or is interrupted.
    */
   @Override
-  public void end(boolean interrupted) { /* driveTrain.stop(); */ }
+  public void end(boolean interrupted) {
+    /* driveTrain.stop(); */ }
 
   /**
    * Returns true when the command should end.
