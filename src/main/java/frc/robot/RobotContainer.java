@@ -73,8 +73,9 @@ public class RobotContainer {
                     m_driveTrain.toggleSlowTurning(1.0);
                 }));
 
-        new JoystickButton(stick, 12).toggleOnTrue(
-                new WaitUntilCommand(m_driveTrain::level));
+        // ? For testing leveling only
+        // new JoystickButton(stick, 12).toggleOnTrue(
+        // new WaitUntilCommand(m_driveTrain::level));
 
     }
 
@@ -123,5 +124,9 @@ public class RobotContainer {
 
     public static AHRS getAhrs() {
         return m_ahrs;
+    }
+
+    public Arm getArm() {
+        return m_arm;
     }
 }
