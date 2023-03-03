@@ -37,12 +37,11 @@ public class Autonomous extends CommandBase {
   // Called when the command is initially scheduled.
   @Override
   public void initialize() {
-    // sets desired angle to 0
-    System.out.println("Starting auto");
+
     /**
-     * Normal Auto
+     * Normal auto, cone and back up
      */
-    SequentialCommandGroup auto = new SequentialCommandGroup(
+    SequentialCommandGroup normalAuto = new SequentialCommandGroup(
         // Close the grabber at the start
         new InstantCommand(() -> {
           driveTrain.toggleTurtleMode(1);
@@ -131,8 +130,6 @@ public class Autonomous extends CommandBase {
           driveTrain.toggleTurtleMode(0.75);
         }));
 
-    // auto.schedule();
-
     /**
      * Auto with balance
      */
@@ -200,13 +197,24 @@ public class Autonomous extends CommandBase {
             return (Timer.getFPGATimestamp() - startTime) >= 1.75;
           }
         }),
+
         new WaitUntilCommand(driveTrain::level),
+
         new PrintCommand("Robot is Level!")
 
     );
 
-    autoBalance.schedule();
+    switch (Robot.autoChooser.getSelected()) {
+      case "Normal Auto":
+        System.out.println("Normal Auto Starting...");
+        normalAuto.schedule();
+        break;
+      case "Fancy Auto":
+        System.out.println("Fancy Auto Starting...");
+        autoBalance.schedule();
+        break;
 
+    }
   }
 
   // Called every time the scheduler runs while the command is scheduled.

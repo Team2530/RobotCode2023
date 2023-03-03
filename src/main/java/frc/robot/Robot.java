@@ -6,8 +6,12 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.commands.Autonomous;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -26,6 +30,14 @@ public class Robot extends TimedRobot {
 
   private RobotContainer m_robotContainer;
 
+  public static SendableChooser<String> autoChooser = new SendableChooser<>() {
+    {
+      addOption("Auto - Place and Backup", "Normal Auto");
+      addOption("Auto - Place and Balance", "Fancy Auto");
+      setDefaultOption("Auto - Place and Backup", "Normal Auto");
+    }
+  };
+
   /**
    * This function is run when the robot is first started up and should be used
    * for any initialization code.
@@ -36,6 +48,7 @@ public class Robot extends TimedRobot {
     // and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
+    Shuffleboard.getTab("Driver Dashboard").add(autoChooser);
   }
 
   /**
@@ -70,7 +83,8 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+  }
 
   /**
    * This method runs the enable command selected by your
@@ -102,7 +116,8 @@ public class Robot extends TimedRobot {
    * This function is called periodically during autonomous.
    */
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() {
+  }
 
   @Override
   public void teleopInit() {
@@ -123,7 +138,8 @@ public class Robot extends TimedRobot {
    * This function is called periodically during operator control.
    */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+  }
 
   @Override
   public void testInit() {

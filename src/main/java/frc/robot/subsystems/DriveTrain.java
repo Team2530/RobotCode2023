@@ -33,6 +33,7 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -42,6 +43,7 @@ import frc.robot.libraries.Deadzone;
 public class DriveTrain extends SubsystemBase {
   private Joystick stick;
   private XboxController xbox;
+  private Arm arm;
 
   RobotDriveBase driveBase;
 
