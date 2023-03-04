@@ -57,7 +57,7 @@ public class Arm extends SubsystemBase {
 
     // Min && Max Angles
     private final double kMinAngle = -25;
-    private final double kMaxAngle = 64.0;
+    private final double kMaxAngle = 68.0;
 
     // Min && Max Extension Values for interpolating
     private final double minExtension = 0.0;
@@ -216,12 +216,12 @@ public class Arm extends SubsystemBase {
         // grabberServo.setRelativeAngle(1);
 
         if (currentAngle < kMaxAngle) {
-            linearActuator.set(1);
+            linearActuator.set(0.5);
         } else {
             linearActuator.set(0.0);
         }
 
-        return Math.abs(currentAngle - kMaxAngle) < 2 && currentExtension < 0.1;
+        return Math.abs(currentAngle - kMaxAngle) < 5 && currentExtension < 1;
     }
 
     /**
