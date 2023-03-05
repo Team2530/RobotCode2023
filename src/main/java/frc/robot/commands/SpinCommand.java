@@ -22,7 +22,7 @@ public class SpinCommand extends CommandBase {
 
     @Override
     public void execute() {
-        RobotContainer.driveTrain.singleJoystickDrive(0.0, 1.0);
+        RobotContainer.driveTrain.singleJoystickDrive(0.0, 0.2);
     }
 
     @Override

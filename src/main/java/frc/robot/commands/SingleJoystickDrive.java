@@ -25,7 +25,7 @@ public class SingleJoystickDrive extends CommandBase {
    */
   @Override
   public void execute() {
-    System.out.println("sjd running");
+    // System.out.println("sjd running");
     RobotContainer.driveTrain.singleJoystickDrive(
         Deadzone.deadZone(stick.getY(), Constants.ControllerConstants.DEADZONE),
         Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE));
