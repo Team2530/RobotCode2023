@@ -113,7 +113,7 @@ public class LimeLight extends SubsystemBase {
    * @param dist Distance away from goal
    */
   public void backToDistance(double dist) {
-    double currentdist = distanceToTarget();
+    // double currentdist = distanceToTarget();
   }
 
   /**

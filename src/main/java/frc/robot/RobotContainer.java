@@ -17,33 +17,22 @@ import com.kauailabs.navx.frc.AHRS;
  */
 public class RobotContainer {
 
-    final Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
-    final XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
-
-    private static final AHRS m_ahrs = new AHRS();
+    public final static Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
+    public final static XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
+    public static final AHRS m_ahrs = new AHRS();
 
     // ---------- Subsystems ----------\\
-    private final DriveTrain m_driveTrain = new DriveTrain(m_ahrs, stick, xbox);
-
-    static {
-        // if(RobotBase.isReal()) {
-        final USBCamera driveCamera = new USBCamera();
-    }
-    // }
-    private final Arm m_arm = new Arm(m_driveTrain, stick, xbox);
-
-    // ---------- Autonomous Commands ----------\\
+    public static final DriveTrain driveTrain = new DriveTrain(m_ahrs, stick, xbox);
+    public static final Arm arm = new Arm(driveTrain, stick, xbox);
 
     // ---------- Commands ----------\\
-    InstantCommand example = new InstantCommand(() -> {
-        /**
-         * code goes here
-         */
-    });
 
+    public static final Command driveCommand = new SingleJoystickDrive(stick, xbox);
+    public static final Command spinCommand = new SpinCommand();
     // ---------- Global Toggles ----------\\
 
     public RobotContainer() {
+        driveTrain.setDefaultCommand(driveCommand);
         configureButtonBindings();
     }
 
@@ -52,35 +41,39 @@ public class RobotContainer {
         // ? Button 2 is used for Turtle Mode
         new JoystickButton(stick, Constants.ControllerConstants.J_TURTLE_TOGGLE).onTrue(
                 new InstantCommand(() -> {
-                    m_driveTrain.toggleTurtleMode(0.5);
+                    driveTrain.setDriveSpeedMultiplier(0.5);
                 })).onFalse(new InstantCommand(() -> {
-                    m_driveTrain.toggleTurtleMode(0.75);
+                    driveTrain.setDriveSpeedMultiplier(0.75);
                 }));
 
         // ? Button 1 (trigger is used for fullspeed)
         new JoystickButton(stick, Constants.ControllerConstants.J_FULL_SPEED).onTrue(
                 new InstantCommand(() -> {
-                    m_driveTrain.toggleTurtleMode(1.0);
+                    driveTrain.setDriveSpeedMultiplier(1.0);
                 })).onFalse(new InstantCommand(() -> {
-                    m_driveTrain.toggleTurtleMode(0.75);
+                    driveTrain.setDriveSpeedMultiplier(0.75);
                 }));
 
         // ? Button 6 (trigger used for slow speed for turning)
         new JoystickButton(stick, Constants.ControllerConstants.J_SLOW_SPEED_TURRNNG).onTrue(
                 new InstantCommand(() -> {
-                    m_driveTrain.toggleSlowTurning(0.5);
+                    driveTrain.setTurnSpeed(0.5);
                 })).onFalse(new InstantCommand(() -> {
-                    m_driveTrain.toggleSlowTurning(1.0);
+                    driveTrain.setTurnSpeed(1.0);
                 }));
+
+        // NOTE: This is just a test for overriding the default command of DriveTrain.
+        // A similar button running a command would be used for auto scoring in the
+        // future.
+        new JoystickButton(stick, 4).onTrue(spinCommand);
 
         // ? For testing leveling only
         // new JoystickButton(stick, 12).toggleOnTrue(
         // new WaitUntilCommand(m_driveTrain::level));
-
     }
 
     public DriveTrain getDriveTrain() {
-        return m_driveTrain;
+        return driveTrain;
     }
 
     /**
@@ -92,7 +85,7 @@ public class RobotContainer {
      */
     public Command getEnableCommand() {
         // return new InstantCommand(() -> m_driveTrain.reset());
-        return null;
+        return null; // SingleJoystickDrive is the default command for DriveTrain now (driveCommand)
     }
 
     /**
@@ -101,7 +94,7 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return new Autonomous(m_driveTrain, m_ahrs, m_arm);
+        return new Autonomous();
     }
 
     /**
@@ -110,7 +103,7 @@ public class RobotContainer {
      * @return the command to run in Telop
      */
     public Command getTelopCommand() {
-        return new SingleJoystickDrive(m_driveTrain, stick, xbox);
+        return null;// new SingleJoystickDrive(stick, xbox);
     }
 
     /**
@@ -119,14 +112,10 @@ public class RobotContainer {
      * @return the command to run in Test
      */
     public Command getTestCommand() {
-        return new WaitUntilCommand(m_arm::zeroArm);
+        return new WaitUntilCommand(arm::zeroArm);
     }
 
     public static AHRS getAhrs() {
         return m_ahrs;
-    }
-
-    public Arm getArm() {
-        return m_arm;
     }
 }

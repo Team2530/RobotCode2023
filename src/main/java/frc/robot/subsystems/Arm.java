@@ -7,15 +7,14 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.libraries.*;
 
 public class Arm extends SubsystemBase {
@@ -39,7 +38,7 @@ public class Arm extends SubsystemBase {
     double calculatedLength = 0.0;
 
     // --------- Values ----------\\
-    private double currentAngle = 0.0;
+    private double currentAngle = 46.3;
     private double currentExtension = 0.0;
 
     /** How far off our calculated and reset when we hit our encoder */
@@ -95,12 +94,26 @@ public class Arm extends SubsystemBase {
         linearActuator.setSensorPhase(false);
     }
 
+    long lastTime = -1;
+
     @Override
     public void periodic() {
         // ? Update to our current data
         // 360 is for reversing the angle and 46.3 gets us to our zero point
-        currentAngle = 360 - angleEncoder.getAngleDeg() - 46.3;
-        currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + eOff;
+        if (Robot.isSimulation()) {
+            // Simulation
+            if (lastTime < 0) {
+                lastTime = RobotController.getFPGATime();
+            }
+            long deltatime = lastTime - RobotController.getFPGATime();
+            currentAngle -= linearActuator.get() * 10 * ((float) deltatime / 1000000);
+            lastTime = RobotController.getFPGATime();
+            currentExtension -= extensionMotor.get() * 20 * ((float) deltatime / 1000000);
+
+        } else {
+            currentAngle = 360 - angleEncoder.getAngleDeg() - 46.3;
+            currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + eOff;
+        }
 
         // reset our encoder reading if our reverse limit switch is closed
         if (extensionMotor.isRevLimitSwitchClosed() == 1) {
@@ -261,6 +274,7 @@ public class Arm extends SubsystemBase {
             extensionMotor.set(0.0);
             return true;
         }
+        System.out.printf("Ext: %f, tgt : %f\n", currentExtension, extensionInches);
 
         return false;
     }

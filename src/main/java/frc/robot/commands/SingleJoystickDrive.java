@@ -4,31 +4,20 @@
 
 package frc.robot.commands;
 
-import frc.robot.subsystems.*;
 import frc.robot.libraries.*;
 import frc.robot.*;
-import edu.wpi.first.math.controller.RamseteController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.*;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
 
 public class SingleJoystickDrive extends CommandBase {
-  DriveTrain driveTrain;
   Joystick stick;
   XboxController xbox;
 
-  // private final SlewRateLimiter m_speedLimiter = new SlewRateLimiter(3);
-  // private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3);
-
-  // private final RamseteController m_ramsete = new RamseteController();
-  // private final Timer m_timer = new Timer();
-
-  public SingleJoystickDrive(DriveTrain driveTrain, Joystick stick, XboxController xbox) {
-    this.driveTrain = driveTrain;
+  public SingleJoystickDrive(Joystick stick, XboxController xbox) {
+    addRequirements(RobotContainer.driveTrain);
     this.stick = stick;
     this.xbox = xbox;
-    // Use addRequirements() here to declare subsystem dependencies.
   }
 
   /**
@@ -36,7 +25,8 @@ public class SingleJoystickDrive extends CommandBase {
    */
   @Override
   public void execute() {
-    driveTrain.singleJoystickDrive(
+    System.out.println("sjd running");
+    RobotContainer.driveTrain.singleJoystickDrive(
         Deadzone.deadZone(stick.getY(), Constants.ControllerConstants.DEADZONE),
         Deadzone.deadZone(stick.getZ(), Constants.ControllerConstants.DEADZONE));
   }
@@ -46,7 +36,7 @@ public class SingleJoystickDrive extends CommandBase {
    */
   @Override
   public void end(boolean interrupted) {
-    /* driveTrain.stop(); */ }
+  }
 
   /**
    * Returns true when the command should end.

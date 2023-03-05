@@ -4,18 +4,15 @@
 
 package frc.robot.subsystems;
 
-import java.util.function.BiConsumer;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.hal.SimDouble;
 import edu.wpi.first.hal.simulation.SimDeviceDataJNI;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
-import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -27,13 +24,10 @@ import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.drive.RobotDriveBase;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.EncoderSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -41,22 +35,8 @@ import frc.robot.RobotContainer;
 import frc.robot.libraries.Deadzone;
 
 public class DriveTrain extends SubsystemBase {
-  private Joystick stick;
-  private XboxController xbox;
-  private Arm arm;
 
-  RobotDriveBase driveBase;
-
-  public static enum Modes {
-    Stop,
-    Move,
-    Brake,
-    Full,
-    Crawl,
-    Half
-  }
-
-  private Modes currentDriveMode = Modes.Move;
+  DifferentialDrive driveBase;
 
   // 3 meters per second.
   public static final double kMaxSpeed = 3.0;
@@ -80,26 +60,12 @@ public class DriveTrain extends SubsystemBase {
   private final Encoder m_leftEncoder = new Encoder(2, 3);
   private final Encoder m_rightEncoder = new Encoder(4, 5);
 
-  // ---------- PID Controllers ----------\\
-  // private final PIDController m_leftPIDController = new PIDController(0, 0, 0);
-  // private final PIDController m_rightPIDController = new PIDController(0, 0,
-  // 0);
-
   private final PIDController levelPID = new PIDController(0.028, 0, 0);
   private AHRS ahrs = RobotContainer.getAhrs();
-  // Double for Rot PID
-  // private double yawCtl = 0.0;
-  // private double yawTarget = 0.0;
 
   // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
   private double driveModeSpeed = 0.75;
   private double zTurningSpeed = 1.0;
-
-  // private double deltaTime = 0.0;
-  // private double startTime = 0.0;
-
-  // // What is driveModeSpeed set to in Turtle Mode
-  // private final double TURTLE_MODE_MULTIPLYER = 0.5;
 
   // ---------- Kinematics & Odometry ----------\\
   public Pose2d pose = new Pose2d();
@@ -109,15 +75,6 @@ public class DriveTrain extends SubsystemBase {
 
   public static double leftVoltage = 0;
   public static double rightVoltage = 0;
-  // public static BiConsumer<Double, Double> voltage = (a, b) -> {
-  // leftVoltage = a;
-  // rightVoltage = b;
-  // };
-
-  // Gains are for example purposes only - must be determined for your own
-  // robot!
-  // private final SimpleMotorFeedforward m_feedforward = new
-  // SimpleMotorFeedforward(1, 3);
 
   // ---------- Simulation Classes ----------\\
   private final EncoderSim m_leftEncoderSim = new EncoderSim(m_leftEncoder);
@@ -131,14 +88,6 @@ public class DriveTrain extends SubsystemBase {
   /** Subsystem constructor. */
   public DriveTrain(AHRS ahrs, Joystick stick, XboxController xbox) {
     this.ahrs = ahrs;
-    this.stick = stick;
-    this.xbox = xbox;
-
-    // Todo: Create DriveTrain type and reverse motors if needed
-    // m_rightLeader.setInverted(false);
-    // m_rightFollower.setInverted(false);
-    // m_leftLeader.setInverted(true);
-    // m_leftFollower.setInverted(true);
 
     m_rightLeader.setInverted(false);
     m_rightFollower.setInverted(false);
@@ -180,44 +129,21 @@ public class DriveTrain extends SubsystemBase {
     updatePeriodic();
     updateShuffleBoardValues();
     pose = getPose();
-    // voltage.accept(m_leftLeader.getMotorOutputVoltage(),
-    // m_rightLeader.getMotorOutputVoltage());
-
-    // if (DriverStation.isAutonomousEnabled()) {
-
-    // }
-  }
-
-  public void setMode(Modes m) {
-    currentDriveMode = m;
   }
 
   public void singleJoystickDrive(double StickY, double StickZ) {
 
     if (RobotBase.isReal()) {
-      ((DifferentialDrive) driveBase).arcadeDrive(
+      driveBase.arcadeDrive(
           Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
           -Deadzone.deadZone(StickZ * driveModeSpeed * zTurningSpeed, Constants.ControllerConstants.DEADZONE));
     } else {
-      ((DifferentialDrive) driveBase).arcadeDrive(
+      driveBase.arcadeDrive(
           Deadzone.deadZone(StickY * driveModeSpeed, Constants.ControllerConstants.DEADZONE),
           Deadzone.deadZone(StickZ * driveModeSpeed * zTurningSpeed, Constants.ControllerConstants.DEADZONE));
     }
 
   }
-
-  /** Sets speeds to the drivetrain motors. */
-  // public void setSpeeds(DifferentialDriveWheelSpeeds speeds) {
-  // var leftFeedforward = m_feedforward.calculate(speeds.leftMetersPerSecond);
-  // var rightFeedforward = m_feedforward.calculate(speeds.rightMetersPerSecond);
-  // double leftOutput = m_leftPIDController.calculate(m_leftEncoder.getRate(),
-  // speeds.leftMetersPerSecond);
-  // double rightOutput = m_rightPIDController.calculate(m_rightEncoder.getRate(),
-  // speeds.rightMetersPerSecond);
-
-  // m_leftLeader.setVoltage(leftOutput + leftFeedforward);
-  // m_rightLeader.setVoltage(rightOutput + rightFeedforward);
-  // }
 
   public void reset(Pose2d pose) {
     ahrs.reset();
@@ -241,19 +167,9 @@ public class DriveTrain extends SubsystemBase {
   }
 
   /**
-   * Use to create a MecanumDrive
-   */
-  // private void mecanumDrive() {
-  // // driveBase = new MecanumDrive(motorFL, motorBL, motorFR, motorBR);
-  // // driveBase.setSafetyEnabled(false);
-  // }
-
-  /**
    * Use to create a Tank Drive (Differential Drive)
    */
   private void tankDrive() {
-    // m_leftFollower.follow(m_leftLeader);
-    // m_rightFollower.follow(m_rightLeader);
     driveBase = new DifferentialDrive(left, right);
   }
 
@@ -267,10 +183,6 @@ public class DriveTrain extends SubsystemBase {
 
   }
 
-  // private void createValues() {
-
-  // }
-
   /** Check the current robot pose. */
   public Pose2d getPose() {
     return m_odometry.getPoseMeters();
@@ -282,7 +194,6 @@ public class DriveTrain extends SubsystemBase {
     // simulation, and write the simulated positions and velocities to our
     // simulated encoder and gyro. We negate the right side so that positive
     // voltages make the right side move forward.
-
     if (DriverStation.isTeleop()) {
       m_drivetrainSimulator.setInputs(
           -m_leftLeader.get() * RobotController.getInputVoltage(),
@@ -307,16 +218,16 @@ public class DriveTrain extends SubsystemBase {
     m_fieldSim.setRobotPose(m_odometry.getPoseMeters());
   }
 
-  public void toggleTurtleMode(double maxSpeed) {
+  public void setDriveSpeedMultiplier(double maxSpeed) {
     driveModeSpeed = maxSpeed;
   }
 
-  public void toggleSlowTurning(double slowTurning) {
+  public void setTurnSpeed(double slowTurning) {
     zTurningSpeed = slowTurning;
   }
 
-  public void drive(double y, double z) {
-    ((DifferentialDrive) driveBase).arcadeDrive(y, z);
+  public void arcadeDrive(double y, double z) {
+    driveBase.arcadeDrive(y, z);
   }
 
   public boolean level() {
@@ -328,7 +239,7 @@ public class DriveTrain extends SubsystemBase {
     this.setAll(-speed);
 
     // ! for simulation purposes only
-    // currentPitch += speed;
+    currentPitch += speed;
 
     // See values
     System.out.println(speed + " " + currentPitch);

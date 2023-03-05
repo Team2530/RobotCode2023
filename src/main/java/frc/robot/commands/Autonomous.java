@@ -6,9 +6,6 @@ package frc.robot.commands;
 
 import java.util.function.BooleanSupplier;
 
-import com.kauailabs.navx.frc.AHRS;
-
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -17,21 +14,15 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import frc.robot.Robot;
-import frc.robot.subsystems.Arm;
-import frc.robot.subsystems.DriveTrain;
+import frc.robot.RobotContainer;
 
 public class Autonomous extends CommandBase {
-  private AHRS ahrs;
-  private DriveTrain driveTrain;
-  private Arm arm;
 
   private double startTime = 0.0;
 
   /** Creates a new Autonomous. */
-  public Autonomous(DriveTrain driveTrain, AHRS ahrs, Arm arm) {
-    this.ahrs = ahrs;
-    this.driveTrain = driveTrain;
-    this.arm = arm;
+  public Autonomous() {
+    addRequirements(RobotContainer.driveTrain);
   }
 
   // Called when the command is initially scheduled.
@@ -44,7 +35,7 @@ public class Autonomous extends CommandBase {
     SequentialCommandGroup normalAuto = new SequentialCommandGroup(
         // Close the grabber at the start
         new InstantCommand(() -> {
-          driveTrain.toggleTurtleMode(1);
+          RobotContainer.driveTrain.setDriveSpeedMultiplier(1);
         }),
         new PrintCommand("1"),
         new InstantCommand(() -> {
@@ -54,7 +45,7 @@ public class Autonomous extends CommandBase {
 
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            driveTrain.singleJoystickDrive(-0.2, 0);
+            RobotContainer.driveTrain.singleJoystickDrive(-0.2, 0);
             return (Timer.getFPGATimestamp() - startTime) >= 1;
           }
         }),
@@ -67,7 +58,7 @@ public class Autonomous extends CommandBase {
 
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            return arm.closeGrabber(startTime);
+            return RobotContainer.arm.closeGrabber(startTime);
           }
         }),
         new PrintCommand("5"),
@@ -75,7 +66,7 @@ public class Autonomous extends CommandBase {
         // Set arm angle to desired angle
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            return arm.waitForArmAngle(33.5);
+            return RobotContainer.arm.waitForArmAngle(33.5);
           }
         }),
         new PrintCommand("6"),
@@ -83,7 +74,7 @@ public class Autonomous extends CommandBase {
         // set arm extension to granted extension
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            return arm.waitForArmExtension(39);
+            return RobotContainer.arm.waitForArmExtension(39);
           }
         }),
         new PrintCommand("7"),
@@ -96,7 +87,7 @@ public class Autonomous extends CommandBase {
 
         // release the kraken (gamepiece)
         new InstantCommand(() -> {
-          arm.openGrabber(startTime);
+          RobotContainer.arm.openGrabber(startTime);
         }),
         new PrintCommand("9"),
 
@@ -104,7 +95,7 @@ public class Autonomous extends CommandBase {
         new WaitCommand(1),
         new PrintCommand("10"),
 
-        new WaitUntilCommand(arm::zeroArm),
+        new WaitUntilCommand(RobotContainer.arm::zeroArm),
         new PrintCommand("11"),
 
         // update timer
@@ -115,19 +106,19 @@ public class Autonomous extends CommandBase {
 
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            driveTrain.singleJoystickDrive(0.5, 0);
+            RobotContainer.driveTrain.singleJoystickDrive(0.5, 0);
             return (Timer.getFPGATimestamp() - startTime) >= 4.5;
           }
         }),
         new PrintCommand("13"),
 
         new InstantCommand(() -> {
-          driveTrain.drive(0, 0);
+          RobotContainer.driveTrain.singleJoystickDrive(0, 0);
         }),
         new PrintCommand("14"),
 
         new InstantCommand(() -> {
-          driveTrain.toggleTurtleMode(0.75);
+          RobotContainer.driveTrain.setDriveSpeedMultiplier(0.75);
         }));
 
     /**
@@ -142,7 +133,7 @@ public class Autonomous extends CommandBase {
 
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            return arm.closeGrabber(startTime);
+            return RobotContainer.arm.closeGrabber(startTime);
           }
         }),
         new PrintCommand("5"),
@@ -150,7 +141,7 @@ public class Autonomous extends CommandBase {
         // Set arm angle to desired angle
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            return arm.waitForArmAngle(33.5);
+            return RobotContainer.arm.waitForArmAngle(33.5);
           }
         }),
         new PrintCommand("6"),
@@ -158,7 +149,7 @@ public class Autonomous extends CommandBase {
         // set arm extension to granted extension
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            return arm.waitForArmExtension(39);
+            return RobotContainer.arm.waitForArmExtension(39);
           }
         }),
         new PrintCommand("7"),
@@ -171,7 +162,7 @@ public class Autonomous extends CommandBase {
 
         // release the kraken (gamepiece)
         new InstantCommand(() -> {
-          arm.openGrabber(startTime);
+          RobotContainer.arm.openGrabber(startTime);
         }),
         new PrintCommand("9"),
 
@@ -179,12 +170,12 @@ public class Autonomous extends CommandBase {
         new WaitCommand(1),
         new PrintCommand("10"),
 
-        new WaitUntilCommand(arm::zeroArm),
+        new WaitUntilCommand(RobotContainer.arm::zeroArm),
         new PrintCommand("11"),
 
         // Close the grabber at the start
         new InstantCommand(() -> {
-          driveTrain.toggleTurtleMode(1);
+          RobotContainer.driveTrain.setDriveSpeedMultiplier(1);
         }),
         new PrintCommand("1"),
         new InstantCommand(() -> {
@@ -193,12 +184,12 @@ public class Autonomous extends CommandBase {
         new PrintCommand("2"),
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            driveTrain.singleJoystickDrive(0.6, 0);
+            RobotContainer.driveTrain.singleJoystickDrive(0.6, 0);
             return (Timer.getFPGATimestamp() - startTime) >= 1.75;
           }
         }),
 
-        new WaitUntilCommand(driveTrain::level),
+        new WaitUntilCommand(RobotContainer.driveTrain::level),
 
         new PrintCommand("Robot is Level!")
 
