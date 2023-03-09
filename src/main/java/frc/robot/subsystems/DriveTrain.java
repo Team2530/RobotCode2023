@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.drive.RobotDriveBase;
@@ -87,6 +88,10 @@ public class DriveTrain extends SubsystemBase {
 
   private final PIDController levelPID = new PIDController(0.028, 0, 0);
   private AHRS ahrs = RobotContainer.getAhrs();
+
+  private double currentTime = 0.0;
+  private double dTime = 0.0;
+  private double lastTime = 0.0;
   // Double for Rot PID
   // private double yawCtl = 0.0;
   // private double yawTarget = 0.0;
@@ -319,8 +324,9 @@ public class DriveTrain extends SubsystemBase {
     ((DifferentialDrive) driveBase).arcadeDrive(y, z);
   }
 
-  public boolean level() {
+  public boolean level(double startTime) {
     double currentPitch = ahrs.getRoll();
+    currentTime = Timer.getFPGATimestamp();
     // PID output for achieving "levelness"
     double speed = levelPID.calculate(currentPitch, 0.0);
     // Keep speed maxed at 100%
@@ -333,7 +339,13 @@ public class DriveTrain extends SubsystemBase {
     // See values
     System.out.println(speed + " " + currentPitch);
 
+    if (Math.abs(currentPitch) < 0.7) {
+      dTime = currentTime - lastTime;
+    } else {
+      lastTime = Timer.getFPGATimestamp();
+    }
+
     // If the charge station is level, we can stop moving
-    return Math.abs(currentPitch) < 0.7;
+    return dTime > 1.5;
   }
 }

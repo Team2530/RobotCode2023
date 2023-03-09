@@ -285,14 +285,20 @@ public class Autonomous extends CommandBase {
             return (Timer.getFPGATimestamp() - startTime) >= 1.75;
           }
         }),
-
-        new WaitUntilCommand(driveTrain::level),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return driveTrain.level(startTime);
+          }
+        }),
 
         new PrintCommand("Robot is Level!")
 
     );
-
-    autoBalance.schedule();
+    // ! AUTO CONFIGURATION+
+    normalAuto.schedule();
 
     // switch (Robot.autoChooser.getSelected()) {
     // case "Normal Auto":
