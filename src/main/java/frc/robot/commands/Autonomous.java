@@ -206,19 +206,18 @@ public class Autonomous extends CommandBase {
 
     );
     // ! AUTO CONFIGURATION+
-    normalAuto.schedule();
 
-    // switch (Robot.autoChooser.getSelected()) {
-    // case "Normal Auto":
-    // System.out.println("Normal Auto Starting...");
-    // normalAuto.schedule();
-    // break;
-    // case "Fancy Auto":
-    // System.out.println("Fancy Auto Starting...");
-    // autoBalance.schedule();
-    // break;
+    switch (Robot.autoChooser.getSelected()) {
+      case "Normal Auto":
+        System.out.println("Normal Auto Starting...");
+        normalAuto.schedule();
+        break;
+      case "Fancy Auto":
+        System.out.println("Fancy Auto Starting...");
+        autoBalance.schedule();
+        break;
 
-    // }
+    }
   }
 
   // Called every time the scheduler runs while the command is scheduled.
