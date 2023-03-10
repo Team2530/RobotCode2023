@@ -19,6 +19,7 @@ public class RobotContainer {
 
     final Joystick stick = new Joystick(Constants.ControllerConstants.JOYSTICK_PORT);
     final XboxController xbox = new XboxController(Constants.ControllerConstants.XBOX_PORT);
+    final PS4Controller ps4 = new PS4Controller(2);
 
     private static final AHRS m_ahrs = new AHRS();
 
@@ -31,6 +32,8 @@ public class RobotContainer {
     }
     // }
     private final Arm m_arm = new Arm(m_driveTrain, stick, xbox);
+
+    private int presetNum = 0;
 
     // ---------- Autonomous Commands ----------\\
 
@@ -72,6 +75,34 @@ public class RobotContainer {
                 })).onFalse(new InstantCommand(() -> {
                     m_driveTrain.toggleSlowTurning(1.0);
                 }));
+
+
+        // Incresisng in the arm preset
+        new JoystickButton(ps4, 1).onTrue(
+            new InstantCommand(() -> {
+                m_arm.setPreset(Arm.getRelativePreset(Arm.PresetPresets.TOP_CONE.getPreset(), presetNum));
+                System.out.println(presetNum);
+                System.out.println("I am printing");
+            })).onFalse(new InstantCommand(() -> {
+                //Have something here?
+            }));
+
+        // Down in the arm preset
+        new JoystickButton(ps4, 2).onTrue(
+            new InstantCommand(() -> {
+                m_arm.setPreset(Arm.PresetPresets.TOP_CONE.getPreset());
+                System.out.println("Bottom CONE");
+            })).onFalse(new InstantCommand(() -> {
+                //Have something here?
+            }));
+
+        new JoystickButton(ps4, 2).onTrue(
+            new InstantCommand(() -> {
+                m_arm.setPreset(Arm.PresetPresets.TOP_CONE.getPreset());
+                System.out.println("Bottom CONE");
+            })).onFalse(new InstantCommand(() -> {
+                //Have something here?
+            }));
 
         // ? For testing leveling only
         // new JoystickButton(stick, 12).toggleOnTrue(

@@ -246,6 +246,104 @@ public class Arm extends SubsystemBase {
         return false;
     }
 
+
+    public static class Preset {
+        double angle, extension;
+
+        public Preset(double angle, double extension) {
+            this.angle = angle;
+            this.extension = extension;
+        }
+
+        public double getAngle() {
+            return angle;
+        }
+
+        public double getExtension() {
+            return extension;
+        }
+        
+        @Override
+        public String toString() {
+            return "Preset {angle=" + this.angle + ", ext=" + this.extension + "}";
+        }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if(!(obj instanceof Preset)) return false;
+            
+            Preset other = (Preset) obj;
+            
+            return other.angle == this.angle && other.extension == this.extension;
+        }
+    }
+
+    public static enum PresetPresets {
+        TOP_CONE(new Preset(45d, 90d)), MIDDLE_CONE(new Preset(12d, 15d)), BOTTOM_BOX(new Preset(-10d, 10d));
+
+        Preset preset;
+
+        PresetPresets(Preset preset) {
+            this.preset = preset;
+        }
+
+        public Preset getPreset() {
+            return preset;
+        }
+    }
+
+    /**
+     * 
+     * @param p
+     * @param movement if == 0 returns p, if 1 returns the next and so on.
+     * @return
+     */
+    /**
+     * 
+     * @param p
+     * @param movement if == 0 returns p, if 1 returns the next and so on.
+     * @return
+     */
+    public static Preset getRelativePreset(Preset p, int movement) {
+        if (movement == 0) return p;
+
+        int index = 0;
+        int i = 0;
+        for (PresetPresets prpr : PresetPresets.values()) {
+            if (prpr.getPreset().equals(p)) {
+                index = i;
+            }
+            i++;
+        }
+
+        if (movement < 0) {
+            while (index + movement < 0) {
+                movement += PresetPresets.values().length;
+            }
+        } else {
+            while (index + movement >= PresetPresets.values().length) {
+                movement -= PresetPresets.values().length;
+            }
+        }
+
+        return PresetPresets.values()[index + movement].getPreset();
+    }
+
+
+    public void setPreset(Preset p) {
+        new SequentialCommandGroup(
+            new InstantCommand(() -> waitForArmAngle(p.getAngle())),
+            new InstantCommand(() -> waitForArmExtension(p.getExtension())));
+            }
+
+
+
+    public void pausePreset(double angle, double extention) {
+
+    }
+
+
+
     /**
      * Will set the arm extension to the wanted extension
      * 
