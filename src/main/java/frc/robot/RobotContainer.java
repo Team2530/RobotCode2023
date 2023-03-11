@@ -31,6 +31,7 @@ public class RobotContainer {
     }
     // }
     private final Arm m_arm = new Arm(m_driveTrain, stick, xbox);
+    private final LimeLight m_limelight = new LimeLight(m_driveTrain);
 
     // ---------- Autonomous Commands ----------\\
 
@@ -72,6 +73,10 @@ public class RobotContainer {
                 })).onFalse(new InstantCommand(() -> {
                     m_driveTrain.toggleSlowTurning(1.0);
                 }));
+
+        new JoystickButton(xbox, 7).whileTrue(new RepeatCommand(new InstantCommand(() -> {
+            m_limelight.aimAtTarget();
+        })));
 
         // ? For testing leveling only
         // new JoystickButton(stick, 12).toggleOnTrue(

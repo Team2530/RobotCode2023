@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -35,6 +36,9 @@ public class LimeLight extends SubsystemBase {
   /** Amount we are willing to compromise for in our distance */
   static double disttolerance = 0.9;
 
+  /* PID FOr Turning 0.055, .004, 0.001 */
+  private PIDController LimelightPID = new PIDController(0.055, 0.004, 0.0025);
+
   // not sure if this is right or not
   static int lightMode = 3;
 
@@ -60,8 +64,8 @@ public class LimeLight extends SubsystemBase {
    * Updates the LimeLight's values
    */
   public static void updateValues() {
-    xoff = getLimeValues("tx");
-    yoff = getLimeValues("ty");
+    xoff = getLimeValues("ty");
+    yoff = getLimeValues("tx");
     // tv = table.getEntry("tv").getDouble(0.0);
     area = getLimeValues("ta");
   }
@@ -93,16 +97,13 @@ public class LimeLight extends SubsystemBase {
    * Assume that there is a valid target, we will turn to aim at it
    */
   public void aimAtTarget() {
-    double error = -xoff;
-    System.out.println("Error: " + error);
+    double error = -getLimeValues("ty");
+    SmartDashboard.putNumber("TY but TX", error);
 
-    if (xoff < 1) {
-      turnRate = limekP * error + minCommand;
-    } else {
-      turnRate = limekP * error - minCommand;
-    }
-    System.out.println(turnRate);
-    // Use this method to turn to robot at the speeds
+    turnRate = LimelightPID.calculate(error);
+    SmartDashboard.putNumber("TurnRate", turnRate);
+    driveTrain.singleJoystickDrive(0, Math.signum(turnRate) * Math.min(Math.abs(turnRate), 0.5));
+
   }
 
   /**
