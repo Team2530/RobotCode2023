@@ -4,6 +4,8 @@ import java.util.function.BooleanSupplier;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
@@ -11,6 +13,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -32,15 +35,18 @@ public class Arm extends SubsystemBase {
     // ---------- Subsystems ----------\\
     private DriveTrain driveTrain;
 
+    private PIDController extensionPID = new PIDController(0.1, 0.0, 0.0);
+    private PIDController anglePID = new PIDController(0.1, 0.0, 0.0);
+
     // ---------- Controllers ----------\\
     private XboxController xbox;
     private Joystick stick;
 
-    double calculatedLength = 0.0;
-
     // --------- Values ----------\\
     private double currentAngle = 0.0;
     private double currentExtension = 0.0;
+    private double currentWantedExtension = 0.0;
+    private double currentWantedAngle = 0.0;
 
     /** How far off our calculated and reset when we hit our encoder */
     private double eOff = 0.0;
@@ -65,10 +71,6 @@ public class Arm extends SubsystemBase {
 
     // ---------- Sensor Reading Constants ---------- \\
     // Min && max Encoder Readings for interpolation
-    private final double minExtensionEncoderReading = 0.0;
-    private final double maxExtensionEncoderReading = 1.0;
-
-    private final double angleChangePerPulse = 22.83;
     private final double extensionChangePerPulse = 6406.177;
 
     private double armOutLimitSpeed = 0.25;
@@ -124,6 +126,9 @@ public class Arm extends SubsystemBase {
 
         // Updates shuffleboard values
         updateShuffleBoardValues();
+
+        // do all presetThings
+        presets();
     }
 
     /**
@@ -207,7 +212,7 @@ public class Arm extends SubsystemBase {
     }
 
     public boolean zeroArm() {
-        if (currentExtension > 0.1) {
+        if (currentExtension > 0.3 && 1 != extensionMotor.isRevLimitSwitchClosed()) {
             extensionMotor.set(-armInLimitSpeed);
         } else {
             extensionMotor.set(0.0);
@@ -221,7 +226,10 @@ public class Arm extends SubsystemBase {
             linearActuator.set(0.0);
         }
 
-        return Math.abs(currentAngle - kMaxAngle) < 5 && currentExtension < 1;
+        currentWantedAngle = currentAngle;
+        currentWantedExtension = currentExtension;
+        return Math.abs(currentAngle - kMaxAngle) < 5 && currentExtension < 3
+                && 1 != extensionMotor.isRevLimitSwitchClosed();
     }
 
     /**
@@ -270,57 +278,12 @@ public class Arm extends SubsystemBase {
      */
     private void updateArm() {
         // Get Xbox POV for Extending
-        switch (xbox.getPOV()) {
-            // Run arm out
-            case 0:
-                // Arm can extend
-                if (canExtend) {
-                    extensionMotor.set(armOutLimitSpeed);
-                } else {
-                    // Set to 0 if nothing needs to happen
-                    extensionMotor.set(0.0);
-                }
-                break;
-            // Run arm in
-            case 180:
-                extensionMotor.set(-armInLimitSpeed);
-                break;
-            // Run arm in slowly
-            case 90:
-                extensionMotor.set(armInLimitSpeed * .5);
-                break;
-            // Run arm out slowly
-            case 270:
-                extensionMotor.set(-armInLimitSpeed * .5);
-                break;
-            // If no button is pressed
-            case -1:
-                extensionMotor.set(0.0);
-                break;
-        }
-    }
+        currentWantedExtension -= Deadzone.deadZone(xbox.getRawAxis(1), 0.05);
+        currentWantedExtension = Math.max(0, Math.min(currentWantedExtension, 37));
+        SmartDashboard.putNumber("Wanted Extemsoin", currentWantedExtension);
 
-    public boolean presetDown() {
-        if (currentExtension > 9.5) {
-            extensionMotor.set(-armInLimitSpeed);
-        } else if (currentExtension < 8.5) {
-            extensionMotor.set(-armOutLimitSpeed);
-        } else {
-            extensionMotor.set(0.0);
+        extensionMotor.set(extensionPID.calculate(currentExtension, currentWantedExtension));
 
-        }
-
-        // grabberServo.setRelativeAngle(1);
-
-        if (currentAngle < -23.2) {
-            linearActuator.set(1);
-        } else if (currentAngle > -23.7) {
-            linearActuator.set(-1);
-        } else {
-            linearActuator.set(0.0);
-        }
-
-        return Math.abs(currentAngle - kMaxAngle) < 0.1 && Math.abs(currentExtension - 9) < .5;
     }
 
     /**
@@ -328,30 +291,11 @@ public class Arm extends SubsystemBase {
      * fairly good</em>
      */
     private void updateLinearActuator() {
-        // If Y button is pressed, we will make the arm go up
-        if (xbox.getYButton()) {
-            linearActuator.set(1);
-            // If arm goes up and it will make us be outside our limit, we go in else, leave
-            // it alone
-            if (needsToGoIn) {
-                extensionMotor.set(-0.5);
-            } else {
-                extensionMotor.set(0.0);
-            }
-            // If A button is pressed, make the arm go down
-        } else if (xbox.getAButton()) {
-            linearActuator.set(-1);
-            // If arm goes down and it will make us be outside our limit, we go in else,
-            // leave
-            // it alone
-            if (needsToGoIn) {
-                extensionMotor.set(-0.5);
-            } else {
-                extensionMotor.set(0.0);
-            }
-        } else {
-            linearActuator.set(0.0);
-        }
+        currentWantedAngle -= Deadzone.deadZone(xbox.getRawAxis(5), 0.05);
+        currentWantedAngle = Math.max(-25, Math.min(currentWantedAngle, 68));
+        SmartDashboard.putNumber("Wanted Angle", currentWantedAngle);
+
+        linearActuator.set(extensionPID.calculate(currentAngle, currentWantedAngle));
     }
 
     public double getArmAngle() {
@@ -366,6 +310,56 @@ public class Arm extends SubsystemBase {
     public boolean openGrabber(double startSeconds) {
         grabberServo.setRelativeAngle(0.5d);
         return Timer.getFPGATimestamp() - startSeconds > 1.5;
+    }
+
+    public void presets() {
+
+        if (xbox.getAButton()) {
+            setFloorGrabPreset();
+        }
+
+        if (xbox.getBButton()) {
+            // just to floor angle
+        }
+
+        if (xbox.getYButton()) {
+            setMediumPreset();
+        }
+
+        if (xbox.getRawButton(5)) {
+            setHighScorePreset();
+        }
+
+        if (xbox.getRawButton(6)) {
+            setDrivingPreset();
+        }
+    }
+
+    public void setFloorGrabPreset() {
+        currentWantedAngle = -25;
+        currentWantedExtension = 20.62;
+    }
+
+    public void setHighScorePreset() {
+        currentWantedAngle = 30;
+        currentWantedExtension = 37;
+    }
+
+    public void setDrivingPreset() {
+        currentWantedExtension = 0;
+        currentWantedAngle = 45;
+
+    }
+
+    public void setMediumPreset() {
+        currentWantedAngle = 27;
+        currentWantedExtension = 16.5;
+    }
+
+    // Sets when we enable to whatever the arm is at
+    public void setWantedToCurrent() {
+        currentWantedAngle = currentAngle;
+        currentWantedExtension = currentExtension;
     }
 
 }

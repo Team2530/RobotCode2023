@@ -107,7 +107,7 @@ public class Autonomous extends CommandBase {
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
-        new PrintCommand("12"),
+        new PrintCommand("START OF BACKING UP!"),
 
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {

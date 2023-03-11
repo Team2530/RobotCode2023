@@ -132,6 +132,8 @@ public class Robot extends TimedRobot {
     if (m_teleopCommand != null) {
       m_teleopCommand.schedule();
     }
+
+    m_robotContainer.getArm().setWantedToCurrent();
   }
 
   /**
@@ -151,6 +153,8 @@ public class Robot extends TimedRobot {
     if (m_testCommand != null) {
       m_testCommand.schedule();
     }
+
+    m_robotContainer.getArm().setWantedToCurrent();
   }
 
   /**
