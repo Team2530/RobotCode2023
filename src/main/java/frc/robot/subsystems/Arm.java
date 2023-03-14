@@ -333,6 +333,11 @@ public class Arm extends SubsystemBase {
         if (xbox.getRawButton(6)) {
             setDrivingPreset();
         }
+
+        //TODO: Ask Richard for preferred button
+        // if(xbox.getRawButton(-1)){
+        //     setHumanPickupPreset();
+        // }
     }
 
     public void setFloorGrabPreset() {
@@ -354,6 +359,11 @@ public class Arm extends SubsystemBase {
     public void setMediumPreset() {
         currentWantedAngle = 27;
         currentWantedExtension = 16.5;
+    }
+
+    public void setHumanPickupPreset(){
+        currentWantedAngle = 30;
+        currentWantedExtension = 91.5;
     }
 
     // Sets when we enable to whatever the arm is at
