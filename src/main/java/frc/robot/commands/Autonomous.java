@@ -172,9 +172,11 @@ public class Autonomous extends CommandBase {
         new PrintCommand("9"),
 
         // Wait for a second for things to slow down and settle
+        //TODO -- could be shorter
         new WaitCommand(1),
         new PrintCommand("10"),
 
+        //TODO -- could do it during moving to autoleveling
         new WaitUntilCommand(arm::zeroArm),
         new PrintCommand("11"),
 
@@ -187,6 +189,7 @@ public class Autonomous extends CommandBase {
           startTime = Timer.getFPGATimestamp();
         }),
         new PrintCommand("2"),
+        //get onto the charge station the first time (No balance)
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             driveTrain.singleJoystickDrive(0.6, 0);
@@ -196,6 +199,27 @@ public class Autonomous extends CommandBase {
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
+        //slow down to get down the charge station
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            driveTrain.singleJoystickDrive(0.3, 0);
+            return (Timer.getFPGATimestamp() - startTime) >= 2;
+          }
+        }),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        // Get back up the charge station
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            driveTrain.singleJoystickDrive(-0.6, 0);
+            return (Timer.getFPGATimestamp() - startTime) >= 1;
+          }
+        }),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        // level the robot
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             return driveTrain.level(startTime);
