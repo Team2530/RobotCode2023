@@ -9,6 +9,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -117,7 +118,7 @@ public class Arm extends SubsystemBase {
         }
         // Sets the grabber to the xbox left trigger
         if (DriverStation.isTeleopEnabled()) {
-            grabberServo.setRelativeAngle(xbox.getRawAxis(2));
+            grabberServo.setRelativeAngle(xbox.getRawAxis(2)  + ((xbox.getRawAxis(2) > 0.5) ? 0.05 * Math.sin((((float)RobotController.getFPGATime() / 1000000.f) * Math.PI)* 8.f) : 0.0));
         }
         // Does all the linear actuator updating
         if (DriverStation.isTeleopEnabled()) {
