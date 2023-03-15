@@ -304,12 +304,12 @@ public class Arm extends SubsystemBase {
 
     public boolean closeGrabber(double startSeconds) {
         grabberServo.setRelativeAngle(1);
-        return Timer.getFPGATimestamp() - startSeconds > 1.5;
+        return Timer.getFPGATimestamp() - startSeconds > .25;
     }
 
     public boolean openGrabber(double startSeconds) {
         grabberServo.setRelativeAngle(0.5d);
-        return Timer.getFPGATimestamp() - startSeconds > 1.5;
+        return Timer.getFPGATimestamp() - startSeconds > .25;
     }
 
     public void presets() {

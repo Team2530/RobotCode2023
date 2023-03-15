@@ -172,7 +172,7 @@ public class Autonomous extends CommandBase {
         new PrintCommand("9"),
 
         // Wait for a second for things to slow down and settle
-        //TODO -- could be shorter
+        //TODO -- could be shorter/gone
         new WaitCommand(1),
         new PrintCommand("10"),
 
