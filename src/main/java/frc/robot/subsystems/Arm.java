@@ -102,7 +102,7 @@ public class Arm extends SubsystemBase {
     public void periodic() {
         // ? Update to our current data
         // 360 is for reversing the angle and 46.3 gets us to our zero point
-        currentAngle = 360 - angleEncoder.getAngleDeg() - 46.3;
+        currentAngle = 360 - angleEncoder.getAngleDeg() - 41.3;
         currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + eOff;
 
         // reset our encoder reading if our reverse limit switch is closed
@@ -118,7 +118,9 @@ public class Arm extends SubsystemBase {
         }
         // Sets the grabber to the xbox left trigger
         if (DriverStation.isTeleopEnabled()) {
-            grabberServo.setRelativeAngle(xbox.getRawAxis(2)  + ((xbox.getRawAxis(2) > 0.5) ? 0.05 * Math.sin((((float)RobotController.getFPGATime() / 1000000.f) * Math.PI)* 8.f) : 0.0));
+            grabberServo.setRelativeAngle(xbox.getRawAxis(2) + ((xbox.getRawAxis(2) > 0.5)
+                    ? 0.05 * Math.sin((((float) RobotController.getFPGATime() / 1000000.f) * Math.PI) * 8.f)
+                    : 0.0));
         }
         // Does all the linear actuator updating
         if (DriverStation.isTeleopEnabled()) {
@@ -280,7 +282,9 @@ public class Arm extends SubsystemBase {
     private void updateArm() {
         // Get Xbox POV for Extending
         currentWantedExtension -= Deadzone.deadZone(xbox.getRawAxis(1), 0.05);
-        currentWantedExtension = Math.max(0, Math.min(currentWantedExtension, 37));
+
+        // Make max to whatever value at angle is
+        currentWantedExtension = Math.max(0, Math.min(currentWantedExtension, Math.abs(currentAngle) < 20 ? 28 : 35));
         SmartDashboard.putNumber("Wanted Extemsoin", currentWantedExtension);
 
         extensionMotor.set(extensionPID.calculate(currentExtension, currentWantedExtension));
@@ -335,9 +339,9 @@ public class Arm extends SubsystemBase {
             setDrivingPreset();
         }
 
-        //TODO: Ask Richard for preferred button
+        // TODO: Ask Richard for preferred button
         // if(xbox.getRawButton(-1)){
-        //     setHumanPickupPreset();
+        // setHumanPickupPreset();
         // }
     }
 
@@ -362,7 +366,7 @@ public class Arm extends SubsystemBase {
         currentWantedExtension = 16.5;
     }
 
-    public void setHumanPickupPreset(){
+    public void setHumanPickupPreset() {
         currentWantedAngle = 30;
         currentWantedExtension = 91.5;
     }
