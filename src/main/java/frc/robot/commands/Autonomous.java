@@ -46,19 +46,6 @@ public class Autonomous extends CommandBase {
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
-        new PrintCommand("2"),
-
-        new WaitUntilCommand(new BooleanSupplier() {
-          public boolean getAsBoolean() {
-            driveTrain.singleJoystickDrive(-0.2, 0);
-            return (Timer.getFPGATimestamp() - startTime) >= 1;
-          }
-        }),
-        new PrintCommand("3"),
-
-        new InstantCommand(() -> {
-          startTime = Timer.getFPGATimestamp();
-        }),
         new PrintCommand("4"),
 
         new WaitUntilCommand(new BooleanSupplier() {

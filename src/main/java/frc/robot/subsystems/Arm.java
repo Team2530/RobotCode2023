@@ -102,7 +102,7 @@ public class Arm extends SubsystemBase {
     public void periodic() {
         // ? Update to our current data
         // 360 is for reversing the angle and 46.3 gets us to our zero point
-        currentAngle = 360 - angleEncoder.getAngleDeg() - 41.3;
+        currentAngle = 360 - angleEncoder.getAngleDeg() - 36.3;
         currentExtension = extensionMotor.getSelectedSensorPosition() / extensionChangePerPulse + eOff;
 
         // reset our encoder reading if our reverse limit switch is closed
@@ -215,7 +215,7 @@ public class Arm extends SubsystemBase {
     }
 
     public boolean zeroArm() {
-        if (currentExtension > 0.3 && 1 != extensionMotor.isRevLimitSwitchClosed()) {
+        if (currentExtension > 0.3) {
             extensionMotor.set(-armInLimitSpeed);
         } else {
             extensionMotor.set(0.0);
@@ -231,8 +231,7 @@ public class Arm extends SubsystemBase {
 
         currentWantedAngle = currentAngle;
         currentWantedExtension = currentExtension;
-        return Math.abs(currentAngle - kMaxAngle) < 5 && currentExtension < 3
-                && 1 != extensionMotor.isRevLimitSwitchClosed();
+        return Math.abs(currentAngle - kMaxAngle) < 5 && currentExtension < 3;
     }
 
     /**
@@ -277,16 +276,17 @@ public class Arm extends SubsystemBase {
     }
 
     /**
-     * Updates the arm based on input and limits
+     * Updates the arm based on input and limits (All extension logic)
      */
     private void updateArm() {
         // Get Xbox POV for Extending
         currentWantedExtension -= Deadzone.deadZone(xbox.getRawAxis(1), 0.05);
-
         // Make max to whatever value at angle is
-        currentWantedExtension = Math.max(0, Math.min(currentWantedExtension, Math.abs(currentAngle) < 20 ? 28 : 35));
+        // If angle is within 20 degrees, we make the max arm wanted extension to less
+        // than max
+        currentWantedExtension = Math.max(0, Math.min(currentWantedExtension, Math.abs(currentAngle) < 20 ? 26.5 : 37));
         SmartDashboard.putNumber("Wanted Extemsoin", currentWantedExtension);
-
+        // Set arm speed to calculated from PID
         extensionMotor.set(extensionPID.calculate(currentExtension, currentWantedExtension));
 
     }
@@ -297,7 +297,7 @@ public class Arm extends SubsystemBase {
      */
     private void updateLinearActuator() {
         currentWantedAngle -= Deadzone.deadZone(xbox.getRawAxis(5), 0.05);
-        currentWantedAngle = Math.max(-25, Math.min(currentWantedAngle, 68));
+        currentWantedAngle = Math.max(-22, Math.min(currentWantedAngle, 68));
         SmartDashboard.putNumber("Wanted Angle", currentWantedAngle);
 
         linearActuator.set(extensionPID.calculate(currentAngle, currentWantedAngle));
@@ -309,12 +309,12 @@ public class Arm extends SubsystemBase {
 
     public boolean closeGrabber(double startSeconds) {
         grabberServo.setRelativeAngle(1);
-        return Timer.getFPGATimestamp() - startSeconds > 1.5;
+        return Timer.getFPGATimestamp() - startSeconds > 0.25d;
     }
 
     public boolean openGrabber(double startSeconds) {
         grabberServo.setRelativeAngle(0.5d);
-        return Timer.getFPGATimestamp() - startSeconds > 1.5;
+        return Timer.getFPGATimestamp() - startSeconds > 0.25d;
     }
 
     public void presets() {
@@ -339,10 +339,9 @@ public class Arm extends SubsystemBase {
             setDrivingPreset();
         }
 
-        // TODO: Ask Richard for preferred button
-        // if(xbox.getRawButton(-1)){
-        // setHumanPickupPreset();
-        // }
+        if (xbox.getXButtonPressed()) {
+            setHumanPickupPreset();
+        }
     }
 
     public void setFloorGrabPreset() {
@@ -351,7 +350,7 @@ public class Arm extends SubsystemBase {
     }
 
     public void setHighScorePreset() {
-        currentWantedAngle = 30;
+        currentWantedAngle = 33;
         currentWantedExtension = 37;
     }
 
@@ -367,8 +366,8 @@ public class Arm extends SubsystemBase {
     }
 
     public void setHumanPickupPreset() {
-        currentWantedAngle = 30;
-        currentWantedExtension = 91.5;
+        currentWantedAngle = 23;
+        currentWantedExtension = 20;
     }
 
     // Sets when we enable to whatever the arm is at
