@@ -37,7 +37,7 @@ public class LimeLight extends SubsystemBase {
   static double disttolerance = 0.9;
 
   /* PID FOr Turning 0.055, .004, 0.001 */
-  private PIDController LimelightPID = new PIDController(0.055, 0.004, 0.0025);
+  private PIDController LimelightPID = new PIDController(0.05, 0.18, 0.006);
 
   // not sure if this is right or not
   static int lightMode = 3;
