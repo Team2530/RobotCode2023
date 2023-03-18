@@ -4,7 +4,9 @@
 
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -19,6 +21,7 @@ import frc.robot.Constants;
  */
 public class LimeLight extends SubsystemBase {
   DriveTrain driveTrain;
+  Joystick stick;
 
   static double xoff;
   static double yoff;
@@ -35,14 +38,18 @@ public class LimeLight extends SubsystemBase {
   /** Amount we are willing to compromise for in our distance */
   static double disttolerance = 0.9;
 
+  /* PID FOr Turning 0.055, .004, 0.001 */
+  private PIDController LimelightPID = new PIDController(0.05, 0.18, 0.006);
+
   // not sure if this is right or not
   static int lightMode = 3;
 
   int cameraMode = 0;
 
   /** Creates a new LimeLight. */
-  public LimeLight(DriveTrain driveTrain) {
+  public LimeLight(DriveTrain driveTrain, Joystick stick) {
     this.driveTrain = driveTrain;
+    this.stick = stick;
   }
 
   @Override
@@ -60,8 +67,8 @@ public class LimeLight extends SubsystemBase {
    * Updates the LimeLight's values
    */
   public static void updateValues() {
-    xoff = getLimeValues("tx");
-    yoff = getLimeValues("ty");
+    xoff = getLimeValues("ty");
+    yoff = getLimeValues("tx");
     // tv = table.getEntry("tv").getDouble(0.0);
     area = getLimeValues("ta");
   }
@@ -93,16 +100,13 @@ public class LimeLight extends SubsystemBase {
    * Assume that there is a valid target, we will turn to aim at it
    */
   public void aimAtTarget() {
-    double error = -xoff;
-    System.out.println("Error: " + error);
+    double error = -getLimeValues("ty");
+    SmartDashboard.putNumber("TY but TX", error);
 
-    if (xoff < 1) {
-      turnRate = limekP * error + minCommand;
-    } else {
-      turnRate = limekP * error - minCommand;
-    }
-    System.out.println(turnRate);
-    // Use this method to turn to robot at the speeds
+    turnRate = LimelightPID.calculate(error);
+    SmartDashboard.putNumber("TurnRate", turnRate);
+    driveTrain.singleJoystickDrive(stick.getY() * 0.75, Math.signum(turnRate) * Math.min(Math.abs(turnRate), 0.5));
+
   }
 
   /**

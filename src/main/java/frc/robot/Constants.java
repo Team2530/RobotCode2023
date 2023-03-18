@@ -10,7 +10,6 @@ import edu.wpi.first.math.util.Units;
  */
 public class Constants {
 
-    
     static {
         // Sets controller ports
         ControllerConstants.JOYSTICK_PORT = 0; // frc.robot.subsystems.Controller.getJoystickPort();
@@ -117,14 +116,15 @@ public class Constants {
         public static final int J_SIMULATION_RESET = 4;
         public static final int J_DRIVE_STRAIGHT = 12;
 
-        //Arm Constants
+        // Arm Constants
 
         // Xbox Buttons (Use X_ before the button name to indicate use with Xbox
         // controller)
-        public static final int X_AIM_TOWARDS_TARGET = 1;
+        public static final int X_AIM_TOWARDS_TARGET = 11;
 
         /**
-         * When changing controller constants, make sure out driver knows about it--and put it on the list if there is one.
+         * When changing controller constants, make sure out driver knows about it--and
+         * put it on the list if there is one.
          */
     }
 

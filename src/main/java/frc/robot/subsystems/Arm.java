@@ -284,7 +284,7 @@ public class Arm extends SubsystemBase {
         // Make max to whatever value at angle is
         // If angle is within 20 degrees, we make the max arm wanted extension to less
         // than max
-        currentWantedExtension = Math.max(0, Math.min(currentWantedExtension, Math.abs(currentAngle) < 20 ? 26.5 : 37));
+        currentWantedExtension = Math.max(0, Math.min(currentWantedExtension, Math.abs(currentAngle) < 20 ? 26.5 : 34));
         SmartDashboard.putNumber("Wanted Extemsoin", currentWantedExtension);
         // Set arm speed to calculated from PID
         extensionMotor.set(extensionPID.calculate(currentExtension, currentWantedExtension));

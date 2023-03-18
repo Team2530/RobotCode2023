@@ -31,6 +31,7 @@ public class RobotContainer {
     }
     // }
     private final Arm m_arm = new Arm(m_driveTrain, stick, xbox);
+    private final LimeLight m_limelight = new LimeLight(m_driveTrain, stick);
 
     // ---------- Autonomous Commands ----------\\
 
@@ -76,6 +77,11 @@ public class RobotContainer {
         // ? For testing leveling only
         // new JoystickButton(stick, 12).toggleOnTrue(
         // new WaitUntilCommand(m_driveTrain::level));
+
+        new JoystickButton(stick, Constants.ControllerConstants.X_AIM_TOWARDS_TARGET)
+                .whileTrue(new RepeatCommand(new InstantCommand(() -> {
+                    m_limelight.aimAtTarget();
+                })));
 
     }
 
