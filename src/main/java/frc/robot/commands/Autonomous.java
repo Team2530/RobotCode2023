@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
@@ -239,26 +240,31 @@ public class Autonomous extends CommandBase {
         new PrintCommand("Wait For Cone to Drop"),
 
         // Wait for a second for things to slow down and settle
-        new WaitCommand(1),
+        new WaitCommand(0.3d),
         new PrintCommand("Zero Arm"),
-        new WaitUntilCommand(arm::zeroArm),
-        new PrintCommand("Zeroed!"),
 
-        new InstantCommand(() -> {
-          driveTrain.toggleTurtleMode(1);
-        }),
-        new PrintCommand("Go Backward for time"),
-        new InstantCommand(() -> {
-          startTime = Timer.getFPGATimestamp();
-        }),
+        // Zero arm and Start Backing Up
+        new PrintCommand("Zero Arm and Start Backing Up"),
+        new ParallelCommandGroup(
+          new WaitUntilCommand(arm::zeroArm),
+          new SequentialCommandGroup(
+            new InstantCommand(() -> {
+              driveTrain.toggleTurtleMode(1);
+            }),
+            new PrintCommand("Go Backward for time"),
+            new InstantCommand(() -> {
+              startTime = Timer.getFPGATimestamp();
+            }),
+            //Go over Charge Station
+            new WaitUntilCommand(new BooleanSupplier() {
+              public boolean getAsBoolean() {
+                driveTrain.singleJoystickDrive(0.6, 0);
+                return (Timer.getFPGATimestamp() - startTime) >= 3;
+              }
+            })
+          )),
 
-        //Go over Charge Station
-        new WaitUntilCommand(new BooleanSupplier() {
-          public boolean getAsBoolean() {
-            driveTrain.singleJoystickDrive(0.6, 0);
-            return (Timer.getFPGATimestamp() - startTime) >= 3;
-          }
-        }),
+        
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
