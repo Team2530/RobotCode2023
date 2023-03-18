@@ -194,8 +194,6 @@ public class Autonomous extends CommandBase {
 
         new PrintCommand("Robot is Level!")
 
-
-        
     );
 
     SequentialCommandGroup autoBackBalance = new SequentialCommandGroup(
@@ -273,11 +271,11 @@ public class Autonomous extends CommandBase {
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             driveTrain.singleJoystickDrive(-0.6, 0);
-            return (Timer.getFPGATimestamp() - startTime) >= 0.75d;
+            return (Timer.getFPGATimestamp() - startTime) >= 1.2d;
           }
         }),
 
-        //Level
+        // Level
 
         new PrintCommand("Level the Robot"),
         new InstantCommand(() -> {
@@ -291,8 +289,6 @@ public class Autonomous extends CommandBase {
 
         new PrintCommand("Robot is Level!")
 
-
-        
     );
     // ! AUTO CONFIGURATION+
 

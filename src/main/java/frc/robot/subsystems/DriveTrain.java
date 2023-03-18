@@ -346,6 +346,6 @@ public class DriveTrain extends SubsystemBase {
     }
 
     // If the charge station is level, we can stop moving
-    return dTime > 1.5;
+    return dTime > 3;
   }
 }
