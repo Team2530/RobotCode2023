@@ -34,6 +34,7 @@ public class Robot extends TimedRobot {
     {
       addOption("Auto - Place and Backup", "Normal Auto");
       addOption("Auto - Place and Balance", "Fancy Auto");
+      addOption("Auto - Place, Over, Balance", "Over Auto");
       setDefaultOption("Auto - Place and Backup", "Normal Auto");
     }
   };

@@ -6,6 +6,8 @@ package frc.robot.commands;
 
 import java.util.function.BooleanSupplier;
 
+import javax.swing.SortingFocusTraversalPolicy;
+
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.DriverStation;
@@ -191,6 +193,100 @@ public class Autonomous extends CommandBase {
 
         new PrintCommand("Robot is Level!")
 
+
+        
+    );
+
+    SequentialCommandGroup autoBackBalance = new SequentialCommandGroup(
+
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new PrintCommand("Close Grabber and Start"),
+        // close grabber
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return arm.closeGrabber(startTime);
+          }
+        }),
+        new PrintCommand("Put arm to angle"),
+
+        // Set arm angle to desired angle
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return arm.waitForArmAngle(33.5);
+          }
+        }),
+        new PrintCommand("Extend arm"),
+
+        // set arm extension to granted extension
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return arm.waitForArmExtension(39);
+          }
+        }),
+
+        // update timer for grabber as it relies on time
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new PrintCommand("Open Grabber"),
+
+        // release the kraken (gamepiece)
+        new InstantCommand(() -> {
+          arm.openGrabber(startTime);
+        }),
+        new PrintCommand("Wait For Cone to Drop"),
+
+        // Wait for a second for things to slow down and settle
+        new WaitCommand(1),
+        new PrintCommand("Zero Arm"),
+        new WaitUntilCommand(arm::zeroArm),
+        new PrintCommand("Zeroed!"),
+
+        new InstantCommand(() -> {
+          driveTrain.toggleTurtleMode(1);
+        }),
+        new PrintCommand("Go Backward for time"),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+
+        //Go over Charge Station
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            driveTrain.singleJoystickDrive(0.6, 0);
+            return (Timer.getFPGATimestamp() - startTime) >= 3;
+          }
+        }),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new PrintCommand("Go back over"),
+        // Get back on
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            driveTrain.singleJoystickDrive(-0.6, 0);
+            return (Timer.getFPGATimestamp() - startTime) >= 0.75d;
+          }
+        }),
+
+        //Level
+
+        new PrintCommand("Level the Robot"),
+        new InstantCommand(() -> {
+          startTime = Timer.getFPGATimestamp();
+        }),
+        new WaitUntilCommand(new BooleanSupplier() {
+          public boolean getAsBoolean() {
+            return driveTrain.level(startTime);
+          }
+        }),
+
+        new PrintCommand("Robot is Level!")
+
+
+        
     );
     // ! AUTO CONFIGURATION+
 
@@ -204,6 +300,10 @@ public class Autonomous extends CommandBase {
         autoBalance.schedule();
         break;
 
+      case "Over Auto":
+        System.out.println("Over Auto Staring...");
+        autoBackBalance.schedule();
+        break;
     }
   }
 
