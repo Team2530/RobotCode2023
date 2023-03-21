@@ -77,6 +77,8 @@ public class Arm extends SubsystemBase {
     private double armOutLimitSpeed = 0.25;
     private double armInLimitSpeed = 0.25;
 
+    private double autoGrabbberPosition = 0;
+
     // If the arm is at full extension and past the limit, we need to retract
     private boolean needsToGoIn = false;
 
@@ -121,6 +123,11 @@ public class Arm extends SubsystemBase {
             grabberServo.setRelativeAngle(xbox.getRawAxis(2) + ((xbox.getRawAxis(2) > 0.5)
                     ? 0.05 * Math.sin((((float) RobotController.getFPGATime() / 1000000.f) * Math.PI) * 8.f)
                     : 0.0));
+        }
+
+        if (DriverStation.isAutonomousEnabled()) {
+            grabberServo.setRelativeAngle(autoGrabbberPosition +
+                    0.05 * Math.sin((((float) RobotController.getFPGATime() / 1000000.f) * Math.PI) * 8.f));
         }
         // Does all the linear actuator updating
         if (DriverStation.isTeleopEnabled()) {
@@ -309,11 +316,13 @@ public class Arm extends SubsystemBase {
 
     public boolean closeGrabber(double startSeconds) {
         grabberServo.setRelativeAngle(1);
+        autoGrabbberPosition = 1d;
         return Timer.getFPGATimestamp() - startSeconds > 0.25d;
     }
 
     public boolean openGrabber(double startSeconds) {
         grabberServo.setRelativeAngle(0.5d);
+        autoGrabbberPosition = 0.5d;
         return Timer.getFPGATimestamp() - startSeconds > 0.25d;
     }
 
