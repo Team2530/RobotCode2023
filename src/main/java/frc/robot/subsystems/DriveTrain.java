@@ -86,7 +86,7 @@ public class DriveTrain extends SubsystemBase {
   // private final PIDController m_rightPIDController = new PIDController(0, 0,
   // 0);
 
-  private final PIDController levelPID = new PIDController(0.028, 0, 0);
+  private final PIDController levelPID = new PIDController(0.0215, 0, 0);
   private AHRS ahrs = RobotContainer.getAhrs();
 
   private double currentTime = 0.0;
@@ -95,6 +95,7 @@ public class DriveTrain extends SubsystemBase {
   // Double for Rot PID
   // private double yawCtl = 0.0;
   // private double yawTarget = 0.0;
+  // Among us- Arden
 
   // Double set by toggleTurtleMode. Sets adjustable maximum motor speed
   private double driveModeSpeed = 0.75;

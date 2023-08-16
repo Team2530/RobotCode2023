@@ -179,8 +179,8 @@ public class Autonomous extends CommandBase {
         new PrintCommand("2"),
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
-            driveTrain.singleJoystickDrive(0.6, 0);
-            return (Timer.getFPGATimestamp() - startTime) >= 1.75;
+            driveTrain.singleJoystickDrive(0.65, 0);
+            return (Timer.getFPGATimestamp() - startTime) >= 1.5;
           }
         }),
         new InstantCommand(() -> {
@@ -244,25 +244,23 @@ public class Autonomous extends CommandBase {
         // Zero arm and Start Backing Up
         new PrintCommand("Zero Arm and Start Backing Up"),
         new ParallelCommandGroup(
-          new WaitUntilCommand(arm::zeroArm),
-          new SequentialCommandGroup(
-            new InstantCommand(() -> {
-              driveTrain.toggleTurtleMode(1);
-            }),
-            new PrintCommand("Go Backward for time"),
-            new InstantCommand(() -> {
-              startTime = Timer.getFPGATimestamp();
-            }),
-            //Go over Charge Station
-            new WaitUntilCommand(new BooleanSupplier() {
-              public boolean getAsBoolean() {
-                driveTrain.singleJoystickDrive(0.6, 0);
-                return (Timer.getFPGATimestamp() - startTime) >= 3;
-              }
-            })
-          )),
+            new WaitUntilCommand(arm::zeroArm),
+            new SequentialCommandGroup(
+                new InstantCommand(() -> {
+                  driveTrain.toggleTurtleMode(1);
+                }),
+                new PrintCommand("Go Backward for time"),
+                new InstantCommand(() -> {
+                  startTime = Timer.getFPGATimestamp();
+                }),
+                // Go over Charge Station
+                new WaitUntilCommand(new BooleanSupplier() {
+                  public boolean getAsBoolean() {
+                    driveTrain.singleJoystickDrive(0.6, 0);
+                    return (Timer.getFPGATimestamp() - startTime) >= 3.25;
+                  }
+                }))),
 
-        
         new InstantCommand(() -> {
           startTime = Timer.getFPGATimestamp();
         }),
@@ -271,7 +269,7 @@ public class Autonomous extends CommandBase {
         new WaitUntilCommand(new BooleanSupplier() {
           public boolean getAsBoolean() {
             driveTrain.singleJoystickDrive(-0.6, 0);
-            return (Timer.getFPGATimestamp() - startTime) >= 1.2d;
+            return (Timer.getFPGATimestamp() - startTime) >= 1.7d - 0.25d;
           }
         }),
 

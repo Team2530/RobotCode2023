@@ -375,7 +375,7 @@ public class Arm extends SubsystemBase {
     }
 
     public void setHumanPickupPreset() {
-        currentWantedAngle = 23;
+        currentWantedAngle = 24;
         currentWantedExtension = 20;
     }
 
